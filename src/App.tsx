@@ -27,10 +27,11 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { setBackdropCruise, surgeBackdrop } from "@/lib/backdropMotion";
 import { MapLoading } from "@/components/MapLoading";
 import { RouteMeta } from "@/components/RouteMeta";
+import { installInbox } from "@/lib/inbox";
 import { HazardAlerts } from "@/features/hazards";
 import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
-import { AutoRescueConsentDialog, RescueDrillHost } from "@/features/rescue";
+import { AutoRescueConsentDialog, RescueDrillHost, RescueAskHost } from "@/features/rescue";
 import { ReceiptFlight } from "@/features/ride/components/ReceiptFlight";
 import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
@@ -54,6 +55,8 @@ installDemoGuard();
 hideAppReferrer();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
+// Blacktop Command's notifications: pushes the worker kept while the app was closed, and any that come in now.
+installInbox();
 installErrorLog();
 // Before the router mounts: it has to hear Back first.
 installWarpNavigation();
@@ -105,6 +108,8 @@ const Settings = lazyPage(() => import("./pages/Settings"));
 const RescueLocation = lazyPage(() => import("./pages/RescueLocation"));
 const Speedshop = lazyPage(() => import("./pages/Speedshop"));
 const Install = lazyPage(() => import("./pages/Install"));
+const SaveRoute = lazyPage(() => import("./pages/SaveRoute"));
+const TripDetail = lazyPage(() => import("./pages/TripDetail"));
 const PrivacyPolicy = lazyPage(() => loadLocaleExtra().then(() => import("./pages/PrivacyPolicy")));
 const Terms = lazyPage(() => loadLocaleExtra().then(() => import("./pages/Terms")));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
@@ -324,6 +329,8 @@ function AppRoutes() {
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
+      <Route path="/routes/new" element={<SaveRoute />} />
+      <Route path="/trip/:id" element={<TripDetail />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/setup" element={<Setup />} />
@@ -359,6 +366,8 @@ const App = () => {
               <UiSounds />
               <AutoRescueConsentDialog />
               <RescueDrillHost />
+              {/* "Are you okay?" for a rescue asked for by hand off the ride screen (the map's R, Command's rescue action). */}
+              <RescueAskHost />
               {!__STORE_BUILD__ && <NimiqFullscreenPrompt />}
               <PatternGateDialog />
               <BrowserRouter>

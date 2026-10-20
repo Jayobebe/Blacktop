@@ -6,9 +6,12 @@ import { RideWrapUp } from '@/features/ride/components/RideWrapUp';
 import { useVoiceChannel, unlockIOSAudio } from '@/features/voice';
 import { useConvoyState, useRegroupListener, getConvoySnapshot, ConvoyQrButton } from '@/features/convoy';
 import { useProximity, useConvoyMergeSync, announceMergeToConvoy, type ConvoyActions } from '@/features/proximity';
-import { attachRideToConvoy } from '@/features/ride';
+import { attachRideToConvoy, subscribeRawFixes } from '@/features/ride';
+import { armTripForRide, trackTripFix, lastTripLeg, type RideTripLeg } from '@/features/ride/lib/trips';
+import { notify } from '@/lib/inbox';
 import { useReactionsListener } from '@/features/pillion';
 import { openBlacktopMap, clearMapDestination, closeBlacktopMap } from '@/features/map';
+import { isTwistyLeg } from '@/features/map/lib/routeStyle';
 import { useNextWaypoint } from '@/features/waypoints';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -148,12 +151,12 @@ export default function ActiveRide() {
   // The radio plays across the whole app during a ride and stops when the ride ends, however
   // it ends (the floating button goes with it: lib resetRadio clears the loaded station).
   const stopRadio = resetRadio;
-  const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy } = useConvoyState();
+  const { convoy, resetNavigationStatus, endConvoyRide, setConvoyRealtimeSuspended, createConvoy, joinConvoy, leaveConvoy, setDestination: setConvoyDestination } = useConvoyState();
   // Only use voice channel for convoy rides with other members
   const voiceChannel = useVoiceChannel(rideState.isConvoyMode ? convoy.id ?? undefined : undefined, { priority: convoy.isLeader });
   const { isConnected, isMuted, speakingUsers, peerLinks, mutedUsers, peerSound, micSound, playBlocked, connect, disconnect, toggleMute, getAudioStreams } = voiceChannel;
   const { settings } = useSettings();
-  const { terms, canLean } = useExperience();
+  const { terms, canLean, showGroup } = useExperience();
   // Riders who said they don't care about speed get distance as the hero number.
   const speedHero = settings.speedFocusEnabled;
   // Lean angle only exists for vehicles that lean into corners.
@@ -372,11 +375,58 @@ export default function ActiveRide() {
   const autoRescueFiredRef = useRef(false);
 
   const membersRef = useRef<ConvoyMemberInfo[]>([]);
+  /** What the ride that just ended was (for its receipt's paper): a convoy ride, a trip's legs. */
+  const wasConvoyRideRef = useRef(false);
+  const savedLegRef = useRef<RideTripLeg | null>(null);
   const controlChannelRef = useRef<any>(null); // Control channel for ride commands from leader
   const rideStateRef = useRef(rideState); // Keep fresh ref for broadcast handler
   
   // Update ref on each render to avoid stale closures
   rideStateRef.current = rideState;
+
+  // Trips (ride/lib/trips): setting off, the ride joins the trip picked for it (a saved route), or starts one
+  // from a plan with stops on the way (the solo route's stops, or the convoy's waypoints still to do); each
+  // leg is counted as the ride's own GPS reaches its end, said on screen and kept in Command's notifications.
+  useEffect(() => {
+    if (!rideState.isActive || !rideState.startedAt) return;
+    const convoyPlan = rideState.isConvoyMode && convoy.destination;
+    const stops = convoyPlan
+      ? convoy.waypoints.filter((w) => !w.isCompleted).sort((a, b) => a.orderIndex - b.orderIndex).map((w) => ({ lat: w.lat, lng: w.lng, name: w.name, address: w.address }))
+      : soloRoute.stops.map((s) => ({ lat: s.lat, lng: s.lng, name: s.name ?? '', address: s.address }));
+    // A twisty pick's bends only shape the way: never a leg of their own.
+    const legStops = stops.filter((s) => !isTwistyLeg(s.name));
+    const dest = convoyPlan ? convoy.destination : soloRoute.destination;
+    const plan = dest
+      ? {
+          name: tr("Trip to {0}", [dest.name || tr("destination")]),
+          points: [{ lat: NaN, lng: NaN, name: tr("Start") }, ...legStops, { lat: dest.lat, lng: dest.lng, name: dest.name ?? '', address: dest.address }],
+          convoy: !!convoyPlan,
+        }
+      : null;
+    const first = rideState.gpsPoints[0];
+    armTripForRide(rideState.startedAt, plan, first ? { lat: first.lat, lng: first.lng } : null);
+    return subscribeRawFixes((fix) => {
+      const done = trackTripFix(fix.lat, fix.lng, fix.accuracy);
+      if (!done) return;
+      const title = done.finished ? tr("Trip finished") : tr("Leg {0} of {1} done", [done.leg, done.total]);
+      toast.success(title, { description: done.name });
+      notify({ kind: 'general', title, body: done.name });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rideState.isActive, rideState.startedAt]);
+
+  // The QR on a solo ride: a convoy of one, started now, told the ride is under way and where it's going, so
+  // whoever scans it gets the route; the effect below makes it a convoy ride when they join.
+  const openSoloRideToConvoy = useCallback(async (): Promise<string | null> => {
+    if (convoy.isActive && convoy.code) return convoy.code;
+    const made = await createConvoy();
+    if (!made) return null;
+    void supabase.from('convoys').update({ ride_started_at: new Date().toISOString() }).eq('id', made.id);
+    const d = soloRoute.destination;
+    if (d) void setConvoyDestination({ name: d.name ?? '', address: d.address ?? '', lat: d.lat, lng: d.lng });
+    return made.code;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convoy.isActive, convoy.code, createConvoy, soloRoute.destination]);
 
   // A ride that set off alone from an unlocked lobby becomes a convoy ride the moment someone joins it: until
   // this, the leader's phone stayed a solo ride, so the member list, voice and the shared route never came on
@@ -446,6 +496,8 @@ export default function ActiveRide() {
       bikeName: activeBike?.name ?? null,
       bikePhoto: activeBike?.photos?.hero ?? null,
       gForceSamples: finalRideStats?.gForceSamples,
+      convoy: !!wasConvoyRideRef.current,
+      leg: savedLegRef.current,
     });
     setShowSummary(false);
     // Finished convoy lobbies are burned, so never route back into the lobby.
@@ -661,7 +713,11 @@ export default function ActiveRide() {
     // Run cleanup in background (non-blocking)
     const target = rideTarget();
     (async () => {
-      const rideId = await endRide();
+      wasConvoyRideRef.current = rideState.isConvoyMode;
+      wasConvoyRideRef.current = rideState.isConvoyMode;
+    const rideId = await endRide();
+    savedLegRef.current = lastTripLeg() ?? null;
+      savedLegRef.current = lastTripLeg() ?? null;
       if (rideId) afterRideSaved(rideId, target);
       clearMapDestination();
       clearSoloRoute();
@@ -834,7 +890,9 @@ export default function ActiveRide() {
     // receipt — that also keeps us from churning local storage on rapid
     // start/stop loops.
     const target = rideTarget();
+    wasConvoyRideRef.current = rideState.isConvoyMode;
     const rideId = await endRide();
+    savedLegRef.current = lastTripLeg() ?? null;
     if (rideId) afterRideSaved(rideId, target);
     clearMapDestination();
     clearSoloRoute();
@@ -1270,6 +1328,11 @@ export default function ActiveRide() {
                 {convoy.isLeader ? tr("LEADER") : tr("CONVOY")}
               </span>
             )}
+            {/* The convoy's QR for everyone riding, beside the pill (above the number it ran into it). On a solo
+                ride it makes the convoy first, and the ride turns into a convoy ride when someone joins. */}
+            {(rideState.isConvoyMode ? !!convoy.code : showGroup) && (
+              <ConvoyQrButton code={convoy.isActive ? convoy.code : null} getCode={rideState.isConvoyMode ? undefined : openSoloRideToConvoy} />
+            )}
             {rideState.isPaused && (
               <span className="flex items-center gap-1 text-warning text-xs font-medium px-2 py-0.5 bg-warning/10 rounded animate-pulse">
                 <Pause className="w-3 h-3" />
@@ -1322,14 +1385,7 @@ export default function ActiveRide() {
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
-            {/* The number sits in its own box so the convoy's QR can sit centred above it,
-                taking no room of its own (beside it, it crowded the mini map in landscape). */}
-            <div className="relative inline-block">
-            {rideState.isConvoyMode && convoy.code && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-10">
-                <ConvoyQrButton code={convoy.code} />
-              </div>
-            )}
+            <div className="inline-block">
             <div data-ride-speed className={cn(
               "font-mono font-black transition-all leading-none",
               speedHero

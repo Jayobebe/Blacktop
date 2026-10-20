@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { takeMapSearch, useMapSearchSeq } from '../lib/mapCommand';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Bookmark, X, IdCard, type LucideIcon } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock, Bookmark, X, IdCard, Route as RouteIcon, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useShortLandscape } from '@/hooks/useShortLandscape';
@@ -18,6 +19,8 @@ import {
   calculateDistance,
 } from '../lib/placeSearch';
 import { getSavedPOIs, poiToSearchResult, deletePOI, type SavedPOI } from '../lib/poiStore';
+import { useSavedRoutes, deleteSavedRoute, type SavedRoute } from '../lib/savedRoutes';
+import { kmText } from '@/lib/units';
 import { useSettings } from '@/features/settings';
 import { useExperience, placeCategories, type PlaceCategory } from '@/features/experience';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
@@ -73,6 +76,8 @@ interface MapSearchBarProps {
   onPreview?: (result: MapSearchResult, category: string) => void;
   /** Bumped by the map when a route is set: the quick search is done. */
   clearSeq?: number;
+  /** A saved route picked from the list: the map loads it as the route. */
+  onRoute?: (route: SavedRoute) => void;
   /** Bumped by the map on Back from a place picked here: the list comes back, scrolled where it was. */
   reopenSeq?: number;
 }
@@ -88,7 +93,8 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
   };
 }
 
-export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus, onCategory, onPreview, clearSeq, reopenSeq }: MapSearchBarProps) {
+export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus, onCategory, onPreview, clearSeq, reopenSeq, onRoute }: MapSearchBarProps) {
+  const savedRoutes = useSavedRoutes();
   const { settings } = useSettings();
   const { vehicles } = useExperience();
   // The top-up stop and the rest suit the vehicle; card search only for riders who collect.
@@ -317,6 +323,21 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     }
   };
 
+  // Blacktop Command asked for a search (a quick action, or its own search box): run it once the map is here.
+  const mapSearchSeq = useMapSearchSeq();
+  useEffect(() => {
+    if (!map) return;
+    const req = takeMapSearch();
+    if (!req) return;
+    if (req.category) {
+      const chip = quickCategories.find((c) => c.id === req.category);
+      if (chip && activeCategory !== chip.id) void handleCategoryClick(chip);
+      return;
+    }
+    if (req.query) handleSearch(req.query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapSearchSeq, map]);
+
   const handleSelect = async (picked: MapSearchResult) => {
     // A what3words suggestion has no position until it's picked.
     const result = await resolveWhat3WordsResult(picked);
@@ -365,11 +386,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const showIdle = query.length < 2 && !activeCategory && !cardsMode;
   const hasSavedPOIs = savedPOIs.length > 0;
   const hasRecent = recentLocations.length > 0;
-  const hasIdleContent = showIdle && (hasSavedPOIs || hasRecent);
+  const hasRoutes = !!onRoute && savedRoutes.length > 0;
+  const hasIdleContent = showIdle && (hasSavedPOIs || hasRecent || hasRoutes);
 
   // Live-search state.
   const displayResults = cardsMode ? sortedCards : results;
-  const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode);
+  const routeMatch = hasRoutes && query.trim().length >= 2 && savedRoutes.some((r) => normaliseName(r.name).includes(normaliseName(query.trim())));
+  const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode || routeMatch);
 
   const hasDisplayContent = hasIdleContent || hasSearchContent;
   // Landscape (short:) with suggestions up: they run sideways in the top row, right of the search column.
@@ -419,6 +442,53 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
         <div ref={listRef} style={{ '--strip-h': placeCategory(activeCategory) ? '3rem' : '2.25rem' } as React.CSSProperties}
           className={cn('suggest-list absolute left-0 right-0 top-full mt-2 short:top-0 short:!mt-0 short:left-[calc(100%+0.5rem)] short:right-auto short:w-[calc(100vw-27.5rem-var(--safe-left)-var(--safe-right))] pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in', nudging && 'suggest-nudge')}>
 
+
+          {/* ── Saved routes (Blacktop Command → Save a route): all of them idle, the ones that match while typing ── */}
+          {onRoute && !activeCategory && !cardsMode && (() => {
+            const q = normaliseName(query.trim());
+            const list = q ? savedRoutes.filter((r) => normaliseName(r.name).includes(q)) : showIdle ? savedRoutes : [];
+            if (!list.length) return null;
+            return (
+              <>
+                <div className="suggest-head px-4 py-2 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+                  <RouteIcon className="w-3.5 h-3.5" />
+                  {tr("Saved routes")}
+                </div>
+                {list.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      setShowResults(false);
+                      setQuery('');
+                      onRoute(r);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors group border-b border-border"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                      <RouteIcon className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{r.name}</p>
+                      <p className={cn('text-xs text-muted-foreground', FADE_RIGHT)}>
+                        {tr("Saved route")} · {kmText(r.distanceMeters / 1000)}
+                      </p>
+                    </div>
+                    {/* Delete button, as on saved places; its offline map goes with it. */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void deleteSavedRoute(r.id);
+                      }}
+                      className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all flex-shrink-0"
+                      aria-label={tr("Remove {0}", [r.name])}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </button>
+                ))}
+              </>
+            );
+          })()}
 
           {/* ── Saved POIs (idle state only) ── */}
           {showIdle && hasSavedPOIs && (

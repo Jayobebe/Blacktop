@@ -7,6 +7,9 @@ import { DEMO_BIKE as DEMO_BIKE_PICTURE } from '@/lib/pictures';
 import { demoTrackData } from '@/lib/demoTrack';
 import { tr } from '@/lib/i18n';
 import { ENVELOPE_BINS } from '@/lib/gForceVector';
+import type { SavedRoute } from '@/features/map/lib/savedRoutes';
+import type { Trip } from '@/features/ride/lib/trips';
+import type { InboxItem } from '@/lib/inbox';
 
 /** Local mirrors of CollectedCard / SpectreCard so demoMode stays leaf-level (no cycle). */
 type CollectedCard = SharedCardPayload & { collectedAt: number; key: string; img?: string };
@@ -399,6 +402,74 @@ export const DEMO_SAVED_POIS = [
   { id: 'demo-poi-3', name: 'Box Hill viewpoint', lat: 51.2525, lng: -0.3107, createdAt: new Date(Date.now() - 150 * 86_400_000).toISOString() },
   { id: 'demo-poi-4', name: "Rico's garage", lat: 51.4012, lng: -0.2551, createdAt: new Date(Date.now() - 40 * 86_400_000).toISOString() },
 ];
+
+// ── Saved routes, a trip in legs, notifications (Blacktop Command) ──
+const DAY_MS = 86_400_000;
+const WALES_POINTS = [
+  { lat: 51.4613, lng: -0.1156, name: 'Home' },
+  { lat: 52.3674, lng: -2.7181, name: 'Ludlow' },
+  { lat: 52.7869, lng: -3.6497, name: 'Bwlch y Groes' },
+  { lat: 51.4613, lng: -0.1156, name: 'Home' },
+];
+/** Saved routes (map/lib/savedRoutes): one with stops (the Wales weekend, a trip two legs in), one straight run. */
+export const DEMO_SAVED_ROUTES: SavedRoute[] = [
+  {
+    id: 'demo-route-wales',
+    name: 'Wales weekend',
+    from: WALES_POINTS[0],
+    via: [WALES_POINTS[1], WALES_POINTS[2]],
+    to: WALES_POINTS[3],
+    distanceMeters: 742_000,
+    durationSeconds: 39_600,
+    createdAt: new Date(Date.now() - 60 * DAY_MS).toISOString(),
+  },
+  {
+    id: 'demo-route-sunday',
+    name: 'Sunday twisties',
+    from: { lat: 51.4613, lng: -0.1156, name: 'Home' },
+    to: { lat: 51.2525, lng: -0.3107, name: 'Box Hill viewpoint' },
+    distanceMeters: 41_500,
+    durationSeconds: 3_600,
+    createdAt: new Date(Date.now() - 90 * DAY_MS).toISOString(),
+  },
+];
+
+/** The Wales weekend as a trip (ride/lib/trips): days 1 and 2 are its first two legs, the ride home still to do. */
+export const DEMO_TRIPS: Trip[] = (() => {
+  const day1 = DEMO_RIDES[36];
+  const day2 = DEMO_RIDES[37];
+  const links = [day1, day2].filter(Boolean).map((r, i) => ({ rideId: r.id, from: i, to: i + 1, at: r.endedAt ?? r.startedAt }));
+  return [
+    {
+      id: 'demo-trip-wales',
+      name: 'Wales weekend',
+      routeId: 'demo-route-wales',
+      points: WALES_POINTS,
+      legsDone: links.length,
+      rides: links,
+      createdAt: day1?.startedAt ?? new Date().toISOString(),
+      updatedAt: day2?.endedAt ?? new Date().toISOString(),
+    },
+  ];
+})();
+[36, 37].forEach((i, leg) => {
+  const r = DEMO_RIDES[i];
+  if (!r) return;
+  r.trip = { tripId: 'demo-trip-wales', name: 'Wales weekend', from: leg, to: leg + 1, total: 3 };
+  r.starred = true;
+});
+
+/** Notifications in Blacktop Command (lib/inbox). */
+export function demoInbox(): InboxItem[] {
+  const now = Date.now();
+  return [
+    { id: 'demo-n-1', kind: 'convoy', title: tr("{0} joined the convoy", ['Rico']), at: now - 6 * 60_000, read: false },
+    { id: 'demo-n-2', kind: 'weather', title: 'Heavy rain heading your way', body: 'Around 3 pm, gusts up to 40 mph.', at: now - 50 * 60_000, read: false },
+    { id: 'demo-n-3', kind: 'service', title: '🔧 Chain lube due soon', body: 'V4 Ducati: its chain lube is due in 120 mi.', url: '/garage', at: now - 3 * 3_600_000, read: true },
+    { id: 'demo-n-4', kind: 'crew', title: 'Night Owls · Week results', body: 'You came 2nd on miles this week: 214 mi.', url: '/crew/leaderboard', at: now - 26 * 3_600_000, read: true },
+    { id: 'demo-n-5', kind: 'general', title: tr("Leg {0} of {1} done", [2, 3]), body: 'Bwlch y Groes', url: '/trip/demo-trip-wales', at: now - 2 * DAY_MS, read: true },
+  ];
+}
 
 export const DEMO_RECENT_LOCATIONS = [
   { id: 'demo-recent-1', name: 'Loomies Cafe', address: 'West Meon, Hampshire', lat: 51.0386, lng: -1.0848 },

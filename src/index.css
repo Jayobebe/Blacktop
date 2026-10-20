@@ -870,6 +870,40 @@
   background-color: #ffe3f0;
 }
 
+/* Trips (a planned route ridden in legs: a leg's receipt and the trip's own) print on mint stock. */
+.receipt-trip {
+  --paper: #e2f6ea;
+  --paper-shadow: #b9e2c9;
+  --ink: #0f4a30;
+  --ink-soft: #3d7a5c;
+  box-shadow:
+    0 30px 60px -20px rgba(0,0,0,0.7),
+    0 10px 30px -10px rgba(0,0,0,0.5),
+    inset 0 0 40px rgba(40,140,90,0.12);
+}
+.receipt-trip + .receipt-edge-bottom,
+.receipt-edge-top.receipt-edge-trip,
+.receipt-edge-bottom.receipt-edge-trip {
+  background-color: #e2f6ea;
+}
+
+/* Convoy rides print on pale blue stock. */
+.receipt-convoy {
+  --paper: #e2eefc;
+  --paper-shadow: #bcd3ef;
+  --ink: #12345f;
+  --ink-soft: #46699a;
+  box-shadow:
+    0 30px 60px -20px rgba(0,0,0,0.7),
+    0 10px 30px -10px rgba(0,0,0,0.5),
+    inset 0 0 40px rgba(50,100,180,0.12);
+}
+.receipt-convoy + .receipt-edge-bottom,
+.receipt-edge-top.receipt-edge-convoy,
+.receipt-edge-bottom.receipt-edge-convoy {
+  background-color: #e2eefc;
+}
+
 /* torn zigzag edges: one sawtooth mask (V teeth hanging off the paper) */
 .receipt-edge-top,
 .receipt-edge-bottom {
@@ -1510,6 +1544,9 @@ html.thermal .tier-fx { display: none; }
 
 /* The rider's second accent colour where one is chosen (--lava, set in useSettings), else the accent: Home's button and nav icons. */
 .text-accent-2 { color: hsl(var(--lava, var(--accent))); }
+/* A button in the second accent, white where none is chosen (the map's Direct beside Twisty in the accent). */
+.btn-accent-2 { background-color: hsl(var(--lava, 0 0% 100%)); color: hsl(0 0% 4%); }
+.btn-accent-2:hover { background-color: hsl(var(--lava, 0 0% 100%)); filter: brightness(1.1); }
 html.thermal .text-accent-2 { color: hsl(var(--accent)); }
 
 /* "Are you okay?" (the rescue button and the crash check): a burn-orange card that glows, slowly. */

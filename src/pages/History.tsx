@@ -23,6 +23,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
 import { PageTips } from '@/features/guide';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+import { useTrips, legCount, tripFinished, type Trip } from '@/features/ride/lib/trips';
+import type { RideSession } from '@/types/blacktop';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
   off: 'Off',
@@ -34,6 +36,9 @@ export default function History() {
   const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { rides, updateRideName, updateRideBike, toggleRideStarred } = useRideHistory();
+  const trips = useTrips();
+  const tripById = new Map(trips.map((t) => [t.id, t]));
+  const shownTrips = new Set<string>();
   const { settings, updateSetting } = useSettings();
   const { terms, showGroup } = useExperience();
   const { bikes } = useGarage();
@@ -151,6 +156,13 @@ export default function History() {
           </div>
         ) : (
           rides.map((ride, index) => {
+            // A trip's rides fold into one card, where its latest leg sits.
+            const trip = ride.trip ? tripById.get(ride.trip.tripId) : undefined;
+            if (trip) {
+              if (shownTrips.has(trip.id)) return null;
+              shownTrips.add(trip.id);
+              return <TripCard key={trip.id} trip={trip} rides={rides} index={index} />;
+            }
             const isLatest = index === 0;
             const displayName = ride.name || formatDate(ride.startedAt);
             const hasBadges = settings.collectiblesEnabled && ride.earnedBadges && ride.earnedBadges.length > 0;
@@ -216,7 +228,7 @@ export default function History() {
                     )}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {ride.isConvoyRide ? (
-                        <span className="flex items-center gap-1 text-[10px] text-accent bg-accent/10 px-2 py-0.5 rounded-lg font-medium">
+                        <span className="flex items-center gap-1 text-[10px] text-[hsl(212_80%_66%)] bg-[hsl(212_80%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
                           <Users className="w-2.5 h-2.5" />
                           {tr("Convoy")}
                         </span>
@@ -285,6 +297,62 @@ export default function History() {
             );
           })
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A trip in History: its rides as one card (mint, as its receipts), how many
+ * legs are done, and the distance and time of them all; it opens the trip's
+ * page with the combined receipt and each leg's own.
+ */
+function TripCard({ trip, rides, index }: { trip: Trip; rides: RideSession[]; index: number }) {
+  const navigate = useNavigate();
+  const { settings } = useSettings();
+  const mine = rides.filter((r) => r.trip?.tripId === trip.id);
+  const distance = mine.reduce((n, r) => n + (r.distance || 0), 0);
+  const duration = mine.reduce((n, r) => n + (r.duration || 0), 0);
+  const done = tripFinished(trip);
+  const open = () => navigate(`/trip/${trip.id}`);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      }}
+      className="pressable w-full bg-card border border-[hsl(150_55%_50%)]/35 rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <p className="font-semibold text-sm truncate">{trip.name}</p>
+      <div className="flex items-center gap-2 mt-1 flex-wrap">
+        <span className="flex items-center gap-1 text-[10px] text-[hsl(150_55%_58%)] bg-[hsl(150_55%_50%)]/10 px-2 py-0.5 rounded-lg font-medium">
+          <Route className="w-2.5 h-2.5" />
+          {tr("Trip")}
+        </span>
+        <span className="text-[10px] font-medium text-muted-foreground">
+          {done ? tr("Finished") : tr("Leg {0} of {1}", [trip.legsDone + 1, legCount(trip)])}
+        </span>
+        {trip.convoy && (
+          <span className="flex items-center gap-1 text-[10px] text-[hsl(212_80%_66%)] bg-[hsl(212_80%_60%)]/10 px-2 py-0.5 rounded-lg font-medium">
+            <Users className="w-2.5 h-2.5" />
+            {tr("Convoy")}
+          </span>
+        )}
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Clock className="w-2.5 h-2.5" />
+          {formatDuration(duration)}
+        </span>
+      </div>
+      <div className="flex items-baseline gap-1 mt-2">
+        <span className="font-mono text-2xl font-bold">{formatDistance(distance, settings.distanceUnit)}</span>
+        <span className="text-xs text-muted-foreground">{getDistanceLabel(settings.distanceUnit)}</span>
+        <span className="ml-auto text-[11px] text-muted-foreground">{mine.length === 1 ? tr("1 ride") : tr("{0} rides", [mine.length])}</span>
       </div>
     </div>
   );

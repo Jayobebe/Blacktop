@@ -54,6 +54,8 @@ const LEFT_OUT = new Set([
   'blacktop_parked', // where the last ride ended: belongs to the moment
   'blacktop_rotation_tip', // the one-time Rotation Lock tip on iPhones: belongs to the device
   'blacktop_tour_offered', // the one-time tour offer after setup: belongs to the device
+  'blacktop_inbox', // the notifications in Blacktop Command: belong to the device and the moment
+  'blacktop_trip_active', // the trip a ride in progress belongs to: the moment, like the ride itself
   'bt.map.offlinePacks.v1',
 ]);
 

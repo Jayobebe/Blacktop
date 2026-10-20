@@ -28,6 +28,7 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: number; x: number; y: number; t: number; axis: 'x' | 'y' | null; dx: number } | null>(null);
   const suppressClick = useRef(false);
+  const placed = useRef(false);
   const count = slides.length;
 
   const place = (dx: number, animate: boolean) => {
@@ -37,8 +38,10 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
     track.style.transform = `translate3d(calc(${-index * 100}% + ${dx}px), 0, 0)`;
   };
 
+  // The first placement is where the deck opens (Home is the second card, Command the first): no slide in to it.
   useLayoutEffect(() => {
-    place(0, true);
+    place(0, placed.current);
+    placed.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, count]);
 
@@ -146,12 +149,15 @@ export function SwipeDeckPips({
   index,
   onSelect,
   labels,
+  marks,
   className,
 }: {
   count: number;
   index: number;
   onSelect: (i: number) => void;
   labels?: string[];
+  /** A card with something new on it (Blacktop Command's unseen notifications): its pip glows. */
+  marks?: boolean[];
   className?: string;
 }) {
   if (count < 2) return null;
@@ -172,7 +178,7 @@ export function SwipeDeckPips({
             <span
               className={cn(
                 'block h-1.5 rounded-full transition-all duration-300',
-                active ? 'w-4 bg-accent' : 'w-1.5 bg-muted-foreground/40',
+                active ? 'w-4 bg-accent' : marks?.[i] ? 'w-1.5 bg-accent ring-2 ring-accent/30' : 'w-1.5 bg-muted-foreground/40',
               )}
             />
           </button>

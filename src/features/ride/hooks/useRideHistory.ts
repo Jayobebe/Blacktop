@@ -8,6 +8,7 @@ import { recordBadges, soloBadgesForRide } from '../lib/badgeWallet';
 import { BadgeType } from '@/types/convoy';
 import { clearAllLogbooks } from '@/features/logbook/lib/logbookStore';
 import { clearTrackData } from '@/features/track/lib/trackStore';
+import { dropTripRides } from '../lib/trips';
 import { RIDES_KEY, BURNED_TOTALS_KEY, EMPTY_BURNED_TOTALS, BurnedTotals, burnedAggregate, mergeAggregates, emptyAggregate, NO_BIKE } from '../lib/tripBurner';
 import { rememberPushLocation, schedulePushResync } from '@/features/notifications';
 import { tr } from '@/lib/i18n';
@@ -153,6 +154,8 @@ export function useRideHistory() {
 
   const deleteRide = useCallback((rideId: string) => {
     setRides(prev => prev.filter(r => r.id !== rideId));
+    // Out of its trip too (a trip left with no rides goes).
+    dropTripRides([rideId]);
   }, [setRides]);
 
   const addRidePhoto = useCallback((rideId: string, photo: RidePhoto) => {

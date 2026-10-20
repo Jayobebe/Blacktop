@@ -15,6 +15,9 @@ export interface ReceiptFlightData {
   bikeName: string | null;
   bikePhoto: string | null;
   gForceSamples?: GForceSample[];
+  /** The paper it prints on: a convoy ride, a trip's leg. */
+  convoy?: boolean;
+  leg?: { name: string; from: number; to: number; total: number } | null;
 }
 
 let flight: ReceiptFlightData | null = null;

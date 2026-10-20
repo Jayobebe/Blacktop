@@ -1,3 +1,4 @@
+import { dropTripRides } from './trips';
 import { RideSession } from '@/types/blacktop';
 
 /**
@@ -210,5 +211,8 @@ export function burnExpiredTrips(interval: BurnTripsInterval = readInterval(), n
   for (const key of [BURNED_TOTALS_KEY, BURNED_LOG_KEY, RIDES_KEY]) {
     window.dispatchEvent(new CustomEvent('bt-local-storage-change', { detail: { key } }));
   }
+  // Burned rides come out of their trips too (lib/trips); a trip left with none goes. A saved route's
+  // trip legs are starred as they're saved, so only solo trips burn like this.
+  dropTripRides(burned.map((r) => r.id));
   return burned.length;
 }

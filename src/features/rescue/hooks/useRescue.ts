@@ -7,6 +7,7 @@ import { useSettings } from '@/features/settings';
 import { setRescueTarget, clearRescueTarget, registerRescueControls, clearRescueControls } from '../lib/rescueBridge';
 import { describeReach, rescueReach } from '../lib/reach';
 import { tr } from '@/lib/i18n';
+import { notify } from '@/lib/inbox';
 import { kmText } from '@/lib/units';
 
 export interface RescueRequest {
@@ -80,6 +81,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
         toast.warning(tr("{0} needs rescue!", [request.userName]), {
           duration: 10000,
         });
+        notify({ kind: 'rescue', title: tr("{0} needs rescue!", [request.userName]) });
       })
       // Any member (not just the leader) can answer a rescue card. The rider in
       // distress is told who's coming; everyone else sees who's already on it,
@@ -95,9 +97,11 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
         if (riderUserId === userId) {
           setResponders((prev) => (prev.includes(responderName) ? prev : [...prev, responderName]));
           toast.success(tr("{0} is on the way to you", [responderName]), { duration: 15000 });
+          notify({ kind: 'rescue', title: tr("{0} is on the way to you", [responderName]) });
           return;
         }
         toast(tr("{0} is heading to {1}", [responderName, riderName]), { duration: 6000 });
+        notify({ kind: 'rescue', title: tr("{0} is heading to {1}", [responderName, riderName]) });
       })
       .on('broadcast', { event: 'rescue_acknowledged' }, (payload) => {
         const { requestId, riderUserId, riderName, responderName } = payload.payload as {

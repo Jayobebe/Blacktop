@@ -18,6 +18,7 @@ import {
 } from "../lib/cameraStore";
 import { pingSpeedCamera, pingAnprCamera } from "../lib/cameraPing";
 import { fetchRouteThroughStops, metersToMiles, RouteResult } from "../lib/routing";
+import { routeStyleVias, twistyLegs, isTwistyLeg, type RouteStyle } from "../lib/routeStyle";
 import { isRoutingOffline, useRoutingOffline } from "../lib/routingStatus";
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
 import { RadioButton } from "@/features/radio";
@@ -76,10 +77,12 @@ import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isThermal } from "@/lib/thermal";
+import { chooseRouteTrip } from "@/features/ride/lib/trips";
 import { switchLegs, playLegs, inOutCubic, type Cam } from "../lib/switchCamera";
 import {
   Navigation,
   Loader2,
+  Waves,
   SkipForward,
   Plus,
   X,
@@ -2560,6 +2563,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     });
   }, []);
 
+  /**
+   * Navigate from the orbit card, Twisty or Direct. Twisty asks the planner for its bends first (the card waits,
+   * the button spinning) and rides them as "Twisty leg" stops before the place, as the lobbies do; with none to
+   * be had it says so and goes direct. Either way a twisty pick before it is dropped from the solo route.
+   */
+  const [styleBusy, setStyleBusy] = useState<RouteStyle | null>(null);
+  const navigateWith = async (style: RouteStyle) => {
+    const target = pin;
+    if (!target || styleBusy) return;
+    const here = userLocationRef.current;
+    const kept = isSolo ? soloRoute.stops.filter((s) => !isTwistyLeg(s.name)) : [];
+    let vias: { lat: number; lng: number }[] | null = null;
+    if (style === "twisty" && here) {
+      setStyleBusy("twisty");
+      vias = await routeStyleVias("twisty", [here, ...kept, target]);
+      setStyleBusy(null);
+      if (pinRef.current !== target) return; // the card was closed or changed meanwhile
+      if (!vias) toast(tr("No twistier way there, so it's the direct one"));
+    }
+    if (target.fromList && target.kind !== "saved") {
+      saveRecentLocation({ id: `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng });
+    }
+    const dest = { lat: target.lat, lng: target.lng, name: target.name, address: target.address || target.category };
+    if (isSolo) setSoloRoute({ destination: dest, stops: [...kept, ...twistyLegs(vias)] });
+    else for (const leg of twistyLegs(vias)) await addWaypoint({ ...leg, address: "" });
+    exitOrbit(false);
+    handleSearchSelect({ id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, ...dest }, { follow: true });
+  };
+
   const handleSearchSelect = (result: MapSearchResult, opts: { follow?: boolean } = {}) => {
     // A route or a stop from here on: a quick search's pins have done their job.
     quickUpRef.current = false;
@@ -2796,6 +2828,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             onSelect={handleSearchSelect}
             onCategory={handleCategory}
             onPreview={handlePreview}
+            onRoute={(r) => {
+              // A saved route loads as an imported GPX route does: its start and stops on the way, its end the destination.
+              quickUpRef.current = false;
+              if (map) clearCategoryPins(map);
+              // With stops it's a trip: an unfinished one carries on from its next leg (ride/lib/trips).
+              const plan = chooseRouteTrip(r);
+              setSoloRoute({ destination: plan.destination, stops: plan.stops });
+              setDestination({ lat: plan.destination.lat, lng: plan.destination.lng, name: plan.destination.name, address: plan.destination.address });
+              toast.success(tr("Route loaded · {0}", [r.name]), plan.trip ? { description: tr("Leg {0} of {1}", [plan.trip.legsDone + 1, plan.trip.points.length - 1]) } : undefined);
+            }}
             clearSeq={searchClearSeq}
             reopenSeq={searchReopenSeq}
           />
@@ -3390,24 +3432,22 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <Button size="sm" variant="outline" className="gap-1" onClick={() => exitOrbit(true)}>
               <ArrowLeft className="w-3.5 h-3.5" />{" "}{tr("Back")}
             </Button>
+            {/* Two ways there, both straight into guidance: Twisty in the accent, Direct in the second accent (white without one). */}
             <Button
               size="sm"
-              // The second accent where one is chosen, else the accent.
-              className="flex-1 gap-1 bg-[hsl(var(--lava,var(--accent)))] hover:bg-[hsl(var(--lava,var(--accent)))] hover:brightness-110"
-              onClick={() => {
-                const target = pin;
-                // Somewhere ridden to from the list goes on the recent list, as a search pick always did.
-                if (target.fromList && target.kind !== "saved") {
-                  saveRecentLocation({ id: `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng });
-                }
-                exitOrbit(false);
-                handleSearchSelect(
-                  { id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, name: target.name, address: target.address || target.category, lat: target.lat, lng: target.lng },
-                  { follow: true },
-                );
-              }}
+              disabled={!!styleBusy}
+              className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110"
+              onClick={() => void navigateWith("twisty")}
             >
-              <Navigation className="w-3.5 h-3.5" />{" "}{tr("Navigate")}
+              {styleBusy === "twisty" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Waves className="w-3.5 h-3.5" />}{" "}{tr("Twisty")}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!!styleBusy}
+              className="flex-1 gap-1 btn-accent-2"
+              onClick={() => void navigateWith("direct")}
+            >
+              <Navigation className="w-3.5 h-3.5" />{" "}{tr("Direct")}
             </Button>
           </div>
         </div>

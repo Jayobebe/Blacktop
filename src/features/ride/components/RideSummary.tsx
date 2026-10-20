@@ -51,6 +51,10 @@ interface RideSummaryProps {
   variant?: 'overlay' | 'embedded';
   /** Track Day session: prints on pink stock. */
   trackDay?: boolean;
+  /** A convoy ride: printed on blue stock. */
+  convoy?: boolean;
+  /** A leg of a trip (ride/lib/trips): printed on mint stock, with the trip and the leg. */
+  leg?: { name: string; from: number; to: number; total: number } | null;
   /** Track Day session details, printed on track-day receipts. */
   track?: Pick<TrackReceipt, 'trackName' | 'laps' | 'bestLapMs'> & Partial<TrackReceipt> | null;
   /** Hide the Save/Continue buttons (e.g. Speedshop preview). */
@@ -75,7 +79,9 @@ function formatLapTime(ms: number | null | undefined): string {
   return `${m}:${sec}`;
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', trackDay = false, track = null, hideActions = false }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', trackDay = false, track = null, hideActions = false, convoy = false, leg = null }: RideSummaryProps) {
+  // The paper: Track Day pink, a trip's legs mint, a convoy blue (in that order when more than one applies).
+  const stock = trackDay ? 'track' : leg ? 'trip' : convoy ? 'convoy' : null;
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   // Each receipt section follows the rider's setup answers.
@@ -190,8 +196,8 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
         : 'flex flex-col items-center',
     )}>
       <div ref={receiptRef} className={cn("w-full max-w-[360px]", !hideActions && "animate-receipt-print")}>
-        <div className={cn('receipt-edge-top', trackDay && 'receipt-edge-track')} />
-        <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', trackDay && 'receipt-track')}>
+        <div className={cn('receipt-edge-top', stock && `receipt-edge-${stock}`)} />
+        <div className={cn('receipt relative px-6 py-5 font-receipt text-[--ink]', stock && `receipt-${stock}`)}>
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
@@ -205,7 +211,13 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           <div className="text-center mb-1">
             <div className="text-3xl font-bold tracking-[0.15em]">{tr("BLACKTOP STORE")}</div>
             <div className="text-sm tracking-[0.3em] opacity-70 mt-1">
-              {trackDay ? tr("— TRACK DAY RECEIPT —") : tr("— {0} RECEIPT —", [terms.Ride.toUpperCase()])}
+              {trackDay
+                ? tr("— TRACK DAY RECEIPT —")
+                : leg
+                  ? tr("— TRIP LEG RECEIPT —")
+                  : convoy
+                    ? tr("— CONVOY RECEIPT —")
+                    : tr("— {0} RECEIPT —", [terms.Ride.toUpperCase()])}
             </div>
           </div>
 
@@ -213,6 +225,23 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
           {showVehicle && (
             <div className="mt-4" data-bike-slot>
               <ReceiptRow label={tr("Vehicle")} value={bikeName || '—'} />
+            </div>
+          )}
+
+          {/* Trip and leg lines (a trip's leg receipts) */}
+          {leg && (
+            <div className={showVehicle ? 'mt-2 space-y-2' : 'mt-4 space-y-2'}>
+              <ReceiptRow label={tr("Trip")} value={leg.name} />
+              <ReceiptRow
+                label={tr("Leg")}
+                value={
+                  leg.to <= leg.from
+                    ? tr("Part of {0} of {1}", [leg.from + 1, leg.total])
+                    : leg.to - leg.from === 1
+                      ? tr("{0} of {1}", [leg.to, leg.total])
+                      : tr("{0}–{1} of {2}", [leg.from + 1, leg.to, leg.total])
+                }
+              />
             </div>
           )}
 
@@ -385,7 +414,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
             <div className="text-center py-4 text-sm opacity-60">{tr("No data to display.")}</div>
           )}
         </div>
-        <div className={cn('receipt-edge-bottom', trackDay && 'receipt-edge-track')} />
+        <div className={cn('receipt-edge-bottom', stock && `receipt-edge-${stock}`)} />
       </div>
 
       {/* Action buttons (outside the receipt) */}

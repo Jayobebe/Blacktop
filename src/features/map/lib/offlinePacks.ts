@@ -1,3 +1,4 @@
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { cacheTilePinned, deleteCachedTiles } from './tileCache';
 
 // Offline map packs: an explicit "download this area for offline" on top of the
@@ -251,4 +252,41 @@ export async function downloadPack(opts: {
   };
   writePacks([pack, ...listPacks()]);
   return pack;
+}
+
+const CACHE_PREFIX = 'blacktop-tile://';
+
+/**
+ * Collects the concrete {z}/{x}/{y} tile templates the current style is using,
+ * resolving TileJSON-backed sources so vector basemaps can be packed too.
+ */
+export async function tileTemplatesFor(map: MapLibreMap): Promise<string[]> {
+  const style = map.getStyle();
+  const templates: string[] = [];
+  const sources = style?.sources ?? {};
+
+  for (const source of Object.values(sources) as Record<string, unknown>[]) {
+    const type = source?.type;
+    if (type !== 'vector' && type !== 'raster') continue;
+
+    const tiles = source.tiles as string[] | undefined;
+    if (Array.isArray(tiles) && tiles.length > 0) {
+      templates.push(tiles[0].replace(CACHE_PREFIX, ''));
+      continue;
+    }
+
+    const url = source.url as string | undefined;
+    if (typeof url === 'string' && url.startsWith('http')) {
+      try {
+        const res = await fetch(url);
+        const tj = await res.json();
+        if (Array.isArray(tj?.tiles) && tj.tiles.length > 0) {
+          templates.push(String(tj.tiles[0]).replace(CACHE_PREFIX, ''));
+        }
+      } catch {
+        // Skip sources we can't resolve — the pack just covers fewer layers.
+      }
+    }
+  }
+  return templates;
 }

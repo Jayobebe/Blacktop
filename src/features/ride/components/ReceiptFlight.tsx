@@ -124,6 +124,8 @@ export function ReceiptFlight() {
           bikeName={flight.bikeName}
           bikePhoto={flight.bikePhoto}
           gForceSamples={flight.gForceSamples}
+          convoy={flight.convoy}
+          leg={flight.leg}
           onBadgesEarned={onBadgesEarned}
         />
       </div>

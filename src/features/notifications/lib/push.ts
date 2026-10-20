@@ -8,6 +8,18 @@ import { tr } from '@/lib/i18n';
 import { sessionUser } from '@/lib/sessionUser';
 import { kmText } from '@/lib/units';
 import { paymentsAvailable } from '@/lib/platform';
+import { notify, type InboxKind } from '@/lib/inbox';
+
+const INBOX_KIND: Partial<Record<PushCategory, InboxKind>> = {
+  rescue: 'rescue',
+  rescue_nearby: 'rescue',
+  weather: 'weather',
+  card_pickups: 'cards',
+  leaderboard: 'crew',
+  crew_convoys: 'crew',
+  challenges: 'crew',
+  maintenance: 'service',
+};
 import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
 
 /**
@@ -573,6 +585,8 @@ export async function showLocalNotification(
   kind: PushCategory,
   n: { title: string; body: string; tag?: string; url?: string },
 ): Promise<void> {
+  // Kept in Blacktop Command's notifications whether or not the phone shows it.
+  notify({ kind: INBOX_KIND[kind] ?? 'general', title: n.title, body: n.body, url: n.url && n.url !== '/' ? n.url : undefined });
   if (!wantsPush(kind) || !('serviceWorker' in navigator)) return;
   try {
     const reg = await navigator.serviceWorker.getRegistration('/');

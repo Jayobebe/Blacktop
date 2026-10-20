@@ -1,4 +1,5 @@
 import { takePendingTrackReceipt } from '@/lib/trackReceipt';
+import { takeTripLeg, getTrip } from '../lib/trips';
 import { mergeGVector, type GMax } from '@/lib/gForceVector';
 import { useCallback, useRef, useSyncExternalStore, useEffect } from 'react';
 import { Geolocation, Position, CallbackID } from '@capacitor/geolocation';
@@ -1138,6 +1139,8 @@ export function useActiveRide(convoyId?: string | null) {
       const rideId = crypto.randomUUID();
       const bikeId = getActiveBikeIdSnapshot() ?? undefined;
       const track = takePendingTrackReceipt();
+      // A leg (or part of one) of a trip: the trip remembers this ride, and the ride its legs.
+      const trip = takeTripLeg(rideId);
       const ride: RideSession = {
         id: rideId,
         startedAt: currentState.startedAt!,
@@ -1157,6 +1160,9 @@ export function useActiveRide(convoyId?: string | null) {
         gMax: currentState.gMax,
         bikeId,
         track,
+        trip,
+        // Kept from Burn trips: convoy rides and the legs of a saved route's trip. Solo rides burn as set.
+        starred: currentState.isConvoyMode || !!(trip && getTrip(trip.tripId)?.routeId) || undefined,
         // Track Day: 3 Speed Demon per dog tag collected on the board.
         earnedBadges: track?.badges?.length ? track.badges : undefined,
       };
@@ -1169,6 +1175,8 @@ export function useActiveRide(convoyId?: string | null) {
         });
       }
     } else if (currentState.startedAt) {
+      // Not saved (too short): its trip lets go of it; legs it reached still count.
+      takeTripLeg(null);
       console.log('[Ride] Discarded invalid session', {
         duration: finalDuration,
         distance: currentState.distance,

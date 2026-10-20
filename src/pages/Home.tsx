@@ -12,6 +12,8 @@ import { HomeRadioDock } from '@/features/radio';
 // after Home: they kept ~180 KB out of the first load.
 const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ default: m.HomeGlobe })));
 const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
+// Blacktop Command, the card left of Home: loaded when first needed, so it adds nothing to Home's first load.
+const CommandCentre = lazy(() => import('@/features/command/components/CommandCentre').then((m) => ({ default: m.CommandCentre })));
 const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive, useMapOverlay } from '@/features/map';
@@ -31,6 +33,7 @@ import { WARP_SWITCH_MS, startWarp } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';
+import { useInbox } from '@/lib/inbox';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Home() {
@@ -43,8 +46,9 @@ export default function Home() {
   const { settings } = useSettings();
   const exp = useExperience();
 
-  // The deck: the consumer home, then each mounted enterprise workspace, then
-  // the Doorway (scan / enter a code). Tracked by key so mounting or removing a
+  // The deck: Blacktop Command (search, quick actions, notifications) to the left
+  // of the consumer home, then each mounted enterprise workspace, then the
+  // Doorway (scan / enter a code). Tracked by key so mounting or removing a
   // workspace never lands the rider on the wrong card.
   const enterprise = useEnterprise();
   const guiding = useGuidanceActive();
@@ -52,7 +56,8 @@ export default function Home() {
   const arrangingStickers = useArranging() && settings.collectiblesEnabled;
   const deckLocked = rideState.isActive || guiding || arrangingStickers;
   const mapOpen = useMapOverlay().isOpen;
-  const deckKeys = ['home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
+  const deckKeys = ['command', 'home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
+  const inbox = useInbox();
   // Back from a package demo page returns to the Doorway (history state).
   const location = useLocation();
   const [deckKey, setDeckKey] = useState<string>(() =>
@@ -545,7 +550,9 @@ export default function Home() {
       count={deckKeys.length}
       index={deckIndex}
       onSelect={goToDeck}
-      labels={[tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
+      labels={[tr("Blacktop Command"), tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
+      // Notifications not seen yet: a mark on Command's pip.
+      marks={[inbox.unread > 0]}
     />
   );
 
@@ -615,6 +622,14 @@ export default function Home() {
         onIndexChange={goToDeck}
         locked={deckLocked}
         slides={[
+          {
+            key: 'command',
+            node: (
+              <Suspense fallback={<div className="flex-1 min-h-0" />}>
+                <CommandCentre active={deckKey === 'command'} footer={deckPips} />
+              </Suspense>
+            ),
+          },
           {
             key: 'home',
             node: (

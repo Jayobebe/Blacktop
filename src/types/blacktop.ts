@@ -70,6 +70,8 @@ export interface RideSession {
   overlayBlobUrl?: string; // Legacy: temporary blob URL (not persisted); kept for backward compatibility
   bikeId?: string; // Garage: which bike this ride was logged against
   track?: TrackReceipt; // Track Pack session run during this ride
+  /** The trip this ride is a leg of (features/ride/lib/trips): legs finished on it, `from` up to (not including) `to`, of `total`. */
+  trip?: { tripId: string; name: string; from: number; to: number; total: number };
 }
 
 export interface GpsPoint {

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
 import { eventSound } from '@/lib/appSound';
+import { notify } from '@/lib/inbox';
 import type { Tables } from '@/integrations/supabase/types';
 import { sessionUser } from '@/lib/sessionUser';
 
@@ -88,8 +89,13 @@ function soundMemberChanges(prev: ConvoyState, next: ConvoyState) {
   if (!prev.id || prev.id !== next.id || prev.members.length === 0 || prev.members === next.members) return;
   const before = new Set(prev.members.map((m) => m.userId));
   const after = new Set(next.members.map((m) => m.userId));
-  if ([...after].some((id) => !before.has(id))) eventSound('radioIn');
-  else if ([...before].some((id) => !after.has(id))) eventSound('radioOut');
+  const joined = next.members.filter((m) => !before.has(m.userId));
+  const left = prev.members.filter((m) => !after.has(m.userId));
+  if (joined.length) eventSound('radioIn');
+  else if (left.length) eventSound('radioOut');
+  // Kept in Blacktop Command's notifications.
+  joined.forEach((m) => notify({ kind: 'convoy', title: tr("{0} joined the convoy", [m.name]) }));
+  left.forEach((m) => notify({ kind: 'convoy', title: tr("{0} left the convoy", [m.name]) }));
 }
 
 /** A convoy_members row as the queries here select it (with the rider's display name). */

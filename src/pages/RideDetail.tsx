@@ -188,6 +188,8 @@ export default function RideDetail() {
             orderId={`#${ride.id.slice(0, 6).toUpperCase()}`}
             trackDay={!!ride.track}
             track={ride.track ?? null}
+            convoy={!!ride.isConvoyRide}
+            leg={ride.trip ?? null}
           />
         </div>
 

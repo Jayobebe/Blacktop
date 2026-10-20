@@ -7,6 +7,33 @@
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
+// Every push is also kept for the app's notification centre (Blacktop Command): saved in
+// the `blacktop-inbox` database, which the app reads when it opens (src/lib/inbox.ts), and
+// an open app is told straight away. Burn deletes the database with the app's others.
+function keepForInbox(entry) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open("blacktop-inbox", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("pending", { autoIncrement: true });
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction("pending", "readwrite");
+        tx.objectStore("pending").add(entry);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); resolve(); };
+      };
+      req.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+async function tellOpenApps() {
+  const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  windows.forEach((w) => w.postMessage({ type: "bt-push-inbox" }));
+}
+
 self.addEventListener("push", (event) => {
   let msg = {};
   try {
@@ -30,8 +57,14 @@ self.addEventListener("push", (event) => {
     options.vibrate = [400, 150, 400, 150, 400];
   }
 
+  const title = typeof msg.title === "string" && msg.title ? msg.title : "Blacktop";
   // Every push must show a notification (iOS revokes permission otherwise).
-  event.waitUntil(self.registration.showNotification(typeof msg.title === "string" && msg.title ? msg.title : "Blacktop", options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      keepForInbox({ title, body: options.body, url: options.data.url, tag: options.tag || "", at: Date.now() }).then(tellOpenApps),
+    ]),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
