@@ -101,7 +101,7 @@ export function CommandCentre({ active, footer }: { active: boolean; footer?: Re
         )}
       </label>
 
-      <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1 pb-2" data-no-pull>
+      <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y -mx-1 px-1 pb-2" data-no-pull>
         {query.trim() ? (
           <SearchResults query={query.trim()} actions={actions} onRun={run} onDone={() => setQuery('')} />
         ) : (
