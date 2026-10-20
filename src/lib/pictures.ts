@@ -4,7 +4,7 @@
  * only exists on the website, so in the Android and iOS apps (whose files are
  * bundled in) and offline they simply weren't there.
  */
-/** The workshop behind every vehicle: the garage, cards, Card Wars, the Speed Shop, a card drop. */
+/** The workshop behind every vehicle: the garage, cards, SwitchBack, the Speed Shop, a card drop. */
 export const GARAGE_SHOP = '/img/garage-shop.png';
 /** The demo bike: demo mode's vehicle, and the stand-in for a rider's own in the tour and the Enterprise scenes. */
 export const DEMO_BIKE = '/img/demo-bike.png';

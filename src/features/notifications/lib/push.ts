@@ -585,8 +585,8 @@ export async function showLocalNotification(
   kind: PushCategory,
   n: { title: string; body: string; tag?: string; url?: string },
 ): Promise<void> {
-  // Kept in Blacktop Command's notifications whether or not the phone shows it.
-  notify({ kind: INBOX_KIND[kind] ?? 'general', title: n.title, body: n.body, url: n.url && n.url !== '/' ? n.url : undefined });
+  // Kept in Blacktop Console's notifications whether or not the phone shows it.
+  notify({ kind: INBOX_KIND[kind] ?? 'general', title: n.title, body: n.body, url: n.url && n.url !== '/' ? n.url : undefined, ref: n.tag });
   if (!wantsPush(kind) || !('serviceWorker' in navigator)) return;
   try {
     const reg = await navigator.serviceWorker.getRegistration('/');

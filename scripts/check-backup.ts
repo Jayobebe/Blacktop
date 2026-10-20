@@ -60,7 +60,7 @@ const NOT_KEYS = /^(blacktop-(badges|buildings-3d|card-copies|dem|devicecheck|en
 const keys = [...found].filter((k) => !NOT_KEYS.test(k)).sort();
 const carried = keys.filter((k) => !LEFT_OUT.includes(k));
 console.log(`${keys.length} storage keys in the source: ${carried.length} carried, ${keys.length - carried.length} left out on purpose`);
-ok('nothing is left out that the list does not name', LEFT_OUT.every((k) => keys.includes(k) || k === 'bt.card_wars.v1'), LEFT_OUT.filter((k) => !keys.includes(k)).join(', '));
+ok('nothing is left out that the list does not name', LEFT_OUT.every((k) => keys.includes(k) || k === 'bt.switchback.v1'), LEFT_OUT.filter((k) => !keys.includes(k)).join(', '));
 
 // ── A phone with one of everything ──
 const vault = {
@@ -76,7 +76,7 @@ const vault = {
 const old: Record<string, string> = {};
 for (const k of keys) old[k] = JSON.stringify({ key: k, value: `data for ${k}`, n: [1, 2, 3], unicode: 'ride — 走る 🏍' });
 old['blacktop_profile'] = JSON.stringify({ name: 'Jesse', createdAt: '2026-01-01T00:00:00.000Z', preferredNavApp: 'blacktop' });
-old['bt.card_wars.v1'] = JSON.stringify(vault);
+old['bt.switchback.v1'] = JSON.stringify(vault);
 old['blacktop:crew:ABC123'] = 'a key made from a crew code';
 old['sb-xwagsaqsomzrubfpjaad-auth-token'] = 'the sign-in, which is the account and never in a file';
 old['someone-elses-key'] = 'not ours';
@@ -92,23 +92,23 @@ ok('restores', restoreBackup(read!));
 const missing = carried.filter((k) => next.getItem(k) !== old[k]);
 ok('every carried key arrives exactly as it was', missing.length === 0, missing.join(', '));
 ok('a key made from a code arrives too', next.getItem('blacktop:crew:ABC123') === old['blacktop:crew:ABC123']);
-const leaked = LEFT_OUT.filter((k) => k !== 'bt.card_wars.v1' && next.getItem(k) !== null);
+const leaked = LEFT_OUT.filter((k) => k !== 'bt.switchback.v1' && next.getItem(k) !== null);
 ok('nothing left out on purpose arrives', leaked.length === 0, leaked.join(', '));
 ok('the sign-in and other apps\' keys are never in the file', !file.includes('never in a file') && !file.includes('not ours'));
 const arrived = JSON.parse(next.getItem(VAULT_KEY) ?? '{}');
-ok('Card Wars: the deck, dog tags and cards won on the phone arrive', JSON.stringify([arrived.deck, arrived.tags, arrived.rewards, arrived.unlocks]) === JSON.stringify([vault.deck, vault.tags, vault.rewards, vault.unlocks]));
-ok('Card Wars: the battle in progress and what the server said do not', !('run' in arrived) && !('wear' in arrived) && !('owned' in arrived) && !('wearQueue' in arrived));
+ok('SwitchBack: the deck, dog tags and cards won on the phone arrive', JSON.stringify([arrived.deck, arrived.tags, arrived.rewards, arrived.unlocks]) === JSON.stringify([vault.deck, vault.tags, vault.rewards, vault.unlocks]));
+ok('SwitchBack: the battle in progress and what the server said do not', !('run' in arrived) && !('wear' in arrived) && !('owned' in arrived) && !('wearQueue' in arrived));
 
 // ── Onto a phone that already has data ──
-next = phone({ blacktop_rides: 'the rides this phone had', 'bt.garage.v1': 'its garage', blacktop_location_granted: '1', 'bt.card_wars.v1': JSON.stringify({ deck: ['mx5'], tags: [], rewards: [], unlocks: [], run: { id: 'theirs' }, wear: { mx5: 80 } }), other: 'untouched' });
+next = phone({ blacktop_rides: 'the rides this phone had', 'bt.garage.v1': 'its garage', blacktop_location_granted: '1', 'bt.switchback.v1': JSON.stringify({ deck: ['mx5'], tags: [], rewards: [], unlocks: [], run: { id: 'theirs' }, wear: { mx5: 80 } }), other: 'untouched' });
 ok('restores over existing data', restoreBackup(read!));
 ok('what the phone had is replaced', next.getItem('blacktop_rides') === old['blacktop_rides'] && next.getItem('bt.garage.v1') === old['bt.garage.v1']);
 ok('what belongs to the device stays', next.getItem('blacktop_location_granted') === '1' && next.getItem('other') === 'untouched');
 const merged = JSON.parse(next.getItem(VAULT_KEY) ?? '{}');
-ok('Card Wars: the backup\'s deck over the phone\'s, its battle in progress kept', merged.deck.join() === vault.deck.join() && merged.run?.id === 'theirs' && merged.wear?.mx5 === 80);
+ok('SwitchBack: the backup\'s deck over the phone\'s, its battle in progress kept', merged.deck.join() === vault.deck.join() && merged.run?.id === 'theirs' && merged.wear?.mx5 === 80);
 
 // ── No room: all or nothing ──
-const before = { blacktop_rides: 'the rides this phone had', 'bt.card_wars.v1': JSON.stringify({ deck: ['mx5'], tags: [], rewards: [] }) };
+const before = { blacktop_rides: 'the rides this phone had', 'bt.switchback.v1': JSON.stringify({ deck: ['mx5'], tags: [], rewards: [] }) };
 next = phone(before);
 const real = next.setItem.bind(next);
 let writes = 0;
@@ -118,13 +118,13 @@ next.setItem = (k: string, v: string) => {
   real(k, v);
 };
 ok('a phone that runs out of room says so', restoreBackup(read!) === false);
-ok('and is left exactly as it was', next.getItem('blacktop_rides') === before.blacktop_rides && next.getItem(VAULT_KEY) === before['bt.card_wars.v1'] && next.map.size === 2, `${next.map.size} keys`);
+ok('and is left exactly as it was', next.getItem('blacktop_rides') === before.blacktop_rides && next.getItem(VAULT_KEY) === before['bt.switchback.v1'] && next.map.size === 2, `${next.map.size} keys`);
 
 // ── Files that aren't backups, or are tampered with ──
 ok('not a backup', parseBackup('{"app":"other"}') === null && parseBackup('not json') === null && parseBackup('{"app":"blacktop","kind":"backup","v":1,"keys":{}}') === null);
-const tampered = parseBackup(JSON.stringify({ app: 'blacktop', kind: 'backup', v: 1, at: '', keys: { blacktop_rides: 'r', blacktop_demo_mode: '1', 'sb-auth': 'x', evil: 'y', 'bt.card_wars.v1': JSON.stringify({ deck: ['w11'], owned: ['everything'], run: { id: 'forged' } }) } }));
-ok('a file can only set our own carried keys', !!tampered && Object.keys(tampered.keys).sort().join() === 'blacktop_rides,bt.card_wars.v1');
-ok('and only the choices from its Card Wars entry', tampered?.keys[VAULT_KEY] === JSON.stringify({ deck: ['w11'], tags: [], rewards: [], unlocks: [] }));
+const tampered = parseBackup(JSON.stringify({ app: 'blacktop', kind: 'backup', v: 1, at: '', keys: { blacktop_rides: 'r', blacktop_demo_mode: '1', 'sb-auth': 'x', evil: 'y', 'bt.switchback.v1': JSON.stringify({ deck: ['w11'], owned: ['everything'], run: { id: 'forged' } }) } }));
+ok('a file can only set our own carried keys', !!tampered && Object.keys(tampered.keys).sort().join() === 'blacktop_rides,bt.switchback.v1');
+ok('and only the choices from its SwitchBack entry', tampered?.keys[VAULT_KEY] === JSON.stringify({ deck: ['w11'], tags: [], rewards: [], unlocks: [] }));
 ok('an empty vault is not worth carrying', vaultPicks(JSON.stringify({ deck: [], tags: [], rewards: [] })) === null);
 
 if (failed) {

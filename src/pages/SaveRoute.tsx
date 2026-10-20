@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import * as maplibregl from 'maplibre-gl';
 import '@/lib/maplibreWorker';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
-import { ArrowLeft, Loader2, LocateFixed, MapPin, Flag, Save, Download, Plus, Waves, Navigation, X } from 'lucide-react';
+import { ArrowLeft, Loader2, LocateFixed, MapPin, Flag, Save, Download, Plus, Waves, Navigation, X, Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import { switchLegs, playLegs } from '@/features/map/lib/switchCamera';
 import { travelTime, etaSpread } from '@/features/map/lib/eta';
 import { tilesForCorridor, estimateTiles, downloadPack, formatBytes, tileTemplatesFor, type PackBounds } from '@/features/map/lib/offlinePacks';
 import { saveRoute, type SavedRouteEnd } from '@/features/map/lib/savedRoutes';
+import { getSavedPOIs, type SavedPOI } from '@/features/map/lib/poiStore';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import '@/features/map/components/blacktopMap.css';
 
@@ -35,7 +36,7 @@ function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 }
 
 /**
- * Save a route (from Blacktop Command's quick action): a plain map with a list
+ * Save a route (from Blacktop Console's quick action): a plain map with a list
  * of searches, the start (your position to begin with, or anywhere searched),
  * then where to, then as many stops after it as the rider adds until the route
  * is right (each can be taken off). Picking a stop works as the Blacktop map
@@ -68,6 +69,10 @@ export default function SaveRoute() {
   const [styleBusy, setStyleBusy] = useState<RouteStyle | null>(null);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const [fitSeq, setFitSeq] = useState(0);
+  /** A field's search is open: it and its list take the screen (on a phone the keyboard leaves little room). */
+  const [openFields, setOpenFields] = useState(0);
+  const searching = openFields > 0;
+  const fieldOpen = (open: boolean) => setOpenFields((n) => Math.max(0, n + (open ? 1 : -1)));
   const picked = legs.filter((p): p is SavedRouteEnd => !!p);
   const to = picked.length ? picked[picked.length - 1] : null;
   const via = picked.slice(0, -1);
@@ -279,6 +284,11 @@ export default function SaveRoute() {
     setLegs((l) => [...l, null]);
   };
 
+  // The map was hidden while searching: give it back its size.
+  useEffect(() => {
+    if (!searching) requestAnimationFrame(() => mapRef.current?.resize());
+  }, [searching]);
+
   // What keeping its map costs.
   const corridor = useMemo(() => (route ? tilesForCorridor(route.geometry.coordinates as [number, number][]) : null), [route]);
   const estimate = corridor && templates.length ? estimateTiles(corridor, templates) : null;
@@ -312,7 +322,7 @@ export default function SaveRoute() {
     <div className="h-dvh flex flex-col p-4 safe-top safe-bottom md:p-5 gap-3">
       <PageHeader title={tr("Save a route")} />
 
-      <div className="grid gap-2 max-h-[40dvh] overflow-y-auto">
+      <div className={cn('grid gap-2 overflow-y-auto content-start', searching ? 'flex-1 min-h-0' : 'max-h-[40dvh]')}>
         <PlaceField
           icon={<LocateFixed className="w-4 h-4 text-accent" />}
           placeholder={tr("From")}
@@ -324,6 +334,7 @@ export default function SaveRoute() {
             setLegs((l) => l.map((x, j) => (j === 0 && x ? { ...x, shape: undefined } : x)));
           }}
           onMine={here ? () => setFrom(null) : undefined}
+          onOpenChange={fieldOpen}
           near={here}
         />
         {legs.map((p, i) => (
@@ -334,6 +345,7 @@ export default function SaveRoute() {
             value={candidate?.index === i ? candidate.place : p}
             autoFocus={focusIndex === i}
             onPick={(v) => setCandidate({ index: i, place: v })}
+            onOpenChange={fieldOpen}
             onRemove={
               legs.length > 1
                 ? () => {
@@ -349,7 +361,7 @@ export default function SaveRoute() {
         ))}
       </div>
 
-      <div className="relative flex-1 min-h-[180px] rounded-2xl overflow-hidden border border-border/60">
+      <div className={cn('relative flex-1 min-h-[180px] rounded-2xl overflow-hidden border border-border/60', searching && 'hidden')}>
         {/* MapLibre makes its container position: relative, so it sits inside the placed box. */}
         <div className="absolute inset-0"><div ref={boxRef} className="w-full h-full" /></div>
         <div ref={hazeRef} aria-hidden className="map-switch-haze" />
@@ -380,7 +392,7 @@ export default function SaveRoute() {
         )}
       </div>
 
-      {route && start && to && !candidate && (
+      {route && start && to && !candidate && !searching && (
         <div className="rounded-2xl frost p-3 space-y-2.5 animate-slide-up">
           <div className="flex items-center gap-4 text-sm">
             <span className="font-mono font-bold text-lg">{kmText(route.distanceMeters / 1000)}</span>
@@ -440,6 +452,7 @@ function PlaceField({
   onRemove,
   near,
   autoFocus,
+  onOpenChange,
 }: {
   icon: React.ReactNode;
   placeholder: string;
@@ -454,10 +467,32 @@ function PlaceField({
   near: { lat: number; lng: number } | null;
   /** Focused as it appears (a stop just added). */
   autoFocus?: boolean;
+  /** Its search opened or closed. */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<MapSearchResult[]>([]);
+  // Places saved on the map: all of them before typing, the ones whose name matches after.
+  const [saved, setSaved] = useState<SavedPOI[]>(() => getSavedPOIs());
+  useEffect(() => {
+    const refresh = () => setSaved(getSavedPOIs());
+    window.addEventListener('blacktop-poi-saved', refresh);
+    return () => window.removeEventListener('blacktop-poi-saved', refresh);
+  }, []);
+  const savedHits = q.trim() ? saved.filter((p) => p.name.toLowerCase().includes(q.trim().toLowerCase())) : saved;
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current === open) return;
+    wasOpen.current = open;
+    onOpenChange?.(open);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+  // A field taken away while open (a stop removed) closes its count too.
+  useEffect(() => () => {
+    if (wasOpen.current) onOpenChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [busy, setBusy] = useState(false);
   const timer = useRef(0);
   const seq = useRef(0);
@@ -512,7 +547,7 @@ function PlaceField({
           </button>
         )}
       </label>
-      {open && (onMine || results.length > 0) && (
+      {open && (onMine || savedHits.length > 0 || results.length > 0) && (
         <ul className="mt-1.5 max-h-64 overflow-y-auto rounded-xl bg-card/95 border border-border shadow-2xl backdrop-blur">
           {onMine && !q && (
             <li>
@@ -522,6 +557,22 @@ function PlaceField({
               </button>
             </li>
           )}
+          {savedHits.map((p) => (
+            <li key={`poi:${p.id}`}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => pick({ lat: p.lat, lng: p.lng, name: p.name })}
+                className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 border-t border-border/50 first:border-t-0"
+              >
+                <Bookmark className="w-4 h-4 text-accent shrink-0" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold truncate">{p.name}</span>
+                  <span className="block text-[11px] text-muted-foreground truncate">{tr("Saved location")}</span>
+                </span>
+              </button>
+            </li>
+          ))}
           {results.map((r) => (
             <li key={r.id}>
               <button

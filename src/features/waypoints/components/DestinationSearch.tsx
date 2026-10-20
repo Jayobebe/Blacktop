@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Building2, Bookmark, IdCard, type LucideIcon } from 'lucide-react';
+import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Building2, Bookmark, IdCard, Route as RouteIcon, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,8 @@ import { ConvoyDestination } from '@/types/convoy';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getSavedPOIs, type SavedPOI } from '@/features/map';
+import { useSavedRoutes, deleteSavedRoute, type SavedRoute } from '@/features/map/lib/savedRoutes';
+import { kmText } from '@/lib/units';
 import { useSettings } from '@/features/settings';
 import { useCardDrops } from '@/features/cards';
 import { useExperience, placeCategories, REFUEL_NOMINATIM } from '@/features/experience';
@@ -37,6 +39,8 @@ interface DestinationSearchProps {
   userLocation?: UserLocation | null;
   countryCode?: string | null;
   distanceUnit?: 'miles' | 'km';
+  /** A saved route picked (Blacktop Console → Save a route): the lobby loads its stops and end. */
+  onRoute?: (route: SavedRoute) => void;
 }
 
 interface UserLocation {
@@ -352,8 +356,10 @@ export function DestinationSearch({
   userLocation: externalUserLocation,
   countryCode: externalCountryCode,
   distanceUnit = 'km',
+  onRoute,
 }: DestinationSearchProps) {
   const [query, setQuery] = useState('');
+  const savedRoutes = useSavedRoutes();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -683,7 +689,10 @@ export function DestinationSearch({
     if (r.distance !== undefined) return r;
     return { ...r, distance: calculateDistance(userLocation.lat, userLocation.lng, r.lat, r.lng) };
   });
-  const hasDisplayContent = hasSavedPOIs || displayResults.length > 0 || isSearching;
+  // Saved routes: all of them idle, the ones whose name matches while typing (as in the map's search).
+  const routeQ = query.trim().toLowerCase();
+  const routeList = !onRoute || activeCategory ? [] : routeQ.length >= 2 ? savedRoutes.filter((r) => r.name.toLowerCase().includes(routeQ)) : showIdle ? savedRoutes : [];
+  const hasDisplayContent = hasSavedPOIs || routeList.length > 0 || displayResults.length > 0 || isSearching;
   const strip = shortLandscape && showResults && hasDisplayContent;
   const nudging = useStripNudge(strip);
 
@@ -785,6 +794,43 @@ export function DestinationSearch({
           }
           className={cn('suggest-list bg-card border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in max-h-[60vh] overflow-y-auto', nudging && 'suggest-nudge')}
         >
+          {routeList.length > 0 && (
+            <>
+              <div className="suggest-head px-4 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center gap-1.5 bg-muted/50">
+                <RouteIcon className="w-3.5 h-3.5" />
+                {tr("Saved routes")}
+              </div>
+              {routeList.map((r) => (
+                <div key={r.id} className="flex items-center border-b border-border">
+                  <button
+                    onClick={() => {
+                      setShowResults(false);
+                      setQuery('');
+                      onRoute?.(r);
+                    }}
+                    className="flex-1 min-w-0 flex items-center gap-3 p-4 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                      <RouteIcon className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{r.name}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {tr("Saved route")} · {kmText(r.distanceMeters / 1000)}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => void deleteSavedRoute(r.id)}
+                    className="glove-hit p-2 mr-2 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={tr("Remove {0}", [r.name])}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
           {/* Saved POIs — idle state only */}
           {hasSavedPOIs && (
             <>
@@ -840,7 +886,7 @@ export function DestinationSearch({
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
               <span className="text-sm">{tr("Finding places...")}</span>
             </div>
-          ) : displayResults.length === 0 && !hasSavedPOIs ? (
+          ) : displayResults.length === 0 && !hasSavedPOIs && !routeList.length ? (
             <div className="p-6 text-center text-muted-foreground">
               <MapPin className="w-6 h-6 mx-auto mb-2 opacity-50" />
               <span className="text-sm">

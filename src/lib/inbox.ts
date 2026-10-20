@@ -1,5 +1,5 @@
 /**
- * The notification centre's inbox (Blacktop Command): what happened to the
+ * The notification centre's inbox (Blacktop Console): what happened to the
  * rider, kept on the phone after the toast or the system notification has
  * gone. Fed by `notify()` from anywhere in the app (rescue calls, riders joining
  * and leaving the convoy, local notifications such as service reminders) and by
@@ -21,6 +21,8 @@ export interface InboxItem {
   body?: string;
   /** Where a tap goes (an in-app path). */
   url?: string;
+  /** What it's about, for its button (a service reminder: `maint-<vehicle id>-<item id>`). */
+  ref?: string;
   at: number;
   read: boolean;
 }
@@ -58,11 +60,11 @@ function commit(next: InboxItem[]) {
 }
 
 /** Something to keep in the inbox. */
-export function notify(entry: { kind: InboxKind; title: string; body?: string; url?: string; at?: number }) {
+export function notify(entry: { kind: InboxKind; title: string; body?: string; url?: string; ref?: string; at?: number }) {
   if (!entry.title) return;
   const at = entry.at ?? Date.now();
   const same = items.find((i) => i.title === entry.title && (i.body ?? '') === (entry.body ?? '') && Math.abs(i.at - at) < SAME_MS);
-  const item: InboxItem = { id: same?.id ?? `${at.toString(36)}-${Math.random().toString(36).slice(2, 7)}`, kind: entry.kind, title: entry.title, body: entry.body, url: entry.url, at, read: false };
+  const item: InboxItem = { id: same?.id ?? `${at.toString(36)}-${Math.random().toString(36).slice(2, 7)}`, kind: entry.kind, title: entry.title, body: entry.body, url: entry.url, ref: entry.ref, at, read: false };
   commit([item, ...items.filter((i) => i !== same)].sort((a, b) => b.at - a.at));
 }
 

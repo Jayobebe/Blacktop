@@ -14,10 +14,10 @@ import { isDemoModeActive } from '@/lib/demoMode';
  */
 export interface Sticker {
   id: string;
-  /** The card it came from: `cw:<catalog id>`, `card:<key>` or `spectre:<key>`. One sticker per card. */
+  /** The card it came from: `sb:<catalog id>`, `card:<key>` or `spectre:<key>`. One sticker per card. */
   card: string;
   name: string;
-  /** The cut-out: a site path (Card Wars artwork) or a small data URL (a rider's own photo). */
+  /** The cut-out: a site path (SwitchBack artwork) or a small data URL (a rider's own photo). */
   src: string;
   /** Height over width. */
   ar: number;

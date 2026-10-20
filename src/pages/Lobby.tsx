@@ -24,6 +24,7 @@ import { openBlacktopMap, RouteOptions, RouteMode } from '@/features/map';
 import { useExperience, getExperience, termsFor } from '@/features/experience';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { tr } from '@/lib/i18n';
+import { chooseRouteTrip } from '@/features/ride/lib/trips';
 
 // Read at call time inside realtime handlers so wording never forces a resubscribe.
 const liveTerms = () => termsFor(getExperience().vehicles);
@@ -810,6 +811,12 @@ export default function Lobby() {
                   onSetDestination={setDestination}
                   onClearDestination={clearDestination}
                   onAddStop={convoy.isLeader && waypoints.filter(w => !w.isCompleted).length < 5 ? () => setShowAddWaypoint(true) : undefined}
+                  onRoute={convoy.isLeader ? async (r) => {
+                    // A saved route: its stops become the convoy's waypoints, in order, and its end the destination.
+                    const plan = chooseRouteTrip(r);
+                    await setDestination({ lat: plan.destination.lat, lng: plan.destination.lng, name: plan.destination.name, address: plan.destination.address ?? '' });
+                    for (const s of plan.stops) await addWaypoint({ name: s.name, address: s.address ?? '', lat: s.lat, lng: s.lng });
+                  } : undefined}
                   isLeader={convoy.isLeader}
                   userLocation={userLocation}
                   countryCode={countryCode}

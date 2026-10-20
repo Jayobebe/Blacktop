@@ -386,7 +386,7 @@ export default function ActiveRide() {
 
   // Trips (ride/lib/trips): setting off, the ride joins the trip picked for it (a saved route), or starts one
   // from a plan with stops on the way (the solo route's stops, or the convoy's waypoints still to do); each
-  // leg is counted as the ride's own GPS reaches its end, said on screen and kept in Command's notifications.
+  // leg is counted as the ride's own GPS reaches its end, said on screen and kept in Console's notifications.
   useEffect(() => {
     if (!rideState.isActive || !rideState.startedAt) return;
     const convoyPlan = rideState.isConvoyMode && convoy.destination;

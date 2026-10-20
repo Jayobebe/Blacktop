@@ -93,7 +93,7 @@ function soundMemberChanges(prev: ConvoyState, next: ConvoyState) {
   const left = prev.members.filter((m) => !after.has(m.userId));
   if (joined.length) eventSound('radioIn');
   else if (left.length) eventSound('radioOut');
-  // Kept in Blacktop Command's notifications.
+  // Kept in Blacktop Console's notifications.
   joined.forEach((m) => notify({ kind: 'convoy', title: tr("{0} joined the convoy", [m.name]) }));
   left.forEach((m) => notify({ kind: 'convoy', title: tr("{0} left the convoy", [m.name]) }));
 }

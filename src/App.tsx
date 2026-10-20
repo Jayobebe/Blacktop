@@ -55,7 +55,7 @@ installDemoGuard();
 hideAppReferrer();
 // iOS forgets motion access when the app closes: the first tap re-grants it.
 installMotionRegrant();
-// Blacktop Command's notifications: pushes the worker kept while the app was closed, and any that come in now.
+// Blacktop Console's notifications: pushes the worker kept while the app was closed, and any that come in now.
 installInbox();
 installErrorLog();
 // Before the router mounts: it has to hear Back first.
@@ -119,7 +119,7 @@ function JoinLink() {
   const { search } = useLocation();
   return <Navigate to={`/join-convoy${search}`} replace />;
 }
-function CardWarsLink() {
+function SwitchBackLink() {
   const { search, hash } = useLocation();
   return <Navigate to={`/arcade/switchback${search}${hash}`} replace />;
 }
@@ -129,7 +129,7 @@ const EnterpriseLink = lazyPage(() => import("./pages/EnterpriseLink"));
 const EnterpriseWelcome = lazyPage(() => import("./pages/EnterpriseWelcome"));
 const EnterpriseDemo = lazyPage(() => loadLocaleExtra().then(() => import("./pages/EnterpriseDemo")));
 const World = lazyPage(() => import("./pages/World"));
-const CardWars = lazyPage(() => import("./pages/CardWars"));
+const SwitchBack = lazyPage(() => import("./pages/SwitchBack"));
 const CrewConvoys = lazyPage(() => import("./pages/CrewConvoys"));
 const Spectate = lazyPage(() => import("./pages/Spectate"));
 const CrewLeaderboard = lazyPage(() => import("./pages/CrewLeaderboard"));
@@ -138,7 +138,7 @@ const CrewChallenges = lazyPage(() => import("./pages/CrewChallenges"));
 const Arcade = lazyPage(() => import("./pages/Arcade"));
 const ArcadeHitHeavy = lazyPage(() => import("./pages/ArcadeHitHeavy"));
 const ArcadePetrolHead = lazyPage(() => import("./pages/ArcadePetrolHead"));
-const ArcadeDerezLegacy = lazyPage(() => import("./pages/ArcadeDerezLegacy"));
+const ArcadeGridlock = lazyPage(() => import("./pages/ArcadeGridlock"));
 
 // Lazy-loaded: MapLibre is heavy, so it isn't part of the first load.
 // Prefetched at idle like the pages, so the map still opens with no signal.
@@ -306,25 +306,25 @@ function AppRoutes() {
       <Route path="/ride/:id" element={<RideDetail />} />
       
       <Route path="/world" element={<World />} />
-      <Route path="/world/card-wars" element={<CardWarsLink />} />
+      <Route path="/world/card-wars" element={<SwitchBackLink />} />
       <Route path="/crew/convoys" element={<CrewConvoys />} />
       <Route path="/spectate/:id" element={<Spectate />} />
       <Route path="/crew/leaderboard" element={<CrewLeaderboard />} />
       <Route path="/crew/join" element={<CrewJoin />} />
       <Route path="/crew/challenges" element={<CrewChallenges />} />
       <Route path="/arcade" element={<Arcade />} />
-      <Route path="/arcade/switchback" element={<CardWars />} />
+      <Route path="/arcade/switchback" element={<SwitchBack />} />
       {/* Its old addresses, for battle and swap links already sent. */}
-      <Route path="/arcade/blackgrid" element={<CardWars />} />
+      <Route path="/arcade/blackgrid" element={<SwitchBack />} />
       {/* The game's old address: battle and swap links already sent still open. */}
-      <Route path="/arcade/card-wars" element={<CardWars />} />
+      <Route path="/arcade/card-wars" element={<SwitchBack />} />
       <Route path="/arcade/hit-heavy" element={<ArcadeHitHeavy />} />
       <Route path="/arcade/petrol-head" element={<ArcadePetrolHead />} />
-      <Route path="/arcade/gridlock" element={<ArcadeDerezLegacy />} />
-      <Route path="/arcade/gridlock/:code" element={<ArcadeDerezLegacy />} />
+      <Route path="/arcade/gridlock" element={<ArcadeGridlock />} />
+      <Route path="/arcade/gridlock/:code" element={<ArcadeGridlock />} />
       {/* The game's old address: invitations already sent still open. */}
-      <Route path="/arcade/derez-legacy" element={<ArcadeDerezLegacy />} />
-      <Route path="/arcade/derez-legacy/:code" element={<ArcadeDerezLegacy />} />
+      <Route path="/arcade/derez-legacy" element={<ArcadeGridlock />} />
+      <Route path="/arcade/derez-legacy/:code" element={<ArcadeGridlock />} />
       <Route path="/stats" element={<Stats />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
@@ -366,7 +366,7 @@ const App = () => {
               <UiSounds />
               <AutoRescueConsentDialog />
               <RescueDrillHost />
-              {/* "Are you okay?" for a rescue asked for by hand off the ride screen (the map's R, Command's rescue action). */}
+              {/* "Are you okay?" for a rescue asked for by hand off the ride screen (the map's R, Console's rescue action). */}
               <RescueAskHost />
               {!__STORE_BUILD__ && <NimiqFullscreenPrompt />}
               <PatternGateDialog />

@@ -53,7 +53,7 @@ function shiftOf(seed: string | undefined): number {
 
 /**
  * A card's finish: how its tier catches the light, the same on every card in
- * the app (the vault's cards, the Speed Shop's preview, Card Wars).
+ * the app (the vault's cards, the Speed Shop's preview, SwitchBack).
  *
  *   Bronze, Silver, Gold, Platinum: metal. Brushed grain, and a band of light crossing it.
  *   Diamond, Ruby: stone. Cut facets, and glints that come and go.

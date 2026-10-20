@@ -74,7 +74,7 @@ export function MaintenanceNotifier() {
             key: `${base}:warn`,
             title: tr("🔧 {0} due soon", [item.name]),
             body: tr("{0}: its {1} service is due in two weeks.", [bike.name, months]),
-            url: '/garage',
+            url: `/garage?tab=maint&bike=${bike.id}`,
             due_at: warn.toISOString(),
           });
         }
@@ -83,7 +83,7 @@ export function MaintenanceNotifier() {
             key: `${base}:over`,
             title: tr("🔧 {0} is due", [item.name]),
             body: tr("{0}: time for its {1} service.", [bike.name, months]),
-            url: '/garage',
+            url: `/garage?tab=maint&bike=${bike.id}`,
             due_at: due.toISOString(),
           });
         }
@@ -147,7 +147,7 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
             ? tr("{0}: overdue by {1} {2}.", [bike.name, fmt(-dueInKm), unit])
             : tr("{0}: due in {1} {2}.", [bike.name, fmt(dueInKm), unit]),
         tag: `maint-${bike.id}-${item.id}`,
-        url: '/garage',
+        url: `/garage?tab=maint&bike=${bike.id}`,
       });
     }
     if (changed) writeNotified(notified);

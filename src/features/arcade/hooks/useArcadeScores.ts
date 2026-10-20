@@ -6,20 +6,20 @@ import { publishArcadeScore } from '../lib/publishArcadeScore';
 const LS_KEYS: Record<ArcadeGame, string> = {
   'hit-heavy': 'blacktop_arcade_hit_heavy_hs',
   'petrol-head': 'blacktop_arcade_petrol_head_hs',
-  'legacy-derez': 'blacktop_arcade_legacy_derez_wins',
+  'gridlock': 'blacktop_arcade_gridlock_wins',
 };
 
 const listeners = new Set<() => void>();
 
 // Stable reference so useSyncExternalStore doesn't see a change on every render
-let cachedSnapshot: ArcadeScores = { 'hit-heavy': 0, 'petrol-head': 0, 'legacy-derez': 0 };
+let cachedSnapshot: ArcadeScores = { 'hit-heavy': 0, 'petrol-head': 0, 'gridlock': 0 };
 
 function getSnapshot(): ArcadeScores {
   const hh = Number(localStorage.getItem(LS_KEYS['hit-heavy']) ?? 0);
   const ph = Number(localStorage.getItem(LS_KEYS['petrol-head']) ?? 0);
-  const ld = Number(localStorage.getItem(LS_KEYS['legacy-derez']) ?? 0);
-  if (hh !== cachedSnapshot['hit-heavy'] || ph !== cachedSnapshot['petrol-head'] || ld !== cachedSnapshot['legacy-derez']) {
-    cachedSnapshot = { 'hit-heavy': hh, 'petrol-head': ph, 'legacy-derez': ld };
+  const ld = Number(localStorage.getItem(LS_KEYS['gridlock']) ?? 0);
+  if (hh !== cachedSnapshot['hit-heavy'] || ph !== cachedSnapshot['petrol-head'] || ld !== cachedSnapshot['gridlock']) {
+    cachedSnapshot = { 'hit-heavy': hh, 'petrol-head': ph, 'gridlock': ld };
   }
   return cachedSnapshot;
 }

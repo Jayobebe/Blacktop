@@ -27,8 +27,8 @@ import { PageTips } from '@/features/guide';
 import { uiCue } from '@/lib/radioFx';
 import { appSoundsOn } from '@/lib/appSound';
 import { syncProfileCountry } from '@/lib/profileCountry';
-// Not the Card Wars barrel: that would pull the whole game into this page.
-import { SpectreTagBack } from '@/features/card-wars/light';
+// Not the SwitchBack barrel: that would pull the whole game into this page.
+import { SpectreTagBack } from '@/features/switchback/light';
 
 // Crew hub landmarks dotted around the globe. Rotating the globe brings each
 // one into view; tapping the chip opens its page.

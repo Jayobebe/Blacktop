@@ -22,6 +22,8 @@ export interface SoloRouteState {
 }
 
 const MAX_STOPS = 5;
+/** A whole plan set at once (a saved route: its start, every stop and a twisty pick's bends) can be longer than the rider adds by hand. */
+const MAX_PLAN_STOPS = 25;
 
 let state: SoloRouteState = { destination: null, stops: [] };
 const listeners = new Set<() => void>();
@@ -38,7 +40,7 @@ const getSnapshot = () => state;
 export function setSoloRoute(next: { destination: SoloStop | null; stops?: SoloStop[] }) {
   state = {
     destination: next.destination,
-    stops: (next.stops ?? []).slice(0, MAX_STOPS),
+    stops: (next.stops ?? []).slice(0, MAX_PLAN_STOPS),
   };
   emit();
 }

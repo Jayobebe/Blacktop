@@ -65,7 +65,7 @@ export interface AppSettings {
   uiSoundsEnabled: boolean;
   /** Home asks "On the move?" (start tracking / open the map) when the app is open and the rider sets off. Only where location is already allowed. */
   setOffPromptEnabled: boolean;
-  /** Riders' vehicle photos on cards (their own and scanned ones) are redrawn in the Card Wars pixel-art look. The photos themselves are untouched. */
+  /** Riders' vehicle photos on cards (their own and scanned ones) are redrawn in the SwitchBack pixel-art look. The photos themselves are untouched. */
   cardArtStyle: boolean;
   /** When the rider accepted the crash detection disclaimer (ms), or null: auto-rescue can't be on without it. */
   autoRescueAcknowledgedAt: number | null;

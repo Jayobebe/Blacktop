@@ -1,33 +1,33 @@
-import type { LngLat } from './lib/derezGeo';
+import type { LngLat } from './lib/gridlockGeo';
 
-export type ArcadeGame = 'hit-heavy' | 'petrol-head' | 'legacy-derez';
+export type ArcadeGame = 'hit-heavy' | 'petrol-head' | 'gridlock';
 
 export interface ArcadeScores {
   'hit-heavy': number;      // peak G (two decimal places stored as float)
   'petrol-head': number;    // seconds survived (integer)
-  'legacy-derez': number;   // wins (integer)
+  'gridlock': number;   // wins (integer)
 }
 
-export type DerezState = 'lobby' | 'countdown' | 'live' | 'finished';
+export type GridlockState = 'lobby' | 'countdown' | 'live' | 'finished';
 
-export interface DerezArena {
+export interface GridlockArena {
   ring: LngLat[];
 }
 
-export interface DerezLobby {
+export interface GridlockLobby {
   id: string;
   code: string;
   leaderId: string;
   lives: number;
-  arena: DerezArena | null;
-  state: DerezState;
+  arena: GridlockArena | null;
+  state: GridlockState;
   winnerId: string | null;
   winnerName: string | null;
   startedAt: string | null;
   roundSeq: number;
 }
 
-export interface DerezPlayer {
+export interface GridlockPlayer {
   id: string;
   userId: string;
   displayName: string;

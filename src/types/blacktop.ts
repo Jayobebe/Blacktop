@@ -46,6 +46,10 @@ export interface RideSession {
   autoNamed?: boolean;
   /** Towns the ride passed through and the ride time each was reached (the flyover's corner; looked up once). */
   places?: Array<{ at: number; name: string }>;
+  /** Gaps in the GPS filled with the road between them, for the flyover (ride/lib/roadGaps; asked for once). */
+  roadGaps?: Array<{ after: number; path: Array<[number, number]> }>;
+  /** The gaps have been looked at (so a ride with none isn't asked again). */
+  roadChecked?: boolean;
   starred?: boolean; // Starred rides are never burned from Ride History
   startedAt: string;
   endedAt: string | null;

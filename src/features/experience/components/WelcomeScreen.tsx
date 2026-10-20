@@ -188,7 +188,7 @@ export function WelcomeScreen({ onStart, onRecover }: WelcomeScreenProps) {
     haptics.light();
     onStart();
   };
-  // Hidden, like the code box in Card Wars: holding Recover for three seconds downloads the Android test app.
+  // Hidden, like the code box in SwitchBack: holding Recover for three seconds downloads the Android test app.
   const hold = useRef<{ timer: number; fired: boolean } | null>(null);
   const endHold = () => {
     if (hold.current && !hold.current.fired) window.clearTimeout(hold.current.timer);

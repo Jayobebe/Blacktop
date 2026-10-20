@@ -60,3 +60,27 @@ export function speedFigure(mph: number, unit = currentUnits().speed): number {
 export function speedText(mph: number, unit = currentUnits().speed): string {
   return `${speedFigure(mph, unit)} ${speedUnitText(unit)}`;
 }
+
+/**
+ * Fahrenheit where the phone's region reads temperatures that way (the US and
+ * a few others), Celsius everywhere else. There's no temperature setting: a
+ * UK rider on mph still reads °C.
+ */
+export function usesFahrenheit(): boolean {
+  try {
+    const region = new Intl.Locale(navigator.language).maximize().region ?? '';
+    return ['US', 'LR', 'MM', 'BS', 'BZ', 'KY', 'PW', 'FM', 'MH'].includes(region);
+  } catch {
+    return false;
+  }
+}
+
+/** A temperature kept in °C: "12°" with the scale the region uses ("54°F" / "12°C"). */
+export function tempText(c: number): string {
+  return usesFahrenheit() ? `${Math.round(c * 1.8 + 32)}°F` : `${Math.round(c)}°C`;
+}
+
+/** A wind speed kept in km/h, in the rider's speed unit: "35 mph" / "56 km/h". */
+export function windText(kmh: number, unit = currentUnits().speed): string {
+  return unit === 'kph' ? tr("{0} km/h", [figure(kmh)]) : tr("{0} mph", [figure(kmh / KM_PER_MI)]);
+}

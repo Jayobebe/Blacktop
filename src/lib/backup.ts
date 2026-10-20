@@ -5,10 +5,10 @@
  * can bring back on this phone or another. Nothing goes through a server.
  *
  * What isn't in it, on purpose:
- *   - what belongs to the account, not the phone (Card Wars' cards, RPM and
+ *   - what belongs to the account, not the phone (SwitchBack' cards, RPM and
  *     dog tags, Enterprise workspaces): a stale copy of the server's answer
  *     would only mislead (`lib/recovery.ts` is how the account itself moves).
- *     What the rider chose in Card Wars on this phone does come: the deck,
+ *     What the rider chose in SwitchBack on this phone does come: the deck,
  *     its three dog tags, and the cards won and unlocked here (`VAULT_PICKS`,
  *     cut out of the game's own key, which is otherwise left out). The rider's name
  *     is in it, so a backup restored from the welcome screen can make an
@@ -22,16 +22,26 @@
  * The unlock pattern's hash is in it, so Public Road Privacy can't be lifted
  * by restoring a backup onto a phone with no pattern.
  */
+import { renameBackupKeys } from './renamedKeys';
 const PREFIXES = ['blacktop', 'bt.', 'bt-'];
 const LEFT_OUT = new Set([
+  // Blacktop Console: the forecast, what the pip last showed, where the crew board stood (all of the moment).
+  'blacktop_console_weather',
+  'blacktop_console_seen',
+  'blacktop_console_crew_rank',
+  // Old names (lib/renamedKeys): renamed on arrival, so never saved under them again.
+  'bt.card_wars.v1',
+  'bt.card_wars_howto',
+  'blacktop_arcade_legacy_derez_wins',
+  'blacktop_derez_lobby_id',
   'blacktop_profile_country',
   'blacktop_enterprise_workspaces',
-  'bt.card_wars.v1',
+  'bt.switchback.v1',
   'bt.server_caps',
   'blacktop_active_convoy_id',
   'blacktop_active_ride',
   'blacktop_convoy_merge',
-  'blacktop_derez_lobby_id',
+  'blacktop_gridlock_lobby_id',
   'blacktop_burn_reveal',
   'blacktop_demo_mode',
   'blacktop_crash_trace',
@@ -54,7 +64,7 @@ const LEFT_OUT = new Set([
   'blacktop_parked', // where the last ride ended: belongs to the moment
   'blacktop_rotation_tip', // the one-time Rotation Lock tip on iPhones: belongs to the device
   'blacktop_tour_offered', // the one-time tour offer after setup: belongs to the device
-  'blacktop_inbox', // the notifications in Blacktop Command: belong to the device and the moment
+  'blacktop_inbox', // the notifications in Blacktop Console: belong to the device and the moment
   'blacktop_trip_active', // the trip a ride in progress belongs to: the moment, like the ride itself
   'bt.map.offlinePacks.v1',
 ]);
@@ -62,13 +72,13 @@ const LEFT_OUT = new Set([
 const inBackup = (key: string) => PREFIXES.some((p) => key.startsWith(p)) && !LEFT_OUT.has(key);
 
 /**
- * Card Wars keeps everything under one key (`card-wars/lib/store.ts`): what the
+ * SwitchBack keeps everything under one key (`switchback/lib/store.ts`): what the
  * server said (cards held, their condition), a battle in progress, and the
  * rider's own choices. Only the choices travel: these lists of ids.
  */
-export const VAULT_KEY = 'bt.card_wars.v1';
+export const VAULT_KEY = 'bt.switchback.v1';
 const VAULT_PICKS = ['deck', 'tags', 'rewards', 'unlocks'] as const;
-/** The rider's own Card Wars choices out of a stored vault, as JSON (null: none worth keeping). */
+/** The rider's own SwitchBack choices out of a stored vault, as JSON (null: none worth keeping). */
 export function vaultPicks(stored: string | null): string | null {
   try {
     const vault = JSON.parse(stored || 'null') as Record<string, unknown> | null;
@@ -137,9 +147,11 @@ export function parseBackup(text: string): Backup | null {
   try {
     const raw = JSON.parse(text) as Partial<Backup> | null;
     if (!raw || raw.app !== 'blacktop' || raw.kind !== 'backup' || raw.v !== 1 || typeof raw.keys !== 'object' || !raw.keys) return null;
+    // An older file has some things under the names they had then.
+    raw.keys = renameBackupKeys(raw.keys as Record<string, unknown>) as Record<string, string>;
     const keys: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw.keys)) if (inBackup(k) && typeof v === 'string') keys[k] = v;
-    // Only the choices are ever taken from a file's Card Wars entry, whatever else it holds.
+    // Only the choices are ever taken from a file's SwitchBack entry, whatever else it holds.
     const picks = typeof raw.keys[VAULT_KEY] === 'string' ? vaultPicks(raw.keys[VAULT_KEY]) : null;
     if (picks) keys[VAULT_KEY] = picks;
     if (!Object.keys(keys).length) return null;

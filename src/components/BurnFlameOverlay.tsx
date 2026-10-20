@@ -7,7 +7,7 @@ type Origin = { x: number; y: number } | null;
  * Burn overlay: a wall
  * of flames rises from the bottom, swallows the whole screen, then burns off
  * the top to reveal a clean app. Drawn on a canvas as pixel art (`lib/pixelFlame`,
- * the look a burnt-out Card Wars card shares): layered flat flames in whole
+ * the look a burnt-out SwitchBack card shares): layered flat flames in whole
  * blocks (red tips, orange body, yellow core) with square sparks, so it's
  * cheap on phones.
  *

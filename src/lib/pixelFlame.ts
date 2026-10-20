@@ -2,7 +2,7 @@
  * The app's fire, as pixel art: flat colours in stacked layers (red tips,
  * orange body, yellow core, a white-hot heart) whose tops are flame tongues
  * drawn a whole block at a time, so every edge is stepped rather than smooth.
- * The Burn overlay and a burnt-out Card Wars card both draw with this, so the
+ * The Burn overlay and a burnt-out SwitchBack card both draw with this, so the
  * two fires are one look at two sizes.
  */
 export const FLAME = { tips: '#b91c1c', body: '#ea580c', core: '#fbbf24', heart: '#fef3c7', spark: '#fde047', char: '#140806' } as const;

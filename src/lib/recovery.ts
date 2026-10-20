@@ -5,7 +5,7 @@ import { VAULT_KEY, vaultPicks } from '@/lib/backup';
 
 /**
  * Recovery codes: an anonymous account has nothing to sign in with, so a lost
- * phone lost the account (Card Wars, crew scores, track records). A rider can
+ * phone lost the account (SwitchBack, crew scores, track records). A rider can
  * make a code, write it down, and enter it on another phone to be that
  * account again. What's on the phone (rides, garage…) is `lib/backup.ts`.
  *
@@ -26,7 +26,7 @@ const LENGTH = 20;
 const PENDING_KEY = 'blacktop_recovery_pending';
 const EMAIL = /^r-[0-9a-f]{40}@recovery\.blacktoplive\.com$/;
 /** Left behind when the phone becomes another account: copies of what the old one's server said. */
-const ACCOUNT_KEYS = ['bt.card_wars.v1', 'blacktop_enterprise_workspaces', 'blacktop_profile_country'];
+const ACCOUNT_KEYS = ['bt.switchback.v1', 'blacktop_enterprise_workspaces', 'blacktop_profile_country'];
 
 /** As typed or pasted: any case, with or without the dashes. */
 export const normalizeCode = (text: string) => text.toUpperCase().replace(/[^0-9A-Z]/g, '');
@@ -187,7 +187,7 @@ export async function checkRecoveryCode(text: string): Promise<{ session: Sessio
  * own token spelled out, so it can only ever delete the account that token
  * belongs to, never the one just recovered.
  *
- * `keepPicks`: a backup has just been restored with it, so the Card Wars
+ * `keepPicks`: a backup has just been restored with it, so the SwitchBack
  * choices on the phone (deck, dog tags, cards won here) are the rider's own
  * from their old phone and stay; only what the other account's server said
  * is dropped from the game's key.

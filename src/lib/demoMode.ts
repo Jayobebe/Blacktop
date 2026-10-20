@@ -196,7 +196,7 @@ export const DEMO_BIKE: Bike = {
   baseOdometerKm: 4200,
   maintenance: [
     // Odometer includes the previous keeper's logbook (~9,260 km), so services sit near it.
-    { id: 'demo-m-1', name: 'Chain lube', intervalKm: 500, lastServiceKm: 9150 },
+    { id: 'demo-m-1', name: 'Chain lube', intervalKm: 500, lastServiceKm: 8930 },
     { id: 'demo-m-2', name: 'Engine oil', intervalKm: 5000, lastServiceKm: 8000 },
     { id: 'demo-m-3', name: 'Tyres', intervalKm: 8000, lastServiceKm: 4200 },
   ],
@@ -403,7 +403,7 @@ export const DEMO_SAVED_POIS = [
   { id: 'demo-poi-4', name: "Rico's garage", lat: 51.4012, lng: -0.2551, createdAt: new Date(Date.now() - 40 * 86_400_000).toISOString() },
 ];
 
-// ── Saved routes, a trip in legs, notifications (Blacktop Command) ──
+// ── Saved routes, a trip in legs, notifications (Blacktop Console) ──
 const DAY_MS = 86_400_000;
 const WALES_POINTS = [
   { lat: 51.4613, lng: -0.1156, name: 'Home' },
@@ -459,14 +459,14 @@ export const DEMO_TRIPS: Trip[] = (() => {
   r.starred = true;
 });
 
-/** Notifications in Blacktop Command (lib/inbox). */
+/** Notifications in Blacktop Console (lib/inbox). */
 export function demoInbox(): InboxItem[] {
   const now = Date.now();
   return [
     { id: 'demo-n-1', kind: 'convoy', title: tr("{0} joined the convoy", ['Rico']), at: now - 6 * 60_000, read: false },
-    { id: 'demo-n-2', kind: 'weather', title: 'Heavy rain heading your way', body: 'Around 3 pm, gusts up to 40 mph.', at: now - 50 * 60_000, read: false },
-    { id: 'demo-n-3', kind: 'service', title: '🔧 Chain lube due soon', body: 'V4 Ducati: its chain lube is due in 120 mi.', url: '/garage', at: now - 3 * 3_600_000, read: true },
-    { id: 'demo-n-4', kind: 'crew', title: 'Night Owls · Week results', body: 'You came 2nd on miles this week: 214 mi.', url: '/crew/leaderboard', at: now - 26 * 3_600_000, read: true },
+    { id: 'demo-n-2', kind: 'weather', title: tr("Heavy rain heading your way"), body: tr("Around 3 pm, with strong gusts."), at: now - 50 * 60_000, read: false },
+    { id: 'demo-n-3', kind: 'service', title: tr("🔧 {0} due soon", ['Chain lube']), body: tr("{0}: chain lube is due soon.", ['V4 Ducati']), url: `/garage?tab=maint&bike=${DEMO_BIKE_ID}`, ref: `maint-${DEMO_BIKE_ID}-demo-m-1`, at: now - 3 * 3_600_000, read: true },
+    { id: 'demo-n-4', kind: 'crew', title: tr("{0} · Week results", ['Night Owls']), body: tr("You came 2nd on distance this week."), url: '/crew/leaderboard', at: now - 26 * 3_600_000, read: true },
     { id: 'demo-n-5', kind: 'general', title: tr("Leg {0} of {1} done", [2, 3]), body: 'Bwlch y Groes', url: '/trip/demo-trip-wales', at: now - 2 * DAY_MS, read: true },
   ];
 }
@@ -480,7 +480,7 @@ export const DEMO_RECENT_LOCATIONS = [
 export const DEMO_SCORES: ArcadeScores = {
   'hit-heavy': 14,    // peak Gs
   'petrol-head': 83,  // seconds survived
-  'legacy-derez': 6,  // wins
+  'gridlock': 6,  // wins
 };
 
 /** Demo bests for the arcade's extra modes. */

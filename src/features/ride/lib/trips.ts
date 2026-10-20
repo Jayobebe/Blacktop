@@ -4,7 +4,7 @@
  * into one card with a combined receipt and each leg's own (pages/TripDetail).
  *
  * - A trip starts with a ride that sets off on a plan with at least one stop on
- *   the way: a saved route (map/lib/savedRoutes) ridden from Blacktop Command or
+ *   the way: a saved route (map/lib/savedRoutes) ridden from Blacktop Console or
  *   picked in the map's search, a solo route with stops, or a convoy's
  *   waypoints (each rider's phone keeps its own copy of the trip).
  * - A leg is done when the rider gets within ARRIVE_M of its end point, whatever
@@ -192,7 +192,10 @@ function readActive(): Active | null {
   }
 }
 let active: Active | null = typeof window !== 'undefined' ? readActive() : null;
+/** The ride has been away from the next stop since the last one was reached (see trackTripFix). */
+let leftNext = false;
 function setActive(a: Active | null) {
+  if (a?.rideStartedAt !== active?.rideStartedAt) leftNext = false;
   active = a;
   try {
     if (a) localStorage.setItem(ACTIVE_KEY, JSON.stringify(a));
@@ -262,7 +265,14 @@ export function trackTripFix(lat: number, lng: number, accuracy?: number | null)
     return null;
   }
   const next = t.points[t.legsDone + 1];
-  if (!next || haversineM({ lat, lng }, next) > ARRIVE_M) return null;
+  if (!next) return null;
+  const d = haversineM({ lat, lng }, next);
+  // A stop only counts once the ride has been away from it: setting off from a
+  // place that's also a later stop (home, on a route that comes back) isn't
+  // arriving there.
+  if (d > ARRIVE_M * 2) leftNext = true;
+  if (d > ARRIVE_M || !leftNext) return null;
+  leftNext = false;
   const legsDone = t.legsDone + 1;
   const total = legCount(t);
   const finished = legsDone >= total;

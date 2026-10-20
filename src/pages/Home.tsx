@@ -12,8 +12,8 @@ import { HomeRadioDock } from '@/features/radio';
 // after Home: they kept ~180 KB out of the first load.
 const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ default: m.HomeGlobe })));
 const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
-// Blacktop Command, the card left of Home: loaded when first needed, so it adds nothing to Home's first load.
-const CommandCentre = lazy(() => import('@/features/command/components/CommandCentre').then((m) => ({ default: m.CommandCentre })));
+// Blacktop Console, the card left of Home: loaded when first needed, so it adds nothing to Home's first load.
+const BlacktopConsole = lazy(() => import('@/features/console/components/Console').then((m) => ({ default: m.BlacktopConsole })));
 const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive, useMapOverlay } from '@/features/map';
@@ -33,7 +33,7 @@ import { WARP_SWITCH_MS, startWarp } from '@/lib/warp';
 import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';
-import { useInbox } from '@/lib/inbox';
+import { useConsoleNews, refreshConsoleNews } from '@/features/console/lib/news';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 
 export default function Home() {
@@ -46,7 +46,7 @@ export default function Home() {
   const { settings } = useSettings();
   const exp = useExperience();
 
-  // The deck: Blacktop Command (search, quick actions, notifications) to the left
+  // The deck: Blacktop Console (search, quick actions, notifications) to the left
   // of the consumer home, then each mounted enterprise workspace, then the
   // Doorway (scan / enter a code). Tracked by key so mounting or removing a
   // workspace never lands the rider on the wrong card.
@@ -56,8 +56,10 @@ export default function Home() {
   const arrangingStickers = useArranging() && settings.collectiblesEnabled;
   const deckLocked = rideState.isActive || guiding || arrangingStickers;
   const mapOpen = useMapOverlay().isOpen;
-  const deckKeys = ['command', 'home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
-  const inbox = useInbox();
+  const deckKeys = ['console', 'home', ...enterprise.workspaces.map((w) => `ws:${w.org.id}`), 'doorway'];
+  // Something new on Blacktop Console (notifications not seen, rain on its way): its pip glows.
+  const consoleNews = useConsoleNews();
+  useEffect(() => refreshConsoleNews(), []);
   // Back from a package demo page returns to the Doorway (history state).
   const location = useLocation();
   const [deckKey, setDeckKey] = useState<string>(() =>
@@ -550,9 +552,9 @@ export default function Home() {
       count={deckKeys.length}
       index={deckIndex}
       onSelect={goToDeck}
-      labels={[tr("Blacktop Command"), tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
-      // Notifications not seen yet: a mark on Command's pip.
-      marks={[inbox.unread > 0]}
+      labels={[tr("Blacktop Console"), tr("Home"), ...enterprise.workspaces.map((w) => w.org.name), tr("Blacktop Enterprise")]}
+      // Notifications not seen yet: a mark on Console's pip.
+      marks={[consoleNews]}
     />
   );
 
@@ -623,10 +625,10 @@ export default function Home() {
         locked={deckLocked}
         slides={[
           {
-            key: 'command',
+            key: 'console',
             node: (
               <Suspense fallback={<div className="flex-1 min-h-0" />}>
-                <CommandCentre active={deckKey === 'command'} footer={deckPips} />
+                <BlacktopConsole active={deckKey === 'console'} footer={deckPips} />
               </Suspense>
             ),
           },

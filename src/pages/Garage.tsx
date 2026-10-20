@@ -1,6 +1,6 @@
 import { PageTips } from '@/features/guide';
-import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X, BookDown } from 'lucide-react';
 import { LogbookCover, LogbookView, LogbookReceiver } from '@/features/logbook';
 import { DEFAULT_BIKE_PLACEMENT, BikePlacement } from '@/features/garage/types';
@@ -50,6 +50,15 @@ export default function Garage() {
     updateBike,
     deleteBike,
   } = useGarage();
+
+  // Opened from a service reminder (Blacktop Console): straight to that vehicle's Maintenance tab.
+  const [params] = useSearchParams();
+  const openTab = params.get('tab') === 'maint' ? 'maint' : 'stats';
+  const wantBike = params.get('bike');
+  useEffect(() => {
+    if (wantBike && wantBike !== activeBikeId && bikes.some((b) => b.id === wantBike)) setActiveBike(wantBike);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantBike]);
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -307,7 +316,7 @@ export default function Garage() {
         </div>
       ) : (
         <div className="mt-4 flex-1 min-h-0">
-          <Tabs defaultValue="stats" className="w-full">
+          <Tabs defaultValue={openTab} className="w-full">
             <TabsList data-tip="garage-tabs" className="grid grid-cols-2 w-full">
               <TabsTrigger value="stats">{tr("Stats")}</TabsTrigger>
               <TabsTrigger value="maint">{tr("Maintenance")}</TabsTrigger>

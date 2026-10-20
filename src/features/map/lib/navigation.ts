@@ -145,7 +145,11 @@ export function snapToRoute(nav: NavRoute, p: { lat: number; lng: number }, hint
   const h = hintAlong ?? 0;
   let best = search(h - 150, h + 2500);
   if (best.dist > 40) {
-    const all = search(-Infinity, Infinity);
+    // Never forward past a stop not reached yet: a route that comes back by
+    // here later (a stop at the rider's own place) would otherwise match that
+    // later stretch and count every stop before it as done.
+    const nextStop = nav.legEnds.slice(0, -1).find((e) => e > h - 150) ?? Infinity;
+    const all = search(-Infinity, nextStop - 50);
     if (all.dist < best.dist - 20) best = all;
   }
   return { along: best.along, offset: best.dist };

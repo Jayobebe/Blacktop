@@ -20,6 +20,8 @@ import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { PageTips } from '@/features/guide';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { tr } from '@/lib/i18n';
+import { chooseRouteTrip } from '@/features/ride/lib/trips';
+import type { SavedRoute } from '@/features/map/lib/savedRoutes';
 
 interface UserLocation {
   lat: number;
@@ -82,6 +84,18 @@ export default function SoloLobby() {
 
   const handleSetDestination = (dest: ConvoyDestination) => {
     setDestination(dest);
+  };
+
+  // A saved route: its stops (a twisty pick's bends among them) and its end; an unfinished trip on it carries on.
+  const handleSavedRoute = (r: SavedRoute) => {
+    const plan = chooseRouteTrip(r);
+    const asDest = (p: { lat: number; lng: number; name?: string; address?: string }) => ({ lat: p.lat, lng: p.lng, name: p.name ?? '', address: p.address ?? '' });
+    setRouteMode('direct');
+    setTwistyVia(null);
+    setShowAddStop(false);
+    setSoloStops(plan.stops.map(asDest));
+    setDestination(asDest(plan.destination));
+    if (plan.trip) toast.success(tr("Leg {0} of {1}", [plan.trip.legsDone + 1, plan.trip.points.length - 1]), { description: r.name });
   };
 
   const handleClearDestination = () => {
@@ -272,6 +286,7 @@ export default function SoloLobby() {
             onSetDestination={handleSetDestination}
             onClearDestination={handleClearDestination}
             onAddStop={destination ? () => setShowAddStop(true) : undefined}
+            onRoute={handleSavedRoute}
             isLeader={true}
             userLocation={userLocation}
             countryCode={countryCode}

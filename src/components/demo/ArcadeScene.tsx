@@ -311,9 +311,9 @@ function SwitchBack({ s }: { s: number }) {
         </g>
       )}
       <g transform={`rotate(${(5 * lunge).toFixed(2)} ${51 + 14 * lunge} 39)`}>
-        <GridCard x={-40 * (1 - inL) + 36 + 14 * lunge} y={19} art="/card-wars/bikes/firebladesbk.png" edge={A} rating={81} show={reveal} hp={1} />
+        <GridCard x={-40 * (1 - inL) + 36 + 14 * lunge} y={19} art="/switchback/bikes/firebladesbk.png" edge={A} rating={81} show={reveal} hp={1} />
       </g>
-      <GridCard x={40 * (1 - inR) + 82 + shake} y={19} art="/card-wars/cars/m3.png" edge="#9ca3af" rating={70} show={reveal} hp={hp} />
+      <GridCard x={40 * (1 - inR) + 82 + shake} y={19} art="/switchback/cars/m3.png" edge="#9ca3af" rating={70} show={reveal} hp={hp} />
       {flash > 0 && <circle cx={84} cy={39} r={6 + 16 * (1 - flash)} fill="white" opacity={0.35 * flash} />}
       <Pop x={128} y={42} s={s} at={BG_HIT + 0.05} label={`−${BG_DAMAGE}`} color={RED} />
     </g>

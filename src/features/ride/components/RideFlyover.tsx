@@ -17,6 +17,7 @@ import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import type { RideSession } from '@/types/blacktop';
 import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame } from '../lib/flyover';
 import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
+import { roadGapsForRide, withRoadGaps, type RoadGap } from '../lib/roadGaps';
 import { tr } from '@/lib/i18n';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
@@ -34,6 +35,16 @@ const VIDEO_SPEEDS = [100, 125, 150, 175, 200] as const;
 /** The chase camera: what a download always uses, and where the on-screen camera starts. */
 const CHASE = { zoom: 15.6, pitch: 62 };
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+/** Longest the flyover waits for the map's tiles in one go. */
+const HOLD_S = 1.5;
+/** The basemap's own tiles in view are in (terrain can keep filling in behind). */
+function basemapLoaded(map: MapLibreMap) {
+  try {
+    return map.getSource('openmaptiles') ? map.isSourceLoaded('openmaptiles') : map.areTilesLoaded();
+  } catch {
+    return true;
+  }
+}
 
 interface RideFlyoverProps {
   ride: RideSession;
@@ -87,6 +98,8 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const [locked, setLocked] = useState(true);
   const [videoSpeed, setVideoSpeed] = useState<number>(100);
   const [recording, setRecording] = useState(false);
+  const recordingRef = useRef(false);
+  recordingRef.current = recording;
   const [convertProgress, setConvertProgress] = useState<number | null>(null);
 
   const accentColor = useMemo(() => {
@@ -99,21 +112,42 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     [ride],
   );
 
+  // Gaps in the GPS (an iPhone's web app gets no fixes with the screen locked) filled with the road between,
+  // so the flyover follows the roads rather than straight lines; the map waits for them (8 s at most).
+  const [gaps, setGaps] = useState<RoadGap[] | null>(() => ride.roadGaps ?? (ride.roadChecked ? [] : null));
+  useEffect(() => {
+    if (gaps) return;
+    let live = true;
+    const giveUp = window.setTimeout(() => live && setGaps([]), 8000);
+    void roadGapsForRide(ride)
+      .catch(() => [] as RoadGap[])
+      .then((g) => {
+        window.clearTimeout(giveUp);
+        if (live) setGaps((cur) => cur ?? g);
+      });
+    return () => {
+      live = false;
+      window.clearTimeout(giveUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ride]);
+  const points = useMemo(
+    () => (gaps ? withRoadGaps((ride.gpsPoints ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)), gaps) : []),
+    [ride, gaps],
+  );
+
   const frames = useMemo(
     () =>
-      buildFlyoverFrames(ride.gpsPoints ?? [], {
+      buildFlyoverFrames(points, {
         durationSec: duration,
         fps: FPS,
         leanSamples: ride.leanSamples,
         gForceSamples: ride.gForceSamples,
       }),
-    [ride, duration],
+    [ride, points, duration],
   );
 
-  const routeCoords = useMemo(
-    () => (ride.gpsPoints ?? []).map(p => [p.lng, p.lat] as [number, number]),
-    [ride],
-  );
+  const routeCoords = useMemo(() => points.map(p => [p.lng, p.lat] as [number, number]), [points]);
 
   const rideStartTs = ride.gpsPoints?.[0]?.timestamp ?? 0;
   const rideEndTs = ride.gpsPoints?.[ride.gpsPoints.length - 1]?.timestamp ?? 0;
@@ -234,7 +268,16 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       title: string,
       lines: Array<[string, string]>,
       color: string,
+      scale = 1,
     ) => {
+      // Drawn about the pin at `scale` (bigger as the camera zooms in), kept on the canvas.
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.translate(-x, -y);
+      const left = x - x / scale;
+      const right = x + (CANVAS_W - x) / scale;
+      const top = y - y / scale;
       const padding = 12;
       ctx.font = 'bold 16px system-ui';
       let width = ctx.measureText(title).width;
@@ -245,8 +288,8 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       const boxW = width + padding * 2;
       const boxH = 30 + lines.length * 20 + padding;
 
-      const bx = Math.max(8, Math.min(CANVAS_W - boxW - 8, x - boxW / 2));
-      const by = Math.max(8, y - boxH - 26);
+      const bx = Math.max(left + 8, Math.min(right - boxW - 8, x - boxW / 2));
+      const by = Math.max(top + 8, y - boxH - 26);
 
       // Leader line down to the pin
       ctx.strokeStyle = color;
@@ -293,6 +336,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.strokeStyle = 'rgba(0,0,0,0.6)';
       ctx.lineWidth = 2;
       ctx.stroke();
+      ctx.restore();
     },
     [],
   );
@@ -347,6 +391,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       if (settings.leanAngleEnabled) lines.push(['Lean', `${Math.abs(Math.round(frame.lean))}°`]);
       if (settings.gForceEnabled) lines.push(['G', `${(frame.gForce || 0).toFixed(1)}G`]);
 
+      // The cards grow as the camera zooms in on the rider (and shrink a little zoomed out). On screen they're
+      // also drawn bigger for the canvas being shrunk to the phone's width; a download keeps them as they are.
+      const zoomScale = clamp(2 ** ((map.getZoom() - CHASE.zoom) * 0.6), 0.75, 2.4);
+      const onScreen = recordingRef.current ? 1 : clamp((CANVAS_W / Math.max(1, canvas.clientWidth)) * 0.45, 1, 2);
+      const cardScale = zoomScale * onScreen;
+
       // Convoy member pins first so the rider card renders on top.
       const ts = rideStartTs + (rideEndTs - rideStartTs) * (frame.elapsed / Math.max(0.001, (rideEndTs - rideStartTs) / 1000));
       for (const track of memberTracks) {
@@ -354,11 +404,11 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         if (!pos) continue;
         const pt = map.project([pos.lng, pos.lat]);
         if (pt.x < -100 || pt.x > CANVAS_W + 100 || pt.y < -100 || pt.y > CANVAS_H + 100) continue;
-        drawStatCard(ctx, pt.x, pt.y, track.name || 'Rider', [], track.color || '#ffffff');
+        drawStatCard(ctx, pt.x, pt.y, track.name || 'Rider', [], track.color || '#ffffff', cardScale);
       }
 
       const self = map.project([frame.lng, frame.lat]);
-      drawStatCard(ctx, self.x, self.y, profile.name.trim() || 'You', lines, accentColor);
+      drawStatCard(ctx, self.x, self.y, profile.name.trim() || 'You', lines, accentColor, cardScale);
 
       // Progress bar
       const progress = frames.length ? frameIndexRef.current / (frames.length - 1) : 0;
@@ -433,10 +483,25 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       lastRouteIndexRef.current = -1;
       let last = performance.now();
       let lastShown = 0;
+      /** Seconds the current wait for tiles may still last (see below). */
+      let holdLeft = HOLD_S;
       const end = frames.length - 1;
       const tick = (now: number) => {
         const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
         last = now;
+        // At a car's pace the camera outruns the map: areas whose tiles haven't arrived draw as the bare
+        // background, and copying those frames made the picture flash darker and lighter. Hold still (the last
+        // good picture stays up) until the basemap in view has loaded, for a moment at most each time.
+        const map = mapRef.current;
+        if (map && !basemapLoaded(map)) {
+          if (holdLeft > 0) {
+            holdLeft -= dt;
+            rafRef.current = requestAnimationFrame(tick);
+            return;
+          }
+        } else {
+          holdLeft = HOLD_S;
+        }
         const raw = posRef.current + dirRef.current * rateRef.current * FPS * dt;
         const at = clamp(raw, 0, end);
         posRef.current = at;

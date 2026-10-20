@@ -38,7 +38,7 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
     track.style.transform = `translate3d(calc(${-index * 100}% + ${dx}px), 0, 0)`;
   };
 
-  // The first placement is where the deck opens (Home is the second card, Command the first): no slide in to it.
+  // The first placement is where the deck opens (Home is the second card, Console the first): no slide in to it.
   useLayoutEffect(() => {
     place(0, placed.current);
     placed.current = true;
@@ -156,7 +156,7 @@ export function SwipeDeckPips({
   index: number;
   onSelect: (i: number) => void;
   labels?: string[];
-  /** A card with something new on it (Blacktop Command's unseen notifications): its pip glows. */
+  /** A card with something new on it (Blacktop Console's unseen notifications): its pip glows. */
   marks?: boolean[];
   className?: string;
 }) {

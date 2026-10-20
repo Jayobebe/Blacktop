@@ -75,7 +75,7 @@ export class NoVehicleFound extends Error {}
 /**
  * A photo of the rider's vehicle, made into garage artwork on the phone: the
  * vehicle found as one shape (`vehicleMask`), everything else cleared, then
- * redrawn as pixel art in the Card Wars look (`pixelArt`: about 120 pixels
+ * redrawn as pixel art in the SwitchBack look (`pixelArt`: about 120 pixels
  * across, a short palette, a dark line round it). At that size the vehicle
  * is plain to see and a number plate, sponsor lettering or a sticker is a
  * few flat pixels nobody can read. The photo itself goes nowhere.

@@ -91,6 +91,8 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
   const stagesRef = useRef<Map<number, number>>(new Map());
   const lastNextRef = useRef<number>(-1);
   const stopsDoneRef = useRef<Set<number>>(new Set());
+  /** Legs the rider has been matched onto: a stop only counts once its own leg has been ridden. */
+  const legsSeenRef = useRef<Set<number>>(new Set());
   const arrivedRef = useRef(false);
   const lastRerouteAtRef = useRef(0);
   useEffect(() => {
@@ -99,6 +101,7 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
     stagesRef.current = new Map();
     lastNextRef.current = -1;
     stopsDoneRef.current = new Set();
+    legsSeenRef.current = new Set();
     arrivedRef.current = false;
     noteIdxRef.current = 0;
     setArrived(false);
@@ -155,9 +158,15 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
     }
 
     // ── Stops and arrival ──
+    // In order, and each only from its own leg: a match that lands further along (a route that comes back
+    // past here) can't count the stops before it as reached.
+    if (snap.offset < OFF_ROUTE_M) {
+      const leg = nav.legEnds.findIndex((e) => along <= e);
+      legsSeenRef.current.add(leg < 0 ? nav.legEnds.length - 1 : leg);
+    }
     for (let i = 0; i < nav.legEnds.length - 1; i++) {
       if (stopsDoneRef.current.has(i)) continue;
-      if (along >= nav.legEnds[i] - ARRIVE_M && snap.offset < OFF_ROUTE_M) {
+      if (legsSeenRef.current.has(i) && along >= nav.legEnds[i] - ARRIVE_M && snap.offset < OFF_ROUTE_M) {
         stopsDoneRef.current.add(i);
         cbRef.current.onStopReached(i);
       }

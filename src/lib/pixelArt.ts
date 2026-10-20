@@ -1,6 +1,6 @@
 /**
- * A rider's vehicle photo redrawn in the look of the Card Wars artwork (the
- * same steps as `finish` / `style` in scripts/make-card-wars-art.py, kept in
+ * A rider's vehicle photo redrawn in the look of the SwitchBack artwork (the
+ * same steps as `finish` / `style` in scripts/make-switchback-art.py, kept in
  * step with it): the vehicle about 120 pixels on its longer side, a short
  * palette of its own colours, stray pixels tidied, near-white kept white and a
  * dark line round the outside. The picture's own frame is kept (it isn't

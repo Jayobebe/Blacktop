@@ -6,7 +6,7 @@ import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { saveModeBest, saveScore, useArcadeScores, useModeBests } from '../../hooks/useArcadeScores';
-import { payArcadeGame } from '@/features/card-wars/light';
+import { payArcadeGame } from '@/features/switchback/light';
 import { PageTips } from '@/features/guide';
 
 /*
@@ -330,7 +330,7 @@ export function HitHeavy() {
       s.record = saveModeBest('hit-heavy-precision', total);
     }
     if (s.record) haptics.success();
-    // A finished game pays a little RPM for Card Wars (more for a best); the server caps the day.
+    // A finished game pays a little RPM for SwitchBack (more for a best); the server caps the day.
     void payArcadeGame('hit-heavy', !!s.record);
   }, []);
 

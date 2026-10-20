@@ -25,7 +25,7 @@ export interface SpectreCard {
   timeSec: number;
   targetSec: number;
   earnedAt: number;
-  /** The Card Wars power its dog tag has: spun for the first time the card is turned over in the vault. */
+  /** The SwitchBack power its dog tag has: spun for the first time the card is turned over in the vault. */
   power?: 'reroll' | 'heal' | 'boost' | 'flip';
 }
 

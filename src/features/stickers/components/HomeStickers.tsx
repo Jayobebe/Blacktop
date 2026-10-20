@@ -28,7 +28,7 @@ const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 const angle = (a: Pt, b: Pt) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 const HANDLE = 22; // the corner handle's radius
 
-/** One sticker's picture: the photo it was cut from, or (Settings → Pixel-art cards) that photo in the Card Wars look. */
+/** One sticker's picture: the photo it was cut from, or (Settings → Pixel-art cards) that photo in the SwitchBack look. */
 function StickerArt({ src, className, style }: { src: string; className?: string; style?: CSSProperties }) {
   const art = useCardArt(src);
   return <img src={art} alt="" draggable={false} className={className} style={style} />;

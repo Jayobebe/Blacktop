@@ -33,7 +33,7 @@ import { formatSpectreTime as formatChallengeTime, formatSpectreGap as formatDel
 import { tr } from '@/lib/i18n';
 
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
-import { BattleCard, VaultTags, useBattleCards, useRedlineCards, type VaultBattleCard } from '@/features/card-wars/collection';
+import { BattleCard, VaultTags, useBattleCards, useRedlineCards, type VaultBattleCard } from '@/features/switchback/collection';
 import { CardLift } from './CardLift';
 import { TierFx } from '@/components/TierFx';
 import { VaultCarousel } from './VaultCarousel';
@@ -211,7 +211,7 @@ export function CollectedCardsFolder({ spectreBack }: { spectreBack?: SpectreBac
     })),
   ];
   const battleEntry = (card: VaultBattleCard, held: boolean): Entry => ({
-    key: `cw:${card.id}`,
+    key: `sb:${card.id}`,
     title: card.name,
     locked: !held,
     card: (turn, onTap) =>
@@ -534,7 +534,7 @@ function OwnFlipCard({ card, turn, onTap, edit }: { card: VehicleCardData; turn?
   return <FlipCard card={{ ...payload, key: `own-${card.bike.id}`, img: hero || undefined, collectedAt: 0 }} image={hero && (edit || turn === undefined) ? image : undefined} trend={card.trend} turn={turn} onTap={onTap} />;
 }
 
-/** What a Spectre's back shows (its Card Wars dog tag): drawn by whoever hosts the vault, so cards don't depend on Card Wars. */
+/** What a Spectre's back shows (its SwitchBack dog tag): drawn by whoever hosts the vault, so cards don't depend on SwitchBack. */
 export type SpectreBack = (spectre: SpectreCard, shown: boolean, assign: (power: NonNullable<SpectreCard['power']>) => void) => React.ReactNode;
 
 /** A Spectre's front, under the photo: where it was won, both times and the gap. */
@@ -647,7 +647,7 @@ function FlipCard({ card, spectre, spectreBack, stickerKey = `card:${card.key}`,
   );
 }
 
-/** A card won in Card Wars: its face, and on the back its sticker. */
+/** A card won in SwitchBack: its face, and on the back its sticker. */
 function WonFlipCard({ card, turn, onTap }: { card: VaultBattleCard; turn?: number; onTap?: () => void }) {
   const [own, setOwn] = useState(false);
   const led = turn !== undefined;
@@ -681,7 +681,7 @@ function WonFlipCard({ card, turn, onTap }: { card: VaultBattleCard; turn?: numb
               <div className="flex-1 min-h-0 w-full flex items-center justify-center p-3">
                 <StickerPreview src={card.image} />
               </div>
-              <StickerControl card={`cw:${card.id}`} name={card.name} src={card.image} className="shrink-0" />
+              <StickerControl card={`sb:${card.id}`} name={card.name} src={card.image} className="shrink-0" />
             </>
           ) : (
             <p className="flex-1 flex items-center text-center text-[11px] text-white/60">{tr("This card's sticker isn't printed yet.")}</p>

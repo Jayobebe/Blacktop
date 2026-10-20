@@ -1,6 +1,6 @@
 /**
  * A rescue call asked for by hand, away from the ride screen (the map's held R,
- * Blacktop Command's held rescue action): one "Are you okay?" card for the whole
+ * Blacktop Console's held rescue action): one "Are you okay?" card for the whole
  * app, shown by RescueAskHost (mounted once in App.tsx, outside every sheet), so
  * a press inside a sheet or the map overlay can still be answered. The host sends
  * the convoy's call through the rescue bridge in a convoy, otherwise the solo

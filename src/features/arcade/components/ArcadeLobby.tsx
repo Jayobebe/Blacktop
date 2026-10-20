@@ -6,8 +6,8 @@ import { useArcadeScores } from '../hooks/useArcadeScores';
 import { syncExistingArcadeScores } from '../lib/publishArcadeScore';
 import { tr } from '@/lib/i18n';
 import { PageTips } from '@/features/guide';
-// Not the Card Wars barrel: only its panel belongs on this page.
-import { CardWarsArcadePanel } from '@/features/card-wars/light';
+// Not the SwitchBack barrel: only its panel belongs on this page.
+import { SwitchBackArcadePanel } from '@/features/switchback/light';
 
 export function ArcadeLobby() {
   const navigate = useNavigate();
@@ -20,14 +20,14 @@ export function ArcadeLobby() {
 
   return (
     <section className="w-full h-full flex flex-col">
-      {/* First-time tips: what each game is, and that playing here pays into Card Wars. */}
+      {/* First-time tips: what each game is, and that playing here pays into SwitchBack. */}
       <PageTips
         page="arcade"
         scroll
         tips={[
           { target: '[data-tip="arcade-hit"]', text: tr("Hold your phone tight in your fist and punch. Blacktop measures the hit in G.") },
           { target: '[data-tip="arcade-petrol"]', text: tr("Dodge traffic and grab fuel cans. Near misses charge a shield.") },
-          { target: '[data-tip="arcade-cw"]', text: tr("Finishing a game here pays RPM for SwitchBack. A personal best pays more.") },
+          { target: '[data-tip="arcade-sb"]', text: tr("Finishing a game here pays RPM for SwitchBack. A personal best pays more.") },
         ]}
       />
       {/* Game tiles */}
@@ -80,11 +80,11 @@ export function ArcadeLobby() {
             <div className="text-[10px] text-muted-foreground/60 mt-0.5 leading-tight">{tr("Real-world lightcycles · 2-8 riders")}</div>
           </div>
           <div className="text-[10px] text-muted-foreground text-right">
-            {scores['legacy-derez'] > 0 ? tr("Wins: {0}", [scores['legacy-derez']]) : tr("No wins yet")}
+            {scores['gridlock'] > 0 ? tr("Wins: {0}", [scores['gridlock']]) : tr("No wins yet")}
           </div>
         </button>
-        {/* Card Wars has more to show than a best score: its panel takes the rest of the page. */}
-        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && <CardWarsArcadePanel onOpen={() => navigate('/arcade/switchback')} />}
+        {/* SwitchBack has more to show than a best score: its panel takes the rest of the page. */}
+        {settings.blacktopWorldEnabled && settings.collectiblesEnabled && <SwitchBackArcadePanel onOpen={() => navigate('/arcade/switchback')} />}
       </div>
     </section>
   );
