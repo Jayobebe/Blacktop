@@ -1605,6 +1605,36 @@ export type Database = {
           },
         ]
       }
+      fuel_price_reports: {
+        Row: {
+          country: string | null
+          currency: string
+          fuel: string
+          id: number
+          price: number
+          reported_at: string
+          station_id: string
+        }
+        Insert: {
+          country?: string | null
+          currency: string
+          fuel: string
+          id?: number
+          price: number
+          reported_at?: string
+          station_id: string
+        }
+        Update: {
+          country?: string | null
+          currency?: string
+          fuel?: string
+          id?: number
+          price?: number
+          reported_at?: string
+          station_id?: string
+        }
+        Relationships: []
+      }
       hazard_votes: {
         Row: {
           created_at: string
@@ -2587,6 +2617,18 @@ export type Database = {
       cw_wildcard_grant: { Args: { _u: string }; Returns: string[] }
       delete_crew_event: { Args: { _id: string }; Returns: boolean }
       enterprise_role: { Args: { _org: string }; Returns: string }
+      fuel_prices_for: {
+        Args: { _ids: string[] }
+        Returns: {
+          currency: string
+          fuel: string
+          high: number
+          latest: string
+          low: number
+          n: number
+          station_id: string
+        }[]
+      }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
         Args: never
@@ -2827,6 +2869,16 @@ export type Database = {
         Returns: undefined
       }
       remove_my_hazard: { Args: { _id: string }; Returns: undefined }
+      report_fuel_price: {
+        Args: {
+          _country?: string
+          _currency: string
+          _fuel: string
+          _price: number
+          _station_id: string
+        }
+        Returns: string
+      }
       report_hazard: {
         Args: { _heading?: number; _kind: string; _lat: number; _lng: number }
         Returns: string
