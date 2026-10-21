@@ -19,6 +19,8 @@ const INBOX_KIND: Partial<Record<PushCategory, InboxKind>> = {
   crew_convoys: 'crew',
   challenges: 'crew',
   maintenance: 'service',
+  calendar: 'calendar',
+  crew_events: 'calendar',
 };
 import { nativePermission, nativePushAvailable, nativePushEndpoint, requestNativePermission, unregisterNativePush } from './nativePush';
 
@@ -49,6 +51,8 @@ const CATEGORY_DEFS = [
   { id: 'crew_convoys', label: tr("Crew convoys"), desc: tr("A crew mate opens an unlocked convoy you can join") },
   { id: 'challenges', label: tr("Crew challenges"), desc: tr("Targets hit, weekly and monthly results, and a 5-days-left nudge") },
   { id: 'maintenance', label: tr("Maintenance"), desc: tr("Service items coming due or overdue") },
+  { id: 'calendar', label: tr("Calendar"), desc: tr("Your plans and reminders on the Blacktop Calendar") },
+  { id: 'crew_events', label: tr("Crew plans"), desc: tr("A crew mate plans a ride or a meet, and the evening before one you're going to") },
 ] as const;
 
 export type PushCategory = (typeof CATEGORY_DEFS)[number]['id'] | 'blacktank';
@@ -419,8 +423,10 @@ export async function disablePush(): Promise<void> {
     if (nativePushAvailable()) {
       const endpoint = await nativePushEndpoint().catch(() => null);
       if (endpoint) {
-        await supabase.rpc('set_push_reminders' as never, { _category: 'maintenance', _reminders: [] } as never);
-        lastReminders = '';
+        for (const kind of ['maintenance', 'calendar']) {
+          await supabase.rpc('set_push_reminders' as never, { _category: kind, _reminders: [] } as never);
+          delete lastReminders[kind];
+        }
         await supabase.rpc('unregister_push_subscription' as never, { _endpoint: endpoint } as never);
       }
       await unregisterNativePush();
@@ -428,8 +434,10 @@ export async function disablePush(): Promise<void> {
       const reg = await navigator.serviceWorker.getRegistration('/');
       const sub = await reg?.pushManager?.getSubscription();
       if (sub) {
-        await supabase.rpc('set_push_reminders' as never, { _category: 'maintenance', _reminders: [] } as never);
-        lastReminders = '';
+        for (const kind of ['maintenance', 'calendar']) {
+          await supabase.rpc('set_push_reminders' as never, { _category: kind, _reminders: [] } as never);
+          delete lastReminders[kind];
+        }
         await supabase.rpc('unregister_push_subscription' as never, { _endpoint: sub.endpoint } as never);
         await sub.unsubscribe().catch(() => {});
       }
@@ -605,18 +613,19 @@ export interface PushReminder {
   due_at: string;
 }
 
-let lastReminders = '';
+/** What each kind last sent (kinds are synced separately, so one doesn't hide the other's change). */
+const lastReminders: Record<string, string> = {};
 
 /** Hands the server this rider's upcoming time-based reminders of one kind (replacing the old set). */
-export async function syncPushReminders(kind: 'maintenance', reminders: PushReminder[]): Promise<void> {
+export async function syncPushReminders(kind: 'maintenance' | 'calendar', reminders: PushReminder[]): Promise<void> {
   if (isDemoModeActive()) return;
   const list = wantsPush(kind) ? reminders : [];
   const sig = JSON.stringify([kind, list]);
-  if (sig === lastReminders) return;
+  if (sig === lastReminders[kind]) return;
   try {
     await ensureSession();
     const { error } = await supabase.rpc('set_push_reminders' as never, { _category: kind, _reminders: list } as never);
-    if (!error) lastReminders = sig;
+    if (!error) lastReminders[kind] = sig;
   } catch {
     /* retried on the next change */
   }

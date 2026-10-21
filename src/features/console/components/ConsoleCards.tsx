@@ -32,11 +32,12 @@ import { useArcadeScores } from '@/features/arcade/hooks/useArcadeScores';
 import { useConvoyState } from '@/features/convoy';
 import { setRideRole } from '@/features/pillion';
 import { useHazards, fetchHazards, boundsAround, HAZARD_BY_KIND, hazardColor } from '@/features/hazards';
-import { useShop, refreshShop } from '@/features/switchback/lib/shop';
-import { dailyChallenge, showRpm } from '@/features/switchback/lib/rules';
 import { useRiderWeather, readWeather, wet, type WeatherHour, type WeatherRead } from '../lib/riderWeather';
 import { useRiderSpot, metresBetween, type Spot } from '../lib/whereRider';
 import type { ConsoleCardId } from '../lib/consoleCards';
+import { useCalendarStore, dayKey, addDays, dayStart, itemTime, reminderDayFrom, reminderName } from '@/features/calendar/lib/calendarStore';
+import { nextCrewPlan } from '@/features/calendar/lib/crewEvents';
+import { useDailyForecast } from '@/features/calendar/lib/dailyForecast';
 import { ServiceDoneButton } from './ServiceDoneButton';
 
 // ── Shared look ──────────────────────────────────────────────────────────────
@@ -864,74 +865,61 @@ function HazardsCard({ spot, active }: { spot: Spot | null; active: boolean }) {
   return <Card icon={TriangleAlert} label={tr("Hazards near you")} active={active} faces={faces} />;
 }
 
-// ── SwitchBack ───────────────────────────────────────────────────────────────
+// ── Up next (the Blacktop Calendar) ──
 
-const THEME_NAME: Record<string, () => string> = {
-  speed: () => tr("Speed"),
-  corners: () => tr("Corners"),
-  g: () => tr("G-force"),
-  distance: () => tr("Distance"),
-};
-const MODE_NAME: Record<string, () => string> = {
-  themed: () => tr("Themed"),
-  chaos: () => tr("Chaos"),
-  sudden: () => tr("Sudden death"),
-  bare: () => tr("Bare knuckle"),
-};
-
-function SwitchBackCard({ active }: { active: boolean }) {
+/** The rider's next few things on the calendar (14 days), each with that day's forecast; a tap opens the day. */
+function UpNextCard({ spot, active }: { spot: Spot | null; active: boolean }) {
   const navigate = useNavigate();
-  const { settings } = useSettings();
-  const shop = useShop();
-  const last = useRef(0);
-  const on = settings.collectiblesEnabled && settings.blacktopWorldEnabled;
-  useEffect(() => {
-    if (!on || !active || Date.now() - last.current < 5 * 60_000) return;
-    last.current = Date.now();
-    void refreshShop().catch(() => undefined);
-  }, [on, active]);
-  if (!on) return null;
-  const today = dailyChallenge();
-  const spins = (shop.freeSpins ?? 0) + (shop.freeTagSpins ?? 0);
-  const play = (
-    <Btn primary className="w-full" onClick={() => navigate('/arcade/switchback')}>
-      <Play className="w-4 h-4" /> {tr("Play")}
-    </Btn>
-  );
-  const faces: ReactNode[] = [];
-  if (!shop.dailyDone) {
-    faces.push(
-      <div key="daily">
-        <Lines icon={Swords} main={tr("Today's challenge")} sub={tr("{0}, theme {1}", [MODE_NAME[today.mode]?.() ?? today.mode, THEME_NAME[today.theme]?.() ?? today.theme])} />
-        <div className="mt-2.5">{play}</div>
-      </div>,
-    );
+  const { items } = useCalendarStore();
+  const forecast = useDailyForecast(spot, active);
+  const today = dayKey(Date.now());
+  const until = addDays(today, 14);
+  const lang = document.documentElement.lang || undefined;
+  const next: Array<{ key: string; day: string; at: number; title: string; sub?: string }> = [];
+  for (const i of items) {
+    const day = i.kind === 'reminder' ? reminderDayFrom(i, today) : i.day;
+    if (day < today || day > until) continue;
+    const at = itemTime({ day, time: i.time });
+    if (day === today && i.time && at < Date.now() - 3600_000) continue;
+    const title = i.kind === 'reminder' ? (i.type === 'other' ? i.title : reminderName(i)) : i.kind === 'track' ? tr("Track Day: {0}", [i.circuit]) : i.title;
+    next.push({ key: i.id, day, at, title, sub: i.kind === 'plan' ? i.place?.name : i.kind === 'track' ? tr("{0} of {1} packed", [i.packing.filter((p) => p.done).length, i.packing.length]) : undefined });
   }
-  if (spins > 0) {
-    faces.push(
-      <div key="spins">
-        <Lines icon={Sparkles} main={spins === 1 ? tr("1 free spin waiting") : tr("{0} free spins waiting", [spins])} sub={tr("Cards and dog tags to win")} />
-        <div className="mt-2.5">{play}</div>
-      </div>,
-    );
+  const crew = nextCrewPlan();
+  if (crew && Date.parse(crew.starts_at) <= dayStart(until).getTime()) {
+    next.push({ key: crew.id, day: dayKey(Date.parse(crew.starts_at)), at: Date.parse(crew.starts_at), title: crew.title, sub: [crew.place_name, crew.going === 1 ? tr("1 going") : tr("{0} going", [crew.going])].filter(Boolean).join(' · ') });
   }
-  if (shop.streak > 0) {
-    faces.push(
-      <div key="streak">
-        <Lines icon={Flame} iconClass="text-[hsl(var(--burn))]" main={tr("{0} hard wins in a row", [shop.streak])} sub={tr("Each win in a row pays more")} />
-        <div className="mt-2.5">{play}</div>
-      </div>,
+  next.sort((a, b) => a.at - b.at);
+  const faces = next.slice(0, 4).map((n) => {
+    const w = forecast.get(n.day);
+    const when = n.day === today ? tr("Today") : n.day === addDays(today, 1) ? tr("Tomorrow") : dayStart(n.day).toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'short' });
+    return (
+      <button
+        key={n.key}
+        type="button"
+        onClick={() => {
+          haptics.tick();
+          navigate(`/calendar?day=${n.day}`);
+        }}
+        className="w-full text-left flex items-center gap-3 min-h-[44px]"
+      >
+        <CalendarDays className="w-6 h-6 text-accent shrink-0" />
+        <span className="flex-1 min-w-0">
+          <span className="block text-[15px] font-semibold truncate">{n.title}</span>
+          <span className="block text-xs text-muted-foreground truncate">
+            {[when, clock(n.at), n.sub, w ? (w.verdict === 'dry' ? tr("Dry") : w.verdict === 'showers' ? tr("Showers") : w.verdict === 'wet' ? tr("Wet") : w.verdict === 'gusty' ? tr("Gusty") : tr("Icy")) : null].filter(Boolean).join(' · ')}
+          </span>
+        </span>
+      </button>
     );
-  }
-  if (shop.balance != null && faces.length) {
-    faces.push(
-      <div key="rpm">
-        <Lines icon={Coins} main={tr("{0} RPM", [showRpm(shop.balance)])} sub={tr("Your SwitchBack balance")} />
-        <div className="mt-2.5">{play}</div>
-      </div>,
-    );
-  }
-  return <Card icon={Swords} label="SwitchBack" active={active} faces={faces} />;
+  });
+  return <Card icon={CalendarDays} label={tr("Up next")} active={active} faces={faces} />;
+}
+
+/** A plan for today, when there is one: its own suggestion face, with Start. */
+function useTodaysPlan() {
+  const { items } = useCalendarStore();
+  const today = dayKey(Date.now());
+  return items.find((i) => i.kind === 'plan' && i.day === today && itemTime(i) > Date.now() - 2 * 3600_000) ?? null;
 }
 
 // ── Suggestion ───────────────────────────────────────────────────────────────
@@ -943,10 +931,27 @@ function SuggestionCard({ weather, active }: { weather: WeatherRead | null; acti
   const { terms } = useExperience();
   const { rideState } = useActiveRide();
   const start = useStartRoute();
+  const todays = useTodaysPlan();
   if (!weather || rideState.isActive) return null;
   const now = Date.now();
   const trip = openTrips(trips)[0] ?? null;
   const faces: ReactNode[] = [];
+  // Something planned for today comes first, with the weather it's going to get.
+  if (todays && todays.kind === 'plan') {
+    const route = todays.routeId ? routes.find((r) => r.id === todays.routeId) : null;
+    const go = todays.tripId ? () => start(chooseTrip(todays.tripId!)) : route ? () => start(chooseRouteTrip(route)) : todays.place ? () => start({ destination: todays.place!, stops: [] }) : null;
+    const weatherLine = weather.wetNow ? tr("wet now") : weather.change ? tr("dry until {0}", [clock(weather.change.t)]) : tr("dry all day");
+    faces.push(
+      <div key="today" className="flex items-center gap-3 min-h-[44px]">
+        <p className="flex-1 min-w-0 text-[14px] font-semibold leading-snug">{tr("Today at {0}: {1} ({2})", [todays.time ?? '', todays.title, weatherLine])}</p>
+        {go && (
+          <Btn primary onClick={go} className="shrink-0">
+            {tr("Start")}
+          </Btn>
+        )}
+      </div>,
+    );
+  }
   const face = (key: string, text: string, go?: { label: string; run: () => void }) => (
     <div key={key} className="flex items-center gap-3 min-h-[44px]">
       <p className="flex-1 min-w-0 text-[14px] font-semibold leading-snug">{text}</p>
@@ -1006,6 +1011,8 @@ export function ConsoleCards({ order, active }: { order: ConsoleCardId[]; active
     switch (id) {
       case 'suggest':
         return <SuggestionCard key={id} weather={weather} active={active} />;
+      case 'upnext':
+        return <UpNextCard key={id} spot={spot} active={active} />;
       case 'weather':
         return <WeatherCard key={id} weather={weather} spot={spot} active={active} />;
       case 'pickup':
@@ -1018,8 +1025,6 @@ export function ConsoleCards({ order, active }: { order: ConsoleCardId[]; active
         return <CrewCard key={id} active={active} />;
       case 'hazards':
         return <HazardsCard key={id} spot={spot} active={active} />;
-      case 'switchback':
-        return <SwitchBackCard key={id} active={active} />;
     }
   };
   return <div className="flex flex-col gap-2.5">{order.map(card)}</div>;

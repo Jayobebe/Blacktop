@@ -175,6 +175,8 @@ export async function processEvent(ctx: Ctx, kind: string, p: Row): Promise<void
       return crewWeek(ctx, str(p.user), str(p.crew), str(p.week))
     case 'crew_convoy':
       return crewConvoy(ctx, str(p.id))
+    case 'crew_event':
+      return crewEventPosted(ctx, str(p.id))
     default:
       console.warn('[send-push] unknown event', kind)
   }
@@ -382,11 +384,53 @@ async function crewConvoy(ctx: Ctx, id: string) {
   })
 }
 
+/** A crew plan put on the calendar: the crew hears about it (not whoever posted it). */
+async function crewEventPosted(ctx: Ctx, id: string) {
+  const e = await one(ctx, 'crew_events', id, 'id, crew_code, created_by, creator_name, kind, title, place_name, starts_at')
+  if (!e || !e.crew_code) return
+  if (!(await markOnce(ctx, `crew_event:${id}`))) return
+  const who = clip(str(e.creator_name, 'A crew mate'), 30)
+  const what = clip(str(e.title), 60)
+  const where = str(e.place_name)
+  await deliver(ctx, { crew: str(e.crew_code), exclude: [str(e.created_by)] }, 'crew_events', {
+    title: e.kind === 'meet' ? `📅 ${who} planned a meet` : `📅 ${who} planned a crew ride`,
+    body: where ? `${what} · ${clip(where, 60)}. Tap to say if you're going.` : `${what}. Tap to say if you're going.`,
+    tag: `crew-event-${id}`,
+    url: '/calendar',
+  })
+}
+
+/** The evening before: everyone going or maybe to a crew plan starting in 12 to 24 hours hears once. */
+async function crewEventEve(ctx: Ctx, now: Date) {
+  const from = new Date(now.getTime() + 12 * 3600_000).toISOString()
+  const to = new Date(now.getTime() + 24 * 3600_000).toISOString()
+  const { data, error } = await ctx.admin.from('crew_events').select('id, kind, title, place_name, starts_at').gte('starts_at', from).lt('starts_at', to).limit(200)
+  if (error) {
+    if (error.code === '42P01') return // the table isn't there yet
+    throw error
+  }
+  for (const e of data ?? []) {
+    const { data: rsvps } = await ctx.admin.from('crew_event_rsvps').select('user_id').eq('event_id', e.id).in('status', ['going', 'maybe'])
+    const userIds = [...new Set((rsvps ?? []).map((r) => r.user_id as string))]
+    if (!userIds.length) continue
+    if (!(await markOnce(ctx, `crew_event_eve:${e.id}`))) continue
+    const hours = Math.round((Date.parse(str(e.starts_at)) - now.getTime()) / 3600_000)
+    const where = str(e.place_name)
+    await deliver(ctx, { userIds }, 'crew_events', {
+      title: `📅 Tomorrow: ${clip(str(e.title), 60)}`,
+      body: where ? `Starts in about ${hours} hours at ${clip(where, 60)}.` : `Starts in about ${hours} hours.`,
+      tag: `crew-event-eve-${e.id}`,
+      url: '/calendar',
+    })
+  }
+}
+
 // ── Scheduled (every 10 minutes) ────────────────────────────────────────────
 
 export async function runScheduled(ctx: Ctx, now = new Date()) {
   const jobs: [string, () => Promise<void>][] = [
     ['reminders', () => dueReminders(ctx)],
+    ['crew plans', () => crewEventEve(ctx, now)],
     ['weather', () => weatherAlerts(ctx, now)],
     ['week results', () => weekResults(ctx, now)],
     ['month results', () => monthResults(ctx, now)],

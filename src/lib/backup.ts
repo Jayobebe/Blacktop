@@ -25,6 +25,10 @@
 import { renameBackupKeys } from './renamedKeys';
 const PREFIXES = ['blacktop', 'bt.', 'bt-'];
 const LEFT_OUT = new Set([
+  // Blacktop Calendar: the forecast, crew plans as last read (the server has them), the stopwatch (of the moment).
+  'blacktop_calendar_forecast',
+  'blacktop_calendar_crew',
+  'blacktop_stopwatch',
   // Blacktop Console: the forecast, what the pip last showed, where the crew board stood (all of the moment).
   'blacktop_console_weather',
   'blacktop_console_seen',

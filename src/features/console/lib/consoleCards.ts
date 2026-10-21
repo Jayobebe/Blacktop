@@ -9,14 +9,16 @@
 import { useSyncExternalStore } from 'react';
 import { tr } from '@/lib/i18n';
 
-export type ConsoleCardId = 'suggest' | 'weather' | 'pickup' | 'vehicle' | 'week' | 'crew' | 'hazards' | 'switchback';
+export type ConsoleCardId = 'suggest' | 'upnext' | 'weather' | 'pickup' | 'vehicle' | 'week' | 'crew' | 'hazards';
 
-export const CONSOLE_CARDS: ConsoleCardId[] = ['suggest', 'weather', 'pickup', 'vehicle', 'week', 'crew', 'hazards', 'switchback'];
+export const CONSOLE_CARDS: ConsoleCardId[] = ['suggest', 'upnext', 'weather', 'pickup', 'vehicle', 'week', 'crew', 'hazards'];
 
 export function cardName(id: ConsoleCardId): string {
   switch (id) {
     case 'suggest':
       return tr("Suggestion");
+    case 'upnext':
+      return tr("Up next");
     case 'weather':
       return tr("Riding weather");
     case 'pickup':
@@ -27,10 +29,8 @@ export function cardName(id: ConsoleCardId): string {
       return tr("Your week");
     case 'crew':
       return tr("Crew live");
-    case 'hazards':
-      return tr("Hazards near you");
     default:
-      return "SwitchBack";
+      return tr("Hazards near you");
   }
 }
 

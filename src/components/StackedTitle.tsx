@@ -22,6 +22,8 @@ export interface TitleSquare {
   big: string;
   label: string;
   onPress: () => void;
+  /** Something on today: a small dot in the square's corner. */
+  dot?: boolean;
 }
 /** The square's side, and the gap before it, as shares of the title's font size. */
 const SQUARE = 0.86;
@@ -153,6 +155,7 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
         >
           <span className="font-black uppercase tracking-wide" style={{ fontSize: side * 0.2 }}>{square.top}</span>
           <span className="font-black font-mono" style={{ fontSize: side * 0.48, marginTop: side * 0.02 }}>{square.big}</span>
+          {square.dot && <span aria-hidden className="absolute rounded-full bg-[hsl(0_0%_6%)]" style={{ width: side * 0.14, height: side * 0.14, top: side * 0.1, right: side * 0.1 }} />}
         </button>
       )}
     </div>

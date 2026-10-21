@@ -1,3 +1,4 @@
+import { logActivity } from '@/features/calendar/lib/calendarStore';
 import { announceSoloRescueToDiscord } from '@/features/integrations/discord';
 import { notifyRescue } from '@/features/notifications';
 import type { AppSettings } from '@/features/settings';
@@ -21,6 +22,7 @@ export async function sendSoloRescue(args: {
   auto?: boolean;
 }): Promise<string[]> {
   const { settings, discordEnabled, riderName, lat, lng, auto = false } = args;
+  logActivity('rescue_sent');
   const reach = rescueReach(settings);
   const [discord, push] = await Promise.all([
     discordEnabled && reach.discord

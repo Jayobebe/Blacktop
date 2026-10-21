@@ -1885,3 +1885,19 @@ html.thermal .suggest-list.suggest-nudge > * { animation: none; }
   -webkit-mask-image: linear-gradient(to top, black 45%, transparent);
   mask-image: linear-gradient(to top, black 45%, transparent);
 }
+
+/* A finished trip's receipt: the stamp inked across its foot, pressed on as it shows. */
+.trip-stamp {
+  transform: rotate(-6deg);
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px var(--ink);
+  opacity: 0.9;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.thermal) .trip-stamp { animation: trip-stamp-in 420ms cubic-bezier(0.2, 1.4, 0.4, 1) 500ms both; }
+}
+@keyframes trip-stamp-in {
+  0% { transform: rotate(-14deg) scale(1.9); opacity: 0; }
+  70% { opacity: 0.95; }
+  100% { transform: rotate(-6deg) scale(1); opacity: 0.9; }
+}

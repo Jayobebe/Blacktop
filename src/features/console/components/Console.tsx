@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Bell, LifeBuoy, Users, Trophy, Wrench, CloudRain, TriangleAlert, Sparkles, Timer, Plus, Check,
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Navigation, Route, Play, Map as MapIcon, Bike, ShieldCheck, SlidersHorizontal,
-  Radio, LayoutGrid,
+  Radio, LayoutGrid, CalendarDays,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -28,9 +28,9 @@ import { arranged, cardName, contextOrder, resetCards, setCardHidden, setCardOrd
 import { markConsoleSeen } from '../lib/news';
 import { Switch } from '@/components/ui/switch';
 import { StackedTitle } from '@/components/StackedTitle';
+import { useCalendarStore, hasItemsOn, dayKey, dayStart, getCalendarItems, reminderDayFrom, reminderName } from '@/features/calendar/lib/calendarStore';
+import { nextCrewPlan, cachedCrewEvents } from '@/features/calendar/lib/crewEvents';
 
-// The calendar only loads when the title's date square is pressed (react-day-picker stays out of the Console till then).
-const ConsoleCalendar = lazy(() => import('./ConsoleCalendar'));
 import { ServiceDoneButton } from './ServiceDoneButton';
 import { useGarage, useBikeStats } from '@/features/garage';
 
@@ -52,7 +52,13 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
   const [adding, setAdding] = useState(false);
   const inbox = useInbox();
   const [editingCards, setEditingCards] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const navigate = useNavigate();
+  // Something of the rider's own on today (a plan, a reminder, a crew plan they're going to): a dot on the square.
+  const calendar = useCalendarStore();
+  const somethingToday = useMemo(() => {
+    const today = dayKey(Date.now());
+    return hasItemsOn(today) || (nextCrewPlan() ? dayKey(Date.parse(nextCrewPlan()!.starts_at)) === today : false);
+  }, [calendar, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const prefs = useConsoleCardPrefs();
   const { rides } = useRideHistory();
   const lastEnded = useMemo(() => {
@@ -108,7 +114,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
         <StackedTitle
           second={tr("Console")}
           label={tr("Blacktop Console")}
-          square={{ ...todaySquare(), label: tr("Open the calendar"), onPress: () => setCalendarOpen(true) }}
+          square={{ ...todaySquare(), label: tr("Open the calendar"), dot: somethingToday, onPress: () => navigate('/calendar') }}
         />
       </header>
 
@@ -201,11 +207,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
 
       <QuickActionsEditor open={editing} onOpenChange={setEditing} actions={actions} ids={ids} />
       <CardsEditor open={editingCards} onOpenChange={setEditingCards} order={cardOrder} hidden={prefs.hidden} />
-      {calendarOpen && (
-        <Suspense fallback={null}>
-          <ConsoleCalendar open={calendarOpen} onOpenChange={setCalendarOpen} />
-        </Suspense>
-      )}
+
       <QuickActionPicker
         open={adding}
         onOpenChange={setAdding}
@@ -281,6 +283,7 @@ const KIND_ICON: Record<InboxKind, typeof Bell> = {
   hazard: TriangleAlert,
   cards: Sparkles,
   track: Timer,
+  calendar: CalendarDays,
   general: Bell,
 };
 
@@ -403,6 +406,12 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
     .filter((p) => !savedNames.has(p.name) && hit(p.name, p.address))
     .slice(0, 5);
   const pastRides = rides.filter((r) => hit(r.name)).slice(0, 5);
+  // What's on the Blacktop Calendar: plans, reminders, Track Days, and crew plans seen lately.
+  const calendar = getCalendarItems()
+    .map((i) => ({ id: i.id, day: i.kind === 'reminder' ? reminderDayFrom(i, dayKey(Date.now())) : i.day, title: i.kind === 'reminder' ? (i.type === 'other' ? i.title : reminderName(i)) : i.kind === 'track' ? tr("Track Day: {0}", [i.circuit]) : i.title }))
+    .concat(cachedCrewEvents().map((e) => ({ id: e.id, day: dayKey(Date.parse(e.starts_at)), title: e.title })))
+    .filter((c) => hit(c.title))
+    .slice(0, 5);
 
   const Row = ({ icon, label, caption, onClick }: { icon: ReactNode; label: string; caption?: string; onClick: () => void }) => (
     <li>
@@ -454,6 +463,15 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
           label={r.name!}
           caption={[tr("Rides"), new Date(r.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })].join(' · ')}
           onClick={() => navigate(`/ride/${r.id}`)}
+        />
+      ))}
+      {calendar.map((c) => (
+        <Row
+          key={c.id}
+          icon={<CalendarDays className="w-5 h-5 text-accent" />}
+          label={c.title}
+          caption={[tr("Calendar"), dayStart(c.day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })].join(' · ')}
+          onClick={() => navigate(`/calendar?day=${c.day}`)}
         />
       ))}
       {/* Anything else: the map's own search. */}

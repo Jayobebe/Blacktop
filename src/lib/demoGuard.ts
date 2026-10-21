@@ -20,6 +20,9 @@ import { isDemoModeActive } from '@/lib/demoMode';
  */
 
 const WRITE_RPCS = new Set([
+  'create_crew_event',
+  'delete_crew_event',
+  'rsvp_crew_event',
   'set_profile_country',
   'cw_save_wear',
   'cw_report_wear',

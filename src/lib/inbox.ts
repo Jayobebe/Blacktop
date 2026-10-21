@@ -12,7 +12,7 @@
 import { useSyncExternalStore } from 'react';
 import { demoInbox, useDemoMode } from '@/lib/demoMode';
 
-export type InboxKind = 'rescue' | 'convoy' | 'crew' | 'service' | 'weather' | 'hazard' | 'cards' | 'track' | 'general';
+export type InboxKind = 'rescue' | 'convoy' | 'crew' | 'service' | 'weather' | 'hazard' | 'cards' | 'track' | 'calendar' | 'general';
 
 export interface InboxItem {
   id: string;
@@ -105,6 +105,7 @@ export function useInbox(): { items: InboxItem[]; unread: number } {
 function kindOfPush(url: string, tag: string): InboxKind {
   const s = `${url} ${tag}`.toLowerCase();
   if (s.includes('rescue')) return 'rescue';
+  if (s.includes('calendar') || s.includes('crew-event')) return 'calendar';
   if (s.includes('weather') || s.includes('storm') || s.includes('rain')) return 'weather';
   if (s.includes('crew') || s.includes('challenge') || s.includes('leaderboard')) return 'crew';
   if (s.includes('convoy') || s.includes('lobby')) return 'convoy';

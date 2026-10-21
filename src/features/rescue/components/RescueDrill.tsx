@@ -1,3 +1,4 @@
+import { logActivity } from '@/features/calendar/lib/calendarStore';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, CircleAlert, Siren, XCircle } from 'lucide-react';
@@ -106,6 +107,8 @@ function RescueDrillScreens({ onClose }: { onClose: () => void }) {
   };
 
   const finish = (how: 'okay' | 'timeout') => {
+    // On the calendar: when the last drill was, and when the next is due.
+    logActivity('drill');
     setAnswered(how);
     setPhase('result');
   };

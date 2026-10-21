@@ -213,10 +213,13 @@ DEMO_RIDES.forEach((r) => { r.bikeId = DEMO_BIKE_ID; });
   [12, 'Rain, rain and more rain'],
   [19, 'Chain stretched, limped home'],
   [23, 'South Downs with Rico'],
+  [24, 'Peaks day 3: home'],
+  [25, 'Peaks day 2: Snake Pass'],
+  [26, 'Peaks day 1: up north'],
   [27, 'Sunset run'],
   [31, 'First ride after service'],
-  [36, 'Wales weekend day 1'],
-  [37, 'Wales weekend day 2'],
+  [37, 'Wales weekend day 1'],
+  [36, 'Wales weekend day 2'],
   [42, 'Picked her up'],
 ] as const).forEach(([i, name]) => {
   if (DEMO_RIDES[i]) DEMO_RIDES[i].name = name;
@@ -434,10 +437,59 @@ export const DEMO_SAVED_ROUTES: SavedRoute[] = [
   },
 ];
 
-/** The Wales weekend as a trip (ride/lib/trips): days 1 and 2 are its first two legs, the ride home still to do. */
+/** A finished trip: the Peak District over three days and four legs. */
+const PEAKS_POINTS = [
+  { lat: 51.4613, lng: -0.1156, name: 'Home' },
+  { lat: 53.1383, lng: -1.5537, name: 'Matlock Bath' },
+  { lat: 53.4211, lng: -1.8458, name: 'Snake Pass' },
+  { lat: 53.2587, lng: -1.9101, name: 'Buxton' },
+  { lat: 51.4613, lng: -0.1156, name: 'Home' },
+];
+/** Rides 26, 25 and 24 (oldest first): the Peak District, finished. Ride 25 took in two legs. */
+const PEAKS_LEGS: [number, number, number, number, number, number][] = [
+  // ride, from leg, to leg, miles, seconds, top mph
+  [26, 0, 1, 152.4, 13_260, 88],
+  [25, 1, 3, 96.8, 10_480, 74],
+  [24, 3, 4, 171.2, 13_020, 96],
+];
+PEAKS_LEGS.forEach(([i, from, to, miles, secs, top]) => {
+  const r = DEMO_RIDES[i];
+  if (!r) return;
+  r.distance = miles;
+  r.duration = secs;
+  r.averageSpeed = Math.round((miles / (secs / 3600)) * 10) / 10;
+  r.maxSpeed = top;
+  r.endedAt = new Date(Date.parse(r.startedAt) + secs * 1000).toISOString();
+  r.trip = { tripId: 'demo-trip-peaks', name: 'Peak District run', from, to, total: 4 };
+  r.starred = true;
+});
+
+// Ride 37 is the older: day 1, Home to Ludlow; ride 36 day 2, Ludlow to Bwlch y Groes.
+([
+  [37, 164.6, 14_160, 92],
+  [36, 88.3, 9_900, 78],
+] as const).forEach(([i, miles, secs, top], leg) => {
+  const r = DEMO_RIDES[i];
+  if (!r) return;
+  r.distance = miles;
+  r.duration = secs;
+  r.averageSpeed = Math.round((miles / (secs / 3600)) * 10) / 10;
+  r.maxSpeed = top;
+  r.endedAt = new Date(Date.parse(r.startedAt) + secs * 1000).toISOString();
+  r.trip = { tripId: 'demo-trip-wales', name: 'Wales weekend', from: leg, to: leg + 1, total: 3 };
+  r.starred = true;
+});
+
+/**
+ * The demo's trips (ride/lib/trips): the Wales weekend (days 1 and 2 are its first two legs, the ride home
+ * still to do) and the Peak District run, finished.
+ */
 export const DEMO_TRIPS: Trip[] = (() => {
-  const day1 = DEMO_RIDES[36];
-  const day2 = DEMO_RIDES[37];
+  const peaks = PEAKS_LEGS.map(([i, from, to]) => DEMO_RIDES[i] && { rideId: DEMO_RIDES[i].id, from, to, at: DEMO_RIDES[i].endedAt ?? DEMO_RIDES[i].startedAt }).filter(Boolean) as { rideId: string; from: number; to: number; at: string }[];
+  const peaksStart = DEMO_RIDES[26]?.startedAt ?? new Date().toISOString();
+  const peaksEnd = DEMO_RIDES[24]?.endedAt ?? new Date().toISOString();
+  const day1 = DEMO_RIDES[37];
+  const day2 = DEMO_RIDES[36];
   const links = [day1, day2].filter(Boolean).map((r, i) => ({ rideId: r.id, from: i, to: i + 1, at: r.endedAt ?? r.startedAt }));
   return [
     {
@@ -450,15 +502,18 @@ export const DEMO_TRIPS: Trip[] = (() => {
       createdAt: day1?.startedAt ?? new Date().toISOString(),
       updatedAt: day2?.endedAt ?? new Date().toISOString(),
     },
+    {
+      id: 'demo-trip-peaks',
+      name: 'Peak District run',
+      points: PEAKS_POINTS,
+      legsDone: 4,
+      rides: peaks,
+      createdAt: peaksStart,
+      updatedAt: peaksEnd,
+      finishedAt: peaksEnd,
+    },
   ];
 })();
-[36, 37].forEach((i, leg) => {
-  const r = DEMO_RIDES[i];
-  if (!r) return;
-  r.trip = { tripId: 'demo-trip-wales', name: 'Wales weekend', from: leg, to: leg + 1, total: 3 };
-  r.starred = true;
-});
-
 /** Notifications in Blacktop Console (lib/inbox). */
 export function demoInbox(): InboxItem[] {
   const now = Date.now();

@@ -29,6 +29,10 @@ export type Category =
   | 'crew_convoys'
   | 'challenges'
   | 'maintenance'
+  /** The rider's own calendar reminders (plans, MOT / insurance / tax, Track Day bookings). */
+  | 'calendar'
+  /** Crew plans: one posted, and the evening before one this rider is going to. */
+  | 'crew_events'
 
 export interface Ctx {
   admin: SupabaseClient

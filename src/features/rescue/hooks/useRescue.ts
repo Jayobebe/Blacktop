@@ -1,3 +1,4 @@
+import { logActivity } from '@/features/calendar/lib/calendarStore';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -156,6 +157,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       return false;
     }
     lastRescueSentAtRef.current = now;
+    logActivity('rescue_sent');
 
     const request: RescueRequest = {
       id: crypto.randomUUID(),
@@ -229,6 +231,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
    * rest of the convoy) who's coming. The rescue route stays on everyone's map.
    */
   const respondToRescue = useCallback(async (request: RescueRequest) => {
+    logActivity('rescue_answered', request.userName);
     setRescueRequests(prev => prev.filter(r => r.id !== request.id));
     if (!channelRef.current || !userId) return;
     await channelRef.current.send({

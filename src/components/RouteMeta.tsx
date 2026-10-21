@@ -94,6 +94,7 @@ function metaFor(path: string): Meta {
     [/^\/install$/, 'Install Blacktop'],
     [/^\/routes\/new$/, 'Save a route'],
     [/^\/trip\//, 'Trip'],
+    [/^\/calendar$/, 'Blacktop Calendar'],
   ];
   const hit = names.find(([re]) => re.test(p));
   return { title: hit ? tr(hit[1]) : null, index: false };
