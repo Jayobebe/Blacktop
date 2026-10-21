@@ -372,6 +372,8 @@ export interface PinInfo {
   price?: PriceInfo | null;
   /** The basemap tile's own word for it ("cafe"), to look its hours and price up by. */
   osm?: string;
+  /** A station's map id ("op:<OpenStreetMap id>"): its reported fuel or charging prices. */
+  stationId?: string;
   /** Picked from the search list: the camera flies along the route to it before circling. */
   fromList?: boolean;
 }

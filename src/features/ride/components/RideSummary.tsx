@@ -59,6 +59,8 @@ interface RideSummaryProps {
   track?: Pick<TrackReceipt, 'trackName' | 'laps' | 'bestLapMs'> & Partial<TrackReceipt> | null;
   /** Hide the Save/Continue buttons (e.g. Speedshop preview). */
   hideActions?: boolean;
+  /** Fill-ups made during the ride (the logbook's ledger): a line each. */
+  fills?: Array<{ id: string; label: string; value: string }>;
 }
 
 function ReceiptRow({ label, value }: { label: string; value: string }) {
@@ -79,7 +81,7 @@ function formatLapTime(ms: number | null | undefined): string {
   return `${m}:${sec}`;
 }
 
-export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', trackDay = false, track = null, hideActions = false, convoy = false, leg = null }: RideSummaryProps) {
+export function RideSummary({ members, currentUserId, rideStats, bikeName, bikePhoto, gForceSamples, earnedBadges, printedAt, orderId: orderIdProp, onBadgesEarned, onClose, variant = 'overlay', trackDay = false, track = null, hideActions = false, convoy = false, leg = null, fills }: RideSummaryProps) {
   // The paper: Track Day pink, a trip's legs mint, a convoy blue (in that order when more than one applies).
   const stock = trackDay ? 'track' : leg ? 'trip' : convoy ? 'convoy' : null;
   const { settings } = useSettings();
@@ -306,6 +308,7 @@ export function RideSummary({ members, currentUserId, rideStats, bikeName, bikeP
                   value={`${formatSpeed(rideStats.averageSpeed, settings.speedUnit)} ${speedUnit}`}
                 />
               )}
+              {fills?.map((f) => <ReceiptRow key={f.id} label={f.label} value={f.value} />)}
             </div>
           )}
 

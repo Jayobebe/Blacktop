@@ -4,7 +4,7 @@ import {
   Play, Pause, Users, UserPlus, Navigation, MapPin, Map as MapIcon, SquareParking, Siren, LifeBuoy, ShieldCheck, Gauge,
   CloudRain, CloudSun, Camera, Volume2, Radio, TriangleAlert, Ban, Coins, Ship, Mountain, Thermometer, Video, Megaphone,
   Bike, Handshake, Music, Timer, Wrench, History, BarChart3, Globe2, Swords, Gamepad2, Settings as SettingsIcon,
-  Route as RouteIcon, Waypoints as RoutePlus,
+  Route as RouteIcon, Waypoints as RoutePlus, HardDrive,
 } from 'lucide-react';
 import { tr } from '@/lib/i18n';
 import { useSettings, type AppSettings } from '@/features/settings';
@@ -322,6 +322,7 @@ export function useActions(): ConsoleAction[] {
   go('switchback', tr("SwitchBack"), Swords, '/arcade/switchback', gate(['blacktopWorldEnabled', 'collectiblesEnabled'], tr("Blacktop World") + ' + ' + tr("Collecting")));
   go('arcade', tr("Arcade"), Gamepad2, '/arcade', worldGate);
   go('settings', tr("Settings"), SettingsIcon, '/settings');
+  go('storage', tr("Storage"), HardDrive, '/storage');
 
   return out;
 }

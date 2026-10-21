@@ -3,6 +3,7 @@ import { warningTone } from '@/lib/radioFx';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { MedicalIdButton } from './MedicalId';
 
 interface Props {
   /** Seconds on the clock. */
@@ -70,7 +71,7 @@ export function CrashCheckPrompt({ timeoutSec, manual, onImFine, onSendNow, onTi
     <div className="fixed inset-0 z-[60] safe-frame flex items-center justify-center p-3 bg-background/90 backdrop-blur-md animate-fade-in" role="alertdialog" aria-modal="true" aria-label={tr("Are you okay?")}>
       <div className="rescue-ask w-full max-w-md short:max-w-3xl max-h-full overflow-y-auto rounded-3xl p-6 short:p-4 text-center short:grid short:grid-cols-2 short:items-center short:gap-5 animate-scale-in">
         <div>
-          <div className="mx-auto mb-3 short:mb-2 flex h-16 w-16 short:h-12 short:w-12 items-center justify-center rounded-full bg-[hsl(var(--burn))] text-white">
+          <div className="mx-auto mb-3 short:mb-2 flex h-16 w-16 short:h-12 short:w-12 items-center justify-center rounded-2xl bg-[hsl(var(--burn))] text-white">
             <span aria-hidden className="text-3xl short:text-2xl font-black leading-none">R</span>
           </div>
           <h2 className="text-4xl short:text-3xl font-black tracking-tight text-white leading-none">{tr("Are you okay?")}</h2>
@@ -94,6 +95,7 @@ export function CrashCheckPrompt({ timeoutSec, manual, onImFine, onSendNow, onTi
           <button type="button" onClick={onSendNow} className={cn(answer, 'bg-[hsl(var(--burn))]')}>
             <span className="text-2xl short:text-xl leading-tight text-balance">{tr("Send rescue")}</span>
           </button>
+          {!manual && <MedicalIdButton className="col-span-2 w-full" />}
         </div>
       </div>
     </div>

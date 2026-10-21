@@ -144,6 +144,11 @@ export default function History() {
         ]}
       />
 
+      <PageTips
+        page="history-trips"
+        when={!editingRideId}
+        tips={[{ target: '[data-tip="history-trip"]', text: tr("A trip's legs fold into one card. Tap it for the whole trip's receipt, or to carry on.") }]}
+      />
       {/* Rides List */}
       <div className="flex-1 overflow-y-auto min-h-0 space-y-3 landscape:space-y-2 pr-1">
         {rides.length === 0 ? (
@@ -326,6 +331,7 @@ function TripCard({ trip, rides, index }: { trip: Trip; rides: RideSession[]; in
           open();
         }
       }}
+      data-tip="history-trip"
       className="pressable w-full bg-card border border-[hsl(150_55%_50%)]/35 rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer"
       style={{ animationDelay: `${index * 60}ms` }}
     >

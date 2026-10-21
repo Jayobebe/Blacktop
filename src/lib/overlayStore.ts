@@ -81,3 +81,15 @@ export async function deleteRideOverlayBlob(rideId: string): Promise<void> {
     tx.onabort = () => reject(tx.error);
   });
 }
+
+/** Every stored overlay video, without reading the videos themselves (the Storage page). */
+export async function listRideOverlays(): Promise<Array<{ rideId: string; size: number; createdAt: number }>> {
+  try {
+    const db = await openDb();
+    const store = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME);
+    const all = await requestToPromise<OverlayRecord[]>(store.getAll());
+    return all.map((r) => ({ rideId: r.rideId, size: r.size || r.blob?.size || 0, createdAt: r.createdAt }));
+  } catch {
+    return [];
+  }
+}

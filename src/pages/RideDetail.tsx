@@ -2,7 +2,7 @@ import { isNativeApp } from '@/lib/platform';
 import { shareFileNative } from '@/lib/nativeShare';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRideHistory, RidePhotos, RideSummary } from '@/features/ride';
-import { useGarage } from '@/features/garage';
+import { useGarage, fillsDuring, volumeText, moneyText } from '@/features/garage';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trash2, Video, Download, Check, Film, Box, Share2, IdCard, Zap, ChevronRight } from 'lucide-react';
 import { formatDate, formatTime, formatDuration } from '@/lib/format';
@@ -182,6 +182,11 @@ export default function RideDetail() {
             }}
             bikeName={rideBike?.name ?? null}
             bikePhoto={rideBike?.photos?.hero ?? null}
+            fills={fillsDuring(ride.bikeId, Date.parse(ride.startedAt), ride.endedAt ? Date.parse(ride.endedAt) : Date.parse(ride.startedAt) + ride.duration * 1000).map((f) => ({
+              id: f.id,
+              label: f.fuel === 'home' || f.fuel === 'ac' || f.fuel === 'dc' ? tr("Charge") : tr("Fuel"),
+              value: [f.fuel === 'home' || f.fuel === 'ac' || f.fuel === 'dc' ? tr("{0} kWh", [f.amount.toFixed(1)]) : volumeText(f.amount), moneyText(f.paid, f.currency), f.station?.name].filter(Boolean).join(' · '),
+            }))}
             gForceSamples={ride.gForceSamples}
             earnedBadges={ride.earnedBadges}
             printedAt={ride.endedAt ?? ride.startedAt}

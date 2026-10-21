@@ -6,6 +6,7 @@ import { showLocalNotification, syncPushReminders, usePush, type PushReminder } 
 import { useGarage } from '../hooks/useGarage';
 import { useBikeStats } from '../hooks/useBikeStats';
 import type { Bike } from '../types';
+import { partName, partWear, updateVehicleLedger, useLedger, vehicleLedger } from '../lib/ledger';
 import { tr } from '@/lib/i18n';
 
 /**
@@ -152,6 +153,24 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
     }
     if (changed) writeNotified(notified);
   }, [bike, odometerKm, miles, unit, push.enabled]);
+
+  // Parts in the logbook's ledger: told once each when it's 90 % worn by distance.
+  const ledger = useLedger();
+  useEffect(() => {
+    const v = vehicleLedger(ledger, bike.id);
+    const worn = v.parts.filter((p) => !p.replacedAt && !p.warned && (partWear(p, odometerKm) ?? 0) >= 0.9);
+    if (!worn.length) return;
+    for (const p of worn) {
+      void showLocalNotification('maintenance', {
+        title: tr("🔧 {0} nearly worn out", [partName(p.kind)]),
+        body: tr("{0}: {1} has done 90 % of the distance you expected.", [bike.name, p.name]),
+        tag: `part-${bike.id}-${p.id}`,
+        url: `/garage?logbook=ledger&bike=${bike.id}`,
+      });
+    }
+    const ids = new Set(worn.map((p) => p.id));
+    updateVehicleLedger(bike.id, (vl) => ({ ...vl, parts: vl.parts.map((p) => (ids.has(p.id) ? { ...p, warned: true } : p)) }));
+  }, [bike.id, bike.name, odometerKm, ledger]);
 
   return null;
 }

@@ -213,3 +213,50 @@ export async function deleteCachedTiles(urls: string[]): Promise<void> {
     // Best-effort: a failed delete just leaves tiles that eviction can reclaim.
   }
 }
+
+// ── Storage manager (pages/Storage) ───────────────────────────────────────
+
+/** Bytes held: the map cache that refills by itself, and tiles pinned by offline packs. */
+export async function tileCacheSizes(): Promise<{ cache: number; pinned: number }> {
+  const out = { cache: 0, pinned: 0 };
+  try {
+    const db = await openDb();
+    const store = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME);
+    await new Promise<void>((resolve, reject) => {
+      const req = store.openCursor();
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) return resolve();
+        const rec = cursor.value as CachedTile;
+        if (rec.pinned) out.pinned += rec.size;
+        else out.cache += rec.size;
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    // Nothing countable: shown as nothing.
+  }
+  return out;
+}
+
+/** Clears the map cache (never an offline pack's tiles): it refills as the map is used. */
+export async function clearTileCache(): Promise<void> {
+  try {
+    const db = await openDb();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    await new Promise<void>((resolve, reject) => {
+      const req = store.openCursor();
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) return resolve();
+        if (!(cursor.value as CachedTile).pinned) cursor.delete();
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    // Best-effort, like the cache itself.
+  }
+}

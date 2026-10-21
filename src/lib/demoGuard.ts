@@ -21,6 +21,7 @@ import { isDemoModeActive } from '@/lib/demoMode';
 
 const WRITE_RPCS = new Set([
   'create_crew_event',
+  'report_fuel_price',
   'delete_crew_event',
   'rsvp_crew_event',
   'set_profile_country',

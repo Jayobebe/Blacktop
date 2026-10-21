@@ -29,6 +29,9 @@ import { toast } from 'sonner';
 import { resolveWhat3WordsResult } from '@/lib/what3words';
 import { QuickChipRow } from '@/components/QuickChipRow';
 import { PriceSigns } from '@/components/PlaceFacts';
+import { useStationPrices, perUnitText, rankPrice } from '@/lib/fuelPrices';
+import { getLedger, vehicleLedger } from '@/features/garage/lib/ledger';
+import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { openText, openTint, placeStatus } from '@/lib/openingHours';
 import { currencySign } from '@/lib/priceLevel';
 
@@ -390,7 +393,20 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
   const hasIdleContent = showIdle && (hasSavedPOIs || hasRecent || hasRoutes);
 
   // Live-search state.
-  const displayResults = cardsMode ? sortedCards : results;
+  // Fuel and charging searches: station prices from riders who share them, and cheapest first on request.
+  const fuelSearch = !cardsMode && (activeCategory === 'gas' || activeCategory === 'charge');
+  const stationPrices = useStationPrices(fuelSearch ? results.map((r) => r.id) : []);
+  const [cheapestFirst, setCheapestFirst] = useState(false);
+  const myFuel = (() => {
+    const id = getActiveBikeIdSnapshot();
+    return id ? vehicleLedger(getLedger(), id).lastFuel : undefined;
+  })();
+  const priced = (id: string) => rankPrice(stationPrices.get(id), myFuel);
+  const displayResults = cardsMode
+    ? sortedCards
+    : fuelSearch && cheapestFirst
+      ? [...results].sort((a, b) => (priced(a.id) ?? Infinity) - (priced(b.id) ?? Infinity))
+      : results;
   const routeMatch = hasRoutes && query.trim().length >= 2 && savedRoutes.some((r) => normaliseName(r.name).includes(normaliseName(query.trim())));
   const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode || routeMatch);
 
@@ -590,6 +606,19 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
             </>
           )}
 
+          {/* Fuel search with prices on some stations: cheapest first, on request. */}
+          {fuelSearch && stationPrices.size > 0 && !isSearching && (
+            <div className="px-3 pt-2 pb-1 flex justify-end">
+              <button
+                type="button"
+                aria-pressed={cheapestFirst}
+                onClick={() => setCheapestFirst((v) => !v)}
+                className={cn('h-8 px-3 rounded-lg text-[11px] font-semibold border transition-colors', cheapestFirst ? 'bg-accent text-accent-foreground border-accent' : 'border-border/60 text-muted-foreground')}
+              >
+                {tr("Cheapest first")}
+              </button>
+            </div>
+          )}
           {/* ── Live search results ── */}
           {!showIdle && (
             isSearching ? (
@@ -648,7 +677,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                         {distanceText(result.lat, result.lng) && (
                           <span className="text-[10px] font-mono text-muted-foreground/80">{distanceText(result.lat, result.lng)}</span>
                         )}
-                        {result.price && <PriceSigns info={result.price} sign={currencySign(countryCode)} className="text-[11px]" />}
+                        {(() => {
+                          // A station's reported price (the rider's fuel where it's priced) beats the brand's guess.
+                          const prices = stationPrices.get(result.id);
+                          const p = prices && (prices.find((x) => x.fuel === myFuel) ?? [...prices].sort((a, b) => a.low - b.low)[0]);
+                          if (p) return <span className="text-[11px] font-mono font-semibold text-foreground">{perUnitText({ ...p, high: p.low })}</span>;
+                          return result.price ? <PriceSigns info={result.price} sign={currencySign(countryCode)} className="text-[11px]" /> : null;
+                        })()}
                       </div>
                     </button>
                   );

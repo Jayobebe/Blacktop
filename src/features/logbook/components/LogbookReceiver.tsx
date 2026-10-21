@@ -10,6 +10,7 @@ import { haptics } from '@/lib/haptics';
 import { useProfile } from '@/features/profile';
 import { useGarage } from '@/features/garage';
 import { setInheritedLog } from '../lib/logbookStore';
+import { importVehicleLedger } from '@/features/garage/lib/ledger';
 import { parseLogbookQr, receiveLogbook } from '../lib/transfer';
 import { tr } from '@/lib/i18n';
 
@@ -49,6 +50,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
       onPackage: (pkg) => {
         const id = importBike(pkg.bike);
         setInheritedLog(id, pkg.log);
+        if (pkg.ledger) importVehicleLedger(id, pkg.ledger);
         haptics.success();
         setState({ phase: 'done', progress: 1, vehicle: pkg.bike.name, msg: `From ${pkg.fromName}` });
         return true;

@@ -18,7 +18,7 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useBackgroundAudio } from '@/hooks/useBackgroundAudio';
 import { useProfile } from '@/features/profile';
 import { RadioButton } from '@/features/radio';
-import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, sendSoloRescue as sendSoloRescueCall, HoldRescueButton } from '@/features/rescue';
+import { useRescue, RescueAlert, CrashCheckPrompt, EmergencyTextButton, emergencyTextAction, cleanPhone, sendSoloRescue as sendSoloRescueCall, HoldRescueButton, MedicalIdButton } from '@/features/rescue';
 import { useCrashDetection, usePeaksHidden, PEAK_HIDDEN, RideDial } from '@/features/ride';
 import { autoNameRide, storedRide } from '@/features/ride/lib/rideNames';
 import { useRideUpdates } from '@/features/ride/hooks/useRideUpdates';
@@ -31,7 +31,7 @@ import { AUTO_RESCUE_ACK_TIMEOUT_SEC } from '@/features/settings/hooks/useSettin
 import { useWaypoints } from '@/features/waypoints';
 
 import { useDiscordIntegration } from '@/features/integrations/discord';
-import { useGarage } from '@/features/garage';
+import { useGarage, FillUpPrompt } from '@/features/garage';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useGForce } from '@/hooks/useGForce';
@@ -1222,6 +1222,12 @@ export default function ActiveRide() {
         onDismiss={dismissRescue}
       />
 
+      {/* Paused on a vehicle that takes fuel or charge: "Filling up?" into the logbook's ledger. */}
+      <FillUpPrompt
+        paused={rideState.isPaused}
+        rideMi={rideState.distance}
+        at={rideState.gpsPoints.length ? { lat: rideState.gpsPoints[rideState.gpsPoints.length - 1].lat, lng: rideState.gpsPoints[rideState.gpsPoints.length - 1].lng } : null}
+      />
       {/* Rider in distress: who's coming. Stays up until the rescue is closed. */}
       {hasPendingRescue && rideState.isConvoyMode && (
         <div className="fixed top-[calc(0.75rem+var(--safe-top))] left-1/2 -translate-x-1/2 z-40 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl border border-[hsl(var(--burn))]/60 bg-[hsl(var(--burn))]/15 backdrop-blur-xl px-4 py-3 shadow-2xl animate-slide-down">
@@ -1234,6 +1240,7 @@ export default function ActiveRide() {
           {/* Where the call went from, in three words, to read out if you call the emergency services. */}
           {rescueSpot && <W3WAddress lat={rescueSpot.lat} lng={rescueSpot.lng} className="mt-1.5 text-sm items-start text-left" />}
           <EmergencyTextButton at={rescueSpot} className="mt-2 w-full" />
+          <MedicalIdButton className="mt-2 w-full" />
         </div>
       )}
 

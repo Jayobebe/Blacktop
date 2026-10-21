@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Search, X, Pencil, Bell, LifeBuoy, Users, Trophy, Wrench, CloudRain, TriangleAlert, Sparkles, Timer, Plus, Check,
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Navigation, Route, Play, Map as MapIcon, Bike, ShieldCheck, SlidersHorizontal,
-  Radio, LayoutGrid, CalendarDays,
+  Radio, LayoutGrid, CalendarDays, HardDrive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ import { nextCrewPlan, cachedCrewEvents } from '@/features/calendar/lib/crewEven
 
 import { ServiceDoneButton } from './ServiceDoneButton';
 import { useGarage, useBikeStats } from '@/features/garage';
+import { PageTips } from '@/features/guide';
 
 /**
  * Blacktop Console: the card left of Home. One search for everything (actions,
@@ -109,6 +110,18 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
 
   return (
     <div className="flex-1 min-h-0 flex flex-col animate-fade-in">
+      {/* First-time tips, once the Console is the card on screen. */}
+      <PageTips
+        page="console"
+        when={active}
+        max={4}
+        tips={[
+          { target: '[data-tip="title-square"]', text: tr("Today's date. Tap it for the Blacktop Calendar: your rides, plans, reminders and crew plans.") },
+          { target: '[data-tip="console-search"]', text: tr("Search everything here: actions, settings, places, past rides and plans.") },
+          { target: '[data-tip="console-cards"]', text: tr("These cards change with the moment. Edit puts them in your order, or hides any.") },
+          { target: '[data-tip="console-add"]', text: tr("Add your own quick actions: up to nine things one tap away.") },
+        ]}
+      />
       {/* BLACKTOP / CONSOLE, as Blacktop Enterprise's title, with today's date in a square that opens the calendar. */}
       <header className="mb-3 landscape:mb-2">
         <StackedTitle
@@ -121,6 +134,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
       <label className="relative block mb-3 landscape:mb-2">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />
         <input
+          data-tip="console-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={tr("Search Blacktop")}
@@ -144,7 +158,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
             <section aria-labelledby="today-heading" className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <h2 id="today-heading" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Today")}</h2>
-                <button type="button" onClick={() => setEditingCards(true)} className="glove-hit inline-flex items-center gap-1 text-xs font-medium text-accent">
+                <button type="button" data-tip="console-cards" onClick={() => setEditingCards(true)} className="glove-hit inline-flex items-center gap-1 text-xs font-medium text-accent">
                   <Pencil className="w-3.5 h-3.5" /> {tr("Edit")}
                 </button>
               </div>
@@ -171,6 +185,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
                 {tiles.length < MAX_QUICK_ACTIONS && (
                   <button
                     type="button"
+                    data-tip="console-add"
                     onClick={() => setAdding(true)}
                     className="pressable w-full h-11 rounded-xl border border-dashed border-accent/50 text-accent text-[13px] font-medium inline-flex items-center justify-center gap-1.5"
                   >
@@ -284,6 +299,7 @@ const KIND_ICON: Record<InboxKind, typeof Bell> = {
   cards: Sparkles,
   track: Timer,
   calendar: CalendarDays,
+  storage: HardDrive,
   general: Bell,
 };
 
@@ -340,6 +356,8 @@ function actionLabel(url: string): string {
   if (url.startsWith('/crew')) return tr("See board");
   if (url.startsWith('/rescue')) return tr("Respond");
   if (url.startsWith('/trip')) return tr("See trip");
+  if (url.startsWith('/storage')) return tr("Storage");
+  if (url.startsWith('/whats-new')) return tr("What's new");
   return tr("Open");
 }
 

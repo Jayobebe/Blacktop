@@ -10,7 +10,7 @@ import { isDemoModeActive, useDemoMode } from '@/lib/demoMode';
  * itself, even a permission error, means it's there. Offline keeps the last answer (stored),
  * and a feature never seen is off. Demo mode shows everything (demo data).
  */
-export type ServerCap = 'trackRecords' | 'switchback' | 'switchbackRepair' | 'switchbackRedline' | 'switchbackTiers' | 'switchbackCombos' | 'worldCountries' | 'calendar';
+export type ServerCap = 'trackRecords' | 'switchback' | 'switchbackRepair' | 'switchbackRedline' | 'switchbackTiers' | 'switchbackCombos' | 'worldCountries' | 'calendar' | 'fuelPrices';
 
 const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | null }>> = {
   switchback: () => supabase.rpc('cw_available' as never),
@@ -25,6 +25,7 @@ const PROBES: Record<ServerCap, () => PromiseLike<{ error: { code?: string } | n
   // Blacktop World's globe glowing by accounts per country, and its list (lib/profileCountry.ts).
   worldCountries: () => supabase.rpc('profile_country_counts' as never),
   // Calendar reminders and crew plans (migration 20261028000000_calendar_crew_events.sql).
+  fuelPrices: () => supabase.rpc('fuel_prices_for' as never, { _ids: [] } as never),
   calendar: () => supabase.rpc('list_crew_events' as never, { _crew_codes: [], _from: new Date().toISOString(), _to: new Date().toISOString() } as never),
   trackRecords: () =>
     supabase.rpc('track_leaderboard' as never, { _osm_id: -1, _direction: 'cw', _vehicle_class: 'motorcycle', _limit: 1 } as never),

@@ -150,6 +150,7 @@ export const StackedTitle = forwardRef<HTMLSpanElement, { second: string; pill?:
           type="button"
           onClick={square.onPress}
           aria-label={square.label}
+          data-tip="title-square"
           className="pressable absolute flex flex-col items-center justify-center rounded-[22%] bg-[hsl(var(--lava,var(--accent)))] text-[hsl(0_0%_6%)] shadow-lg leading-none"
           style={{ left: (fit.secondW ?? 0) + fit.size * SQUARE_GAP, top: fit.size * 0.9 + (fit.size * 0.9 - side) / 2, width: side, height: side }}
         >

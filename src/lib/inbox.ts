@@ -12,7 +12,7 @@
 import { useSyncExternalStore } from 'react';
 import { demoInbox, useDemoMode } from '@/lib/demoMode';
 
-export type InboxKind = 'rescue' | 'convoy' | 'crew' | 'service' | 'weather' | 'hazard' | 'cards' | 'track' | 'calendar' | 'general';
+export type InboxKind = 'rescue' | 'convoy' | 'crew' | 'service' | 'weather' | 'hazard' | 'cards' | 'track' | 'calendar' | 'storage' | 'general';
 
 export interface InboxItem {
   id: string;

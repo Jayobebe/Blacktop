@@ -32,6 +32,10 @@ import { passportFor } from '../lib/passport';
 import { tr } from '@/lib/i18n';
 import { keepPeakTelemetry, PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { PageTips } from '@/features/guide';
+import { Page, PageTitle, Row, fmtDate } from './BookPage';
+import { useLedgerBook } from './LedgerPages';
+import { getLedger, vehicleLedger } from '@/features/garage/lib/ledger';
+import { Switch } from '@/components/ui/switch';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -40,43 +44,19 @@ const NOTE_CHARS_PER_LINE = 30;
 const noteLines = (n: LogNote) => 1.6 + Math.ceil(n.text.length / NOTE_CHARS_PER_LINE);
 const KM_PER_MI = 1.60934;
 
-function fmtDate(ms: number | string) {
-  return new Date(ms).toLocaleDateString([], { day: 'numeric', month: 'short', year: '2-digit' });
-}
-
-/* ── page furniture ─────────────────────────────────────────────────────── */
-
-function Page({ children, n, side }: { children: React.ReactNode; n: number; side: 'l' | 'r' }) {
-  return (
-    <div
-      className={cn(
-        'relative h-full flex flex-col px-2.5 pt-3 pb-5 text-[#2b2118] bg-[#f6eed9] overflow-hidden',
-        '[background-image:repeating-linear-gradient(0deg,transparent_0,transparent_15px,rgba(80,60,30,0.10)_15px,rgba(80,60,30,0.10)_16px)]',
-        side === 'l' ? 'rounded-l-md shadow-[inset_-10px_0_14px_-10px_rgba(0,0,0,0.35)]' : 'rounded-r-md shadow-[inset_10px_0_14px_-10px_rgba(0,0,0,0.35)]',
-      )}
-    >
-      {children}
-      <span className={cn('absolute bottom-1.5 text-[8px] font-mono text-[#2b2118]/60', side === 'l' ? 'left-2.5' : 'right-2.5')}>{n}</span>
-    </div>
-  );
-}
-
-function PageTitle({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black uppercase tracking-[0.2em] border-b-2 border-[#2b2118]/70 pb-1 mb-1.5">{children}</p>;
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2 text-[9.5px] leading-[16px]">
-      <span className="uppercase tracking-wider text-[#2b2118]/70 truncate">{label}</span>
-      <span className="font-mono font-bold whitespace-nowrap">{value}</span>
-    </div>
-  );
-}
+/** The sticky-note bookmarks, in book order: their colour and tilt. */
+const BOOKMARKS: Array<{ key: string; label: () => string; color: string; tilt: number }> = [
+  { key: 'stats', label: () => tr("Stats"), color: '#ffe27a', tilt: -2 },
+  { key: 'rides', label: () => tr("Rides"), color: '#9fd8ff', tilt: 1.5 },
+  { key: 'service', label: () => tr("Service"), color: '#ffb27a', tilt: -1 },
+  { key: 'ledger', label: () => tr("Ledger"), color: '#a8e6a1', tilt: 2 },
+  { key: 'notes', label: () => tr("Notes"), color: '#ffa3cf', tilt: -1.5 },
+  { key: 'handover', label: () => tr("Hand-over"), color: '#cdb5ff', tilt: 1 },
+];
 
 /* ── the book ───────────────────────────────────────────────────────────── */
 
-export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }) {
+export function LogbookView({ bike, onBack, openAt }: { bike: Bike; onBack: () => void; /** A section to open at (a bookmark's key). */ openAt?: string }) {
   const peaksHidden = usePeaksHidden();
   const { settings } = useSettings();
   const { profile } = useProfile();
@@ -84,6 +64,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
   const { rides, burnedTotals, detachBike } = useRideHistory();
   const { deleteBike } = useGarage();
   const stats = useBikeStats(bike);
+  const ledgerBook = useLedgerBook(bike, stats.odometerKm);
   const { cards } = useVehicleCards();
   const logs = useInheritedLogs();
   const inherited = logs[bike.id] ?? null;
@@ -213,6 +194,62 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   pages.push((n, side) => (
     <Page n={n} side={side}>
+      <PageTitle>{tr("Highlights")}</PageTitle>
+      <Row label={tr("Longest")} value={longestMi > 0 ? dist(longestMi) : '—'} />
+      {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
+      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastestMph > 0 ? spd(fastestMph) : '—'} />
+      {fastest && !peaksHidden && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
+      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
+      {Object.keys(badgeCounts).length === 0 ? (
+        <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
+      ) : (
+        Object.entries(badgeCounts).map(([b, c]) => <Row key={b} label={b.replace(/-/g, ' ')} value={`×${c}`} />)
+      )}
+      {trackBests.length > 0 && (
+        <>
+          <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Track days")}</p>
+          {trackBests.slice(0, 4).map((t) => (
+            <Row key={t.name} label={`${t.name} ×${t.days}`} value={t.best != null ? `${Math.floor(t.best / 60000)}:${((t.best % 60000) / 1000).toFixed(3).padStart(6, '0')}` : '—'} />
+          ))}
+        </>
+      )}
+    </Page>
+  ));
+
+  // Where each section starts, for the bookmarks.
+  const sectionStart: Record<string, number> = { stats: 2 };
+  sectionStart.rides = pages.length;
+  for (let i = 0; i < Math.max(1, Math.ceil(allRides.length / RIDES_PER_PAGE)); i++) {
+    const slice = allRides.slice(i * RIDES_PER_PAGE, (i + 1) * RIDES_PER_PAGE);
+    pages.push((n, side) => (
+      <Page n={n} side={side}>
+        <PageTitle>{tr("Ride log")}{" "}{i > 0 ? `(${i + 1})` : ''}</PageTitle>
+        {slice.length === 0 ? (
+          <p className="text-[9px] italic text-[#2b2118]/60">{tr("No rides logged yet.")}</p>
+        ) : (
+          <div className="space-y-[3px]">
+            {slice.map((r) => (
+              <div key={r.id} className="text-[9px] leading-[11px] border-b border-dashed border-[#2b2118]/20 pb-[3px]">
+                <div className="flex justify-between gap-1">
+                  <span className="font-bold truncate">{r.name || fmtDate(r.startedAt)}</span>
+                  <span className="font-mono">{dist(r.distance)}</span>
+                </div>
+                <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
+                  <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? tr(" · convoy") : ''}</span>
+                  {/* No max speed on rides kept under Public Road Privacy. */}
+                  <span>{formatDuration(r.duration)} · {peaksHidden || r.maxSpeed == null ? PEAK_HIDDEN : spd(r.maxSpeed)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Page>
+    ));
+  }
+
+  sectionStart.service = pages.length;
+  pages.push((n, side) => (
+    <Page n={n} side={side}>
       <PageTitle>{tr("Service record")}</PageTitle>
       {bike.maintenance.length === 0 ? (
         <p className="text-[9px] italic text-[#2b2118]/60">{tr("No service items logged.")}</p>
@@ -246,59 +283,12 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     </Page>
   ));
 
-  pages.push((n, side) => (
-    <Page n={n} side={side}>
-      <PageTitle>{tr("Highlights")}</PageTitle>
-      <Row label={tr("Longest")} value={longestMi > 0 ? dist(longestMi) : '—'} />
-      {longest && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(longest.startedAt)} · {longest.owner}</p>}
-      <Row label={tr("Fastest")} value={peaksHidden ? PEAK_HIDDEN : fastestMph > 0 ? spd(fastestMph) : '—'} />
-      {fastest && !peaksHidden && <p className="text-[8px] font-mono text-[#2b2118]/60 -mt-0.5 mb-1">{fmtDate(fastest.startedAt)} · {fastest.owner}</p>}
-      <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Badges")}</p>
-      {Object.keys(badgeCounts).length === 0 ? (
-        <p className="text-[9px] italic text-[#2b2118]/60">{tr("None yet.")}</p>
-      ) : (
-        Object.entries(badgeCounts).map(([b, c]) => <Row key={b} label={b.replace(/-/g, ' ')} value={`×${c}`} />)
-      )}
-      {trackBests.length > 0 && (
-        <>
-          <p className="mt-1 text-[9px] font-black uppercase tracking-wider">{tr("Track days")}</p>
-          {trackBests.slice(0, 4).map((t) => (
-            <Row key={t.name} label={`${t.name} ×${t.days}`} value={t.best != null ? `${Math.floor(t.best / 60000)}:${((t.best % 60000) / 1000).toFixed(3).padStart(6, '0')}` : '—'} />
-          ))}
-        </>
-      )}
-    </Page>
-  ));
-
-  for (let i = 0; i < Math.max(1, Math.ceil(allRides.length / RIDES_PER_PAGE)); i++) {
-    const slice = allRides.slice(i * RIDES_PER_PAGE, (i + 1) * RIDES_PER_PAGE);
-    pages.push((n, side) => (
-      <Page n={n} side={side}>
-        <PageTitle>{tr("Ride log")}{" "}{i > 0 ? `(${i + 1})` : ''}</PageTitle>
-        {slice.length === 0 ? (
-          <p className="text-[9px] italic text-[#2b2118]/60">{tr("No rides logged yet.")}</p>
-        ) : (
-          <div className="space-y-[3px]">
-            {slice.map((r) => (
-              <div key={r.id} className="text-[9px] leading-[11px] border-b border-dashed border-[#2b2118]/20 pb-[3px]">
-                <div className="flex justify-between gap-1">
-                  <span className="font-bold truncate">{r.name || fmtDate(r.startedAt)}</span>
-                  <span className="font-mono">{dist(r.distance)}</span>
-                </div>
-                <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
-                  <span className="truncate">{r.name ? fmtDate(r.startedAt) : r.owner}{r.isConvoyRide ? tr(" · convoy") : ''}</span>
-                  {/* No max speed on rides kept under Public Road Privacy. */}
-                  <span>{formatDuration(r.duration)} · {peaksHidden || r.maxSpeed == null ? PEAK_HIDDEN : spd(r.maxSpeed)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Page>
-    ));
-  }
+  // The ledger: running costs, fuel, costs, parts.
+  sectionStart.ledger = pages.length;
+  pages.push(...ledgerBook.pages);
 
   // Notes: remarks from every keeper, flowing onto as many pages as needed.
+  sectionStart.notes = pages.length;
   // The last notes page carries "Add a note".
   const notes = [...(inherited?.notes ?? [])].sort((a, b) => a.at - b.at);
   const notePages: LogNote[][] = [[]];
@@ -359,6 +349,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
     ));
   }
   const handoverPageIndex = pages.length;
+  sectionStart.handover = handoverPageIndex;
   pages.push((n, side) => (
     <Page n={n} side={side}>
       <PageTitle>{tr("Change of keeper")}</PageTitle>
@@ -386,7 +377,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   // ── spreads ──────────────────────────────────────────────────────────────
   const spreads = Math.ceil(pages.length / 2);
-  const [spread, setSpread] = useState(0);
+  const [spread, setSpread] = useState(() => (openAt && sectionStart[openAt] !== undefined ? Math.floor(sectionStart[openAt] / 2) : 0));
   const [turn, setTurn] = useState<'fwd' | 'back' | null>(null);
   const go = (to: number) => {
     const next = Math.max(0, Math.min(spreads - 1, to));
@@ -400,6 +391,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
 
   // ── hand-over ────────────────────────────────────────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [withCosts, setWithCosts] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const saveNote = () => {
@@ -447,6 +439,11 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         passport: prev?.passport ?? passportFor(bike.id),
         notes: prev?.notes ?? [],
       },
+      ledger: (() => {
+        const v = vehicleLedger(getLedger(), bike.id);
+        const fills = v.fills.map((f) => ({ ...f, shared: undefined, ...(withCosts ? {} : { paid: 0 }) }));
+        return { power: v.power, tank: v.tank, fills, costs: withCosts ? v.costs.map((c) => ({ ...c, photo: undefined })) : [], parts: v.parts };
+      })(),
       fromName: myName,
       handedOverAt: Date.now(),
     };
@@ -495,6 +492,13 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         </div>
       </header>
 
+      <PageTips
+        page="logbook-ledger"
+        when={!handover && !noteOpen}
+        tips={[
+          { target: '[data-tip="logbook-marks"]', text: tr("Tap a sticky note to jump to a section. The ledger keeps fill-ups, costs and parts: pause a ride at the pump and it asks what you put in.") },
+        ]}
+      />
       {/* Open book */}
       <PageTips
         page="logbook"
@@ -504,6 +508,31 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
           { target: '[data-tip="logbook-end"]', text: tr("Your own notes and the hand-over to a new keeper are at the back.") },
         ]}
       />
+      {/* Bookmarks: a sticky note for each section, standing up from the top edge; the one you're in sits raised. */}
+      <div data-tip="logbook-marks" className="w-full max-w-md mx-auto flex gap-0.5 px-1.5 -mb-1.5 relative z-10" role="tablist" aria-label={tr("Sections")}>
+        {BOOKMARKS.map((b, i) => {
+          const at = sectionStart[b.key];
+          if (at === undefined) return null;
+          const nextAt = BOOKMARKS.slice(i + 1).map((x) => sectionStart[x.key]).find((x) => x !== undefined) ?? pages.length;
+          const here = spread * 2 + 1 >= at && spread * 2 < nextAt;
+          return (
+            <button
+              key={b.key}
+              type="button"
+              role="tab"
+              aria-selected={here}
+              onClick={() => go(Math.floor(at / 2))}
+              className={cn(
+                'flex-1 min-w-0 h-9 rounded-t-md px-0 pt-1 text-[8px] font-black uppercase tracking-tight leading-none text-[#2b2118] shadow-[1px_2px_0_rgba(0,0,0,0.35)] transition-transform duration-200',
+                here ? '-translate-y-1.5' : 'translate-y-0.5 opacity-85',
+              )}
+              style={{ backgroundColor: b.color, rotate: `${b.tilt}deg` }}
+            >
+              <span className="block truncate">{b.label()}</span>
+            </button>
+          );
+        })}
+      </div>
       <div data-tip="logbook-book" className="w-full max-w-md mx-auto h-[46dvh] min-h-[300px] max-h-[440px] rounded-xl border-[3px] border-black/85 bg-gradient-to-br from-[#7a4020] to-[#4a230e] p-2 shadow-[4px_6px_0_rgba(0,0,0,0.55)]">
         <div className="relative grid grid-cols-2 h-full gap-0">
           <div
@@ -559,6 +588,8 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         </Button>
       </div>
 
+      {ledgerBook.dialogs}
+
       {/* Write a remark into the logbook */}
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
         <DialogContent className="max-w-sm">
@@ -593,6 +624,11 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
               {bike.name}{" "}{tr("is removed from your garage for good. Your own ride history and totals stay. The code is live for 10 seconds; if nobody scans it, nothing changes.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {/* The ledger goes too: fill-ups and parts always, what it all cost only if they say so. */}
+          <label className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2.5">
+            <span className="flex-1 text-sm">{tr("Include what it cost (fuel, services, parts)")}</span>
+            <Switch checked={withCosts} onCheckedChange={setWithCosts} />
+          </label>
           <AlertDialogFooter>
             <AlertDialogCancel>{tr("Keep it")}</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={beginHandover}>

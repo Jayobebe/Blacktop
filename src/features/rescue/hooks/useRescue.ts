@@ -10,6 +10,7 @@ import { describeReach, rescueReach } from '../lib/reach';
 import { tr } from '@/lib/i18n';
 import { notify } from '@/lib/inbox';
 import { kmText } from '@/lib/units';
+import { medicalForRescue, receivedMedical, type MedicalFacts } from '../lib/medicalId';
 
 export interface RescueRequest {
   id: string;
@@ -18,6 +19,8 @@ export interface RescueRequest {
   lat: number;
   lng: number;
   timestamp: number;
+  /** The rider's Medical ID, when they chose to send it with rescue calls (convoy channel only, never stored). */
+  medical?: MedicalFacts | null;
 }
 
 // Minimum gap between rescue requests from the same device. Prevents a member
@@ -46,8 +49,10 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
 
     channel
       .on('broadcast', { event: 'rescue_request' }, async (payload) => {
-        const request = payload.payload as RescueRequest;
+        const request = { ...(payload.payload as RescueRequest) };
         if (request.userId === userId) return;
+        // Only the known fields, as text: it came from another phone.
+        request.medical = receivedMedical(request.medical);
 
         // Verify sender is actually in this convoy before surfacing anything.
         // Realtime broadcast channels are open to any authenticated user who knows
@@ -166,6 +171,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
       lat,
       lng,
       timestamp: Date.now(),
+      medical: medicalForRescue(),
     };
 
     const reach = reachRef.current;

@@ -114,6 +114,8 @@ import { etaClock, etaSpread, travelTime } from '../lib/eta';
 import { openText, openTint, parseOpeningHours, placeStatus, weekLines } from '@/lib/openingHours';
 import { currencySign, type PriceInfo } from '@/lib/priceLevel';
 import { PriceSigns } from '@/components/PlaceFacts';
+import { useStationPrices, perUnitText, reportsText } from '@/lib/fuelPrices';
+import { fuelName } from '@/features/garage/lib/ledger';
 import { W3WAddress } from '@/components/W3WAddress';
 import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
@@ -1618,7 +1620,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const pinRef = useRef(pin);
   pinRef.current = pin;
   const [pinRoute, setPinRoute] = useState<{ key: string; route: RouteResult | null; loading: boolean } | null>(null);
-  const [pinFacts, setPinFacts] = useState<{ key: string; hours?: string; price: PriceInfo | null } | null>(null);
+  const [pinFacts, setPinFacts] = useState<{ key: string; hours?: string; price: PriceInfo | null; stationId?: string } | null>(null);
+  // A station's prices from riders who share them (lib/fuelPrices; nothing without the server side).
+  const pinStationId = pin?.stationId ?? (pinFacts?.key === pinKey ? pinFacts?.stationId : undefined);
+  const pinPrices = useStationPrices(pinStationId ? [pinStationId] : []).get(pinStationId ?? '');
   /** The card waits for the camera when it flies there from the list; a pin tapped on the map has it at once. */
   const [pinArrived, setPinArrived] = useState(false);
   const [pinHoursOpen, setPinHoursOpen] = useState(false);
@@ -1652,7 +1657,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     }
     let live = true;
     void placeDetails(target.name, target.lat, target.lng, target.osm).then((d) => {
-      if (live && d) setPinFacts({ key: pinKey, hours: d.hours, price: d.price });
+      if (live && d) setPinFacts({ key: pinKey, hours: d.hours, price: d.price, stationId: d.stationId });
     });
     return () => {
       live = false;
@@ -2559,6 +2564,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       lng: result.lng,
       hours: result.hours,
       price: result.price,
+      stationId: result.id.startsWith("op:") ? result.id : undefined,
       fromList: true,
     });
   }, []);
@@ -2730,6 +2736,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             { target: '.blacktop-maplibre .bt-alarm-ctrl', text: tr("This arms the anti-theft alarm: the same lock as on Home.") },
             { target: '.blacktop-maplibre .maplibregl-ctrl-compass', text: tr("Tap the compass to turn the map north-up again. The locate button brings the map back to you.") },
           ]}
+        />
+      )}
+      {/* Its own set, the first time a place's card is up. */}
+      {isVisible && (
+        <PageTips
+          page="map-place"
+          when={!!pin && pinArrived}
+          tips={[{ target: '[data-tip="orbit-twisty"]', text: tr("Twisty takes the bendy roads there, Direct the quickest way. Both start guiding straight away.") }]}
         />
       )}
       {/* Its own set, shown once there's a parked spot on the map. */}
@@ -3391,6 +3405,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               </button>
             )}
           </div>
+          {/* Fuel or charging prices riders reported here in the last two weeks. */}
+          {pinPrices && pinPrices.length > 0 && (
+            <div className="mt-2 rounded-lg bg-muted/40 px-2.5 py-1.5 space-y-0.5">
+              {[...pinPrices].sort((a, b) => a.low - b.low).map((p) => (
+                <div key={p.fuel} className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="font-semibold truncate">{fuelName(p.fuel)}</span>
+                  <span className="font-mono font-semibold shrink-0">{perUnitText(p)}</span>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground">{reportsText({ ...pinPrices[0], n: pinPrices.reduce((n, p) => n + p.n, 0), latest: Math.max(...pinPrices.map((p) => p.latest)) })}</p>
+            </div>
+          )}
           {/* Open or shut (green / red) and how dear, with the week's hours a tap away. */}
           {(() => {
             const hours = pin.hours ?? (pinFacts?.key === pinKey ? pinFacts.hours : undefined);
@@ -3436,6 +3462,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <Button
               size="sm"
               disabled={!!styleBusy}
+              data-tip="orbit-twisty"
               className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110"
               onClick={() => void navigateWith("twisty")}
             >

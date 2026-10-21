@@ -65,6 +65,8 @@ export interface AppSettings {
   uiSoundsEnabled: boolean;
   /** Home asks "On the move?" (start tracking / open the map) when the app is open and the rider sets off. Only where location is already allowed. */
   setOffPromptEnabled: boolean;
+  /** Pausing a ride on a vehicle that takes fuel or charge asks "Filling up?" (the logbook's ledger). */
+  fillUpPromptEnabled: boolean;
   /** Riders' vehicle photos on cards (their own and scanned ones) are redrawn in the SwitchBack pixel-art look. The photos themselves are untouched. */
   cardArtStyle: boolean;
   /** When the rider accepted the crash detection disclaimer (ms), or null: auto-rescue can't be on without it. */
@@ -180,6 +182,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   alarmIntercomDisarm: false,
   uiSoundsEnabled: true,
   setOffPromptEnabled: false,
+  fillUpPromptEnabled: true,
   cardArtStyle: false,
   autoRescueAcknowledgedAt: null,
   logPeakTelemetry: true,

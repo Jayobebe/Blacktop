@@ -4,6 +4,8 @@ export { CrashCheckPrompt } from './components/CrashCheckPrompt';
 export { RescueDrillButton, RescueDrillHost } from './components/RescueDrill';
 export { openRescueDrill } from './lib/drillStore';
 export { EmergencyTextButton, EmergencyContactSettings } from './components/EmergencyText';
+export { MedicalIdButton, MedicalIdCard, MedicalIdSettings } from './components/MedicalId';
+export { useMedicalId, hasMedicalFacts, MEDICAL_ID_KEY, type MedicalFacts } from './lib/medicalId';
 export { emergencyTextAction, safeArrivalHref, safeArrivalMessage, emergencySmsHref, cleanPhone } from './lib/emergencyText';
 export { SafetyStatusCard } from './components/SafetyStatusCard';
 export { MapRescueButton, RESCUE_HOLD_MS } from './components/MapRescueButton';

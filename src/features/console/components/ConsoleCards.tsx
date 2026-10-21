@@ -5,6 +5,7 @@ import {
   Sun, Moon, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Wind, Snowflake, Sunset, Sunrise,
   Route as RouteIcon, Play, Wrench, Check, CircleParking, Footprints, Repeat2, TrendingUp, TrendingDown, Flame, Award, Users,
   Eye, Trophy, TriangleAlert, Map as MapIcon, Sparkles, Swords, Lightbulb, Radar, Target, Siren, CalendarDays, Coins, type LucideIcon,
+  Fuel, PlugZap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -22,7 +23,7 @@ import { useRideHistory, useActiveRide, setSoloRoute, usePeaksHidden, PEAK_HIDDE
 import { useTrips, legCount, tripFinished, chooseTrip, chooseRouteTrip, type Trip } from '@/features/ride/lib/trips';
 import { useSavedRoutes, type SavedRoute } from '@/features/map/lib/savedRoutes';
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
-import { useGarage, useBikeStats, dueItems } from '@/features/garage';
+import { useGarage, useBikeStats, dueItems, useLedger, vehicleLedger, ledgerSums, ledgerCurrency, powerOf, economyText } from '@/features/garage';
 import { armAlarm } from '@/features/alarm';
 import { useCrew, setActiveCrew } from '@/features/crew/useCrew';
 import { crewTotals, weekStats } from '@/features/crew/stats';
@@ -376,6 +377,7 @@ function VehicleCard({ spot, active }: { spot: Spot | null; active: boolean }) {
   const navigate = useNavigate();
   const { bikes, activeBike, setActiveBike } = useGarage();
   const stats = useBikeStats(activeBike);
+  const ledger = useLedger();
   const parked = useParkedSpot();
   const peaksHidden = usePeaksHidden();
   const showBike = settings.garageEnabled && !!activeBike;
@@ -439,6 +441,33 @@ function VehicleCard({ spot, active }: { spot: Spot | null; active: boolean }) {
             </button>
             <ServiceDoneButton bike={activeBike} item={due.item} odometerKm={stats.odometerKm} />
           </div>
+        </div>,
+      );
+    }
+    // Fuel or charge: range left and economy, from the logbook's ledger.
+    const vl = vehicleLedger(ledger, activeBike.id);
+    const power = powerOf(vl);
+    const sums = power !== 'none' ? ledgerSums(vl, stats.odometerKm, ledgerCurrency(ledger)) : null;
+    if (sums && (sums.rangeKm !== null || sums.economy)) {
+      faces.push(
+        <div key="fuel">
+          {head}
+          <button
+            type="button"
+            onClick={() => {
+              haptics.tick();
+              navigate(`/garage?logbook=ledger&bike=${activeBike.id}`);
+            }}
+            className="mt-2.5 w-full rounded-xl bg-muted/30 px-3 py-2 flex items-center gap-2 text-left"
+          >
+            {power === 'electric' ? <PlugZap className="w-4 h-4 text-accent shrink-0" /> : <Fuel className="w-4 h-4 text-accent shrink-0" />}
+            <span className="flex-1 min-w-0">
+              <span className="block text-[13px] font-semibold truncate">
+                {sums.rangeKm !== null ? tr("About {0} left since your last fill-up", [kmText(sums.rangeKm)]) : economyText(sums.economy!, power, settings.distanceUnit !== 'km')}
+              </span>
+              {sums.rangeKm !== null && sums.economy && <span className="block text-[11px] text-muted-foreground">{economyText(sums.economy, power, settings.distanceUnit !== 'km')}</span>}
+            </span>
+          </button>
         </div>,
       );
     }

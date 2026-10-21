@@ -69,6 +69,14 @@ export default function Garage() {
   // Snapshot of the vehicle whose logbook is open: it stays open (showing the
   // hand-over result) even after a hand-over removes the vehicle.
   const [logbookBike, setLogbookBike] = useState<Bike | null>(null);
+  // Opened at a logbook section (the Console's fuel line: `?logbook=ledger&bike=<id>`).
+  const openLogbookAt = params.get('logbook');
+  useEffect(() => {
+    if (!openLogbookAt) return;
+    const b = bikes.find((x) => x.id === (wantBike ?? activeBikeId));
+    if (b) setLogbookBike(b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openLogbookAt]);
   // The logbook scanner lives outside the Add dialog so closing the dialog
   // doesn't unmount it mid-scan; the dialog's button just opens it.
   const openReceiverRef = useRef<(() => void) | null>(null);
@@ -136,7 +144,7 @@ export default function Garage() {
   // The logbook takes over the whole screen while it's open.
   if (logbookBike) {
     const live = bikes.find((b) => b.id === logbookBike.id) ?? logbookBike;
-    return <LogbookView bike={live} onBack={() => setLogbookBike(null)} />;
+    return <LogbookView bike={live} openAt={openLogbookAt ?? undefined} onBack={() => setLogbookBike(null)} />;
   }
 
   return (

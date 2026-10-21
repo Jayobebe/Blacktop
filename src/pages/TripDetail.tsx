@@ -13,6 +13,7 @@ import { useExperience } from '@/features/experience';
 import { useRideHistory, useActiveRide, setSoloRoute, PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { useTrips, legCount, tripFinished, chooseTrip, forgetTrip } from '@/features/ride/lib/trips';
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
+import { PageTips } from '@/features/guide';
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
@@ -147,6 +148,15 @@ export default function TripDetail() {
 
   return (
     <div className="min-h-dvh p-4 safe-top safe-bottom md:p-5 space-y-4">
+      <PageTips
+        page="trip"
+        scroll
+        tips={[
+          { target: '[data-tip="trip-receipt"]', text: tr("The whole trip on one receipt: every leg with its date, distance, time and speeds, and the best of it.") },
+          { target: '[data-tip="trip-continue"]', text: tr("Carry on from the next leg: the route is set and the ride starts.") },
+          { target: '[data-tip="trip-legs"]', text: tr("Tap a ride under a leg for that ride's own receipt.") },
+        ]}
+      />
       <PageHeader title={trip.name} subtitle={done ? tr("Finished") : tr("Leg {0} of {1}", [trip.legsDone + 1, total])} backTo="/history" />
 
       {/* In landscape the receipt and the legs sit side by side. */}
@@ -154,7 +164,7 @@ export default function TripDetail() {
       {/* The trip's own receipt: the route, every leg itemised, the best of it, the totals. */}
       <div className="w-full max-w-[360px] mx-auto short:mx-0">
         <div className="receipt-edge-top receipt-edge-trip" />
-        <div className="receipt receipt-trip relative px-5 py-5 font-receipt text-[--ink] overflow-hidden">
+        <div data-tip="trip-receipt" className="receipt receipt-trip relative px-5 py-5 font-receipt text-[--ink] overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <BTLogo size="sm" className="!bg-[--ink] !text-[--paper] !border-[--ink]" />
             <div className="text-right text-base leading-tight uppercase">
@@ -250,14 +260,14 @@ export default function TripDetail() {
 
       <div className="space-y-4 min-w-0 short:sticky short:top-2">
       {!done && (
-        <Button onClick={carryOn} className="w-full h-12 rounded-2xl font-semibold">
+        <Button data-tip="trip-continue" onClick={carryOn} className="w-full h-12 rounded-2xl font-semibold">
           <Play className="w-4 h-4 mr-2" />
           {tr("Continue trip")}
         </Button>
       )}
 
       {/* Each leg, with the rides that rode it (their own receipts). */}
-      <section className="space-y-2">
+      <section data-tip="trip-legs" className="space-y-2">
         <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Legs")}</h2>
         {trip.points.slice(1).map((to, i) => {
           const from = trip.points[i];

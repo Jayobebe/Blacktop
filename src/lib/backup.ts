@@ -27,6 +27,10 @@ const PREFIXES = ['blacktop', 'bt.', 'bt-'];
 const LEFT_OUT = new Set([
   // Blacktop Calendar: the forecast, crew plans as last read (the server has them), the stopwatch (of the moment).
   'blacktop_calendar_forecast',
+  'blacktop_storage_warned',
+  'blacktop_whats_new',
+  // Medical ID: only when the rider includes it (its own `inBackup`, see `medicalInBackup`).
+  'blacktop_medical_id',
   'blacktop_calendar_crew',
   'blacktop_stopwatch',
   // Blacktop Console: the forecast, what the pip last showed, where the crew board stood (all of the moment).
@@ -74,6 +78,17 @@ const LEFT_OUT = new Set([
 ]);
 
 const inBackup = (key: string) => PREFIXES.some((p) => key.startsWith(p)) && !LEFT_OUT.has(key);
+
+/** The Medical ID travels only when the rider has said so on it (`inBackup`). */
+const MEDICAL_KEY = 'blacktop_medical_id';
+function medicalInBackup(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    return JSON.parse(value)?.inBackup === true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * SwitchBack keeps everything under one key (`switchback/lib/store.ts`): what the
@@ -132,6 +147,8 @@ export function makeBackup(): Backup {
   }
   const picks = vaultPicks(localStorage.getItem(VAULT_KEY));
   if (picks) keys[VAULT_KEY] = picks;
+  const medical = localStorage.getItem(MEDICAL_KEY);
+  if (medicalInBackup(medical)) keys[MEDICAL_KEY] = medical;
   return { app: 'blacktop', kind: 'backup', v: 1, at: new Date().toISOString(), keys };
 }
 
@@ -155,6 +172,7 @@ export function parseBackup(text: string): Backup | null {
     raw.keys = renameBackupKeys(raw.keys as Record<string, unknown>) as Record<string, string>;
     const keys: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw.keys)) if (inBackup(k) && typeof v === 'string') keys[k] = v;
+    if (medicalInBackup(raw.keys[MEDICAL_KEY])) keys[MEDICAL_KEY] = raw.keys[MEDICAL_KEY] as string;
     // Only the choices are ever taken from a file's SwitchBack entry, whatever else it holds.
     const picks = typeof raw.keys[VAULT_KEY] === 'string' ? vaultPicks(raw.keys[VAULT_KEY]) : null;
     if (picks) keys[VAULT_KEY] = picks;

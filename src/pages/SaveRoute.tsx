@@ -25,6 +25,7 @@ import { saveRoute, type SavedRouteEnd } from '@/features/map/lib/savedRoutes';
 import { getSavedPOIs, type SavedPOI } from '@/features/map/lib/poiStore';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import '@/features/map/components/blacktopMap.css';
+import { PageTips } from '@/features/guide';
 
 const ORBIT_DEG_PER_S = 9;
 const GROUND = 16.8;
@@ -372,6 +373,11 @@ export default function SaveRoute() {
         )}
 
         {/* The place being circled: how to get there, Twisty or Direct. */}
+        <PageTips
+          page="save-route-pick"
+          when={!!candidate && arrived}
+          tips={[{ target: '[data-tip="route-twisty"]', text: tr("Twisty takes the bendy roads to this stop, Direct the quickest way. Either one adds it to your route.") }]}
+        />
         {candidate && arrived && (
           <div className="absolute left-2 right-2 bottom-2 z-10 rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur p-3 animate-slide-up">
             <p className="font-semibold text-sm truncate">{candidate.place.name}</p>
@@ -381,7 +387,7 @@ export default function SaveRoute() {
               <Button size="sm" variant="outline" className="gap-1" onClick={back}>
                 <ArrowLeft className="w-3.5 h-3.5" /> {tr("Back")}
               </Button>
-              <Button size="sm" disabled={!!styleBusy} className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110" onClick={() => void choose('twisty')}>
+              <Button size="sm" data-tip="route-twisty" disabled={!!styleBusy} className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110" onClick={() => void choose('twisty')}>
                 {styleBusy === 'twisty' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Waves className="w-3.5 h-3.5" />} {tr("Twisty")}
               </Button>
               <Button size="sm" disabled={!!styleBusy} className="flex-1 gap-1 btn-accent-2" onClick={() => void choose('direct')}>

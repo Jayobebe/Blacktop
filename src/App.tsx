@@ -33,6 +33,7 @@ import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
 import { AutoRescueConsentDialog, RescueDrillHost, RescueAskHost } from "@/features/rescue";
 import { CalendarReminders } from "@/features/calendar/lib/reminders";
+import { StorageWatch } from "@/components/StorageWatch";
 import { ReceiptFlight } from "@/features/ride/components/ReceiptFlight";
 import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
@@ -112,6 +113,8 @@ const Install = lazyPage(() => import("./pages/Install"));
 const SaveRoute = lazyPage(() => import("./pages/SaveRoute"));
 const TripDetail = lazyPage(() => import("./pages/TripDetail"));
 const CalendarPage = lazyPage(() => import("./pages/Calendar"));
+const StoragePage = lazyPage(() => import("./pages/Storage"));
+const WhatsNewPage = lazyPage(() => import("./pages/WhatsNew"));
 const PrivacyPolicy = lazyPage(() => loadLocaleExtra().then(() => import("./pages/PrivacyPolicy")));
 const Terms = lazyPage(() => loadLocaleExtra().then(() => import("./pages/Terms")));
 const NotFound = lazyPage(() => import("./pages/NotFound"));
@@ -334,6 +337,8 @@ function AppRoutes() {
       <Route path="/routes/new" element={<SaveRoute />} />
       <Route path="/trip/:id" element={<TripDetail />} />
       <Route path="/calendar" element={<CalendarPage />} />
+      <Route path="/storage" element={<StoragePage />} />
+      <Route path="/whats-new" element={<WhatsNewPage />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/setup" element={<Setup />} />
@@ -372,6 +377,7 @@ const App = () => {
               {/* "Are you okay?" for a rescue asked for by hand off the ride screen (the map's R, Console's rescue action). */}
               <RescueAskHost />
               <CalendarReminders />
+              <StorageWatch />
               {!__STORE_BUILD__ && <NimiqFullscreenPrompt />}
               <PatternGateDialog />
               <BrowserRouter>

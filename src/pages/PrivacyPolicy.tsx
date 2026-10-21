@@ -37,6 +37,8 @@ export default function PrivacyPolicy() {
             <li>{tr("Your garage, settings, language and preferences")}</li>
             <li>{tr("Your Track Day tracks, sessions and lap times")}</li>
             <li>{tr("Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)")}</li>
+            <li>{tr("Your vehicles' ledger: fill-ups, what you spent, the parts fitted, receipt photos you add")}</li>
+            <li>{tr("Your Medical ID, if you fill one in (shown on your own crash screens; sent to riders in your convoy with a rescue call only if you switch that on, over the live link, never stored on our servers; in a backup only if you include it)")}</li>
             <li>{tr("Your saved places, recent destinations and where the map was last centred")}</li>
             <li>{tr("Offline map areas you download")}</li>
             <li>{tr("Your unlock pattern for the anti-theft alarm and Public Road Privacy, kept only as a one-way hash (the pattern itself is never stored or sent)")}</li>
@@ -211,6 +213,13 @@ export default function PrivacyPolicy() {
           <h2 className="text-base font-semibold">{tr("Anonymous counts")}</h2>
           <p className="text-muted-foreground">
             {tr("To see whether Blacktop is being used, the app adds one to a daily tally on our server when it is opened and when a ride starts or ends, along with the kind of device (browser, installed app, iPhone or Android) and roughly how long ago it was first set up (today, this week, this month or longer). The tally holds numbers only: nothing in it says who you are, where you were or what you rode. Demo mode counts nothing.")}
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold">{tr("Fuel prices")}</h2>
+          <p className="text-muted-foreground">
+            {tr("Your vehicle's ledger (fill-ups, costs and parts) stays on your phone. If you turn on Help map fuel prices, each fill-up at a station on the map sends our server that station's map id, the fuel type, the price per litre or kWh, the currency, your country and the date: not your account, your route, your vehicle or how much you bought. Prices are shown to everyone as ranges per station and deleted after 60 days.")}
           </p>
         </section>
 

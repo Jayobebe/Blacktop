@@ -122,7 +122,7 @@ export function CalendarClock() {
         )}
       </div>
       {/* What the clock shows. */}
-      <div role="tablist" className="relative mt-3 mx-auto max-w-xs grid grid-cols-2 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5">
+      <div role="tablist" data-tip="cal-clock-modes" className="relative mt-3 mx-auto max-w-xs grid grid-cols-2 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5">
         <SlidingPill />
         {(
           [

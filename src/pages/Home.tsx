@@ -25,6 +25,8 @@ import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { SlidingPill } from '@/components/SlidingPill';
+import { WhatsNewCard } from '@/components/WhatsNew';
+import { settleForNewRider, useWhatsNew } from '@/lib/whatsNew';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
@@ -63,6 +65,9 @@ export default function Home() {
   // workspace never lands the rider on the wrong card.
   const enterprise = useEnterprise();
   const guiding = useGuidanceActive();
+  // What's new: nothing to catch up on for a rider who set up after the newest release; otherwise Settings glows until the list is opened.
+  useEffect(() => settleForNewRider(profile.createdAt), [profile.createdAt]);
+  const whatsNew = useWhatsNew();
   // Arranging stickers: drags belong to the stickers, not the deck.
   const arrangingStickers = useArranging() && settings.collectiblesEnabled;
   const deckLocked = rideState.isActive || guiding || arrangingStickers;
@@ -369,7 +374,7 @@ export default function Home() {
     ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage') }] : []),
     { icon: History, label: tr("History"), onClick: () => navigate('/history'), nav: 'history' },
     { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats') },
-    { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings') },
+    { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings'), glow: whatsNew.unread },
   ];
 
   // Canvas can't resolve `hsl(var(--accent))`, so look up the literal HSL for
@@ -641,8 +646,15 @@ export default function Home() {
           { target: '[role="tablist"]', text: tr("Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.") },
         ]}
       />
+      <PageTips
+        page="home-console"
+        when={deckKey === 'home' && !arrangingStickers && !rideState.isActive}
+        tips={[{ target: '[role="tablist"]', text: tr("Swipe the other way for Blacktop Console: live cards, quick actions, search and your notifications.") }]}
+      />
       {/* Just set up: offer the two-minute tour once (the tips wait for it). */}
       <TourOffer blocked={deckKey !== 'home' || arrangingStickers || rideState.isActive} />
+      {/* After an update: what's new, once (held back while riding, in a convoy, guided or arranging stickers). */}
+      <WhatsNewCard when={deckKey === 'home' && !arrangingStickers && !rideState.isActive && !convoy.isActive && !guiding && !mapOpen} />
       {/* Things nobody finds by themselves: a set of its own, so riders past the first tips still get it. */}
       <PageTips
         page="home-more"
@@ -877,7 +889,7 @@ export default function Home() {
                         haptics.tick();
                         onClick();
                       }}
-                      className="pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10"
+                      className={cn('pressable flex flex-col items-center gap-1 p-2 rounded-xl touch-target hover:bg-accent/10', 'glow' in item && item.glow && 'news-glow')}
                     >
                       <Icon className="w-5 h-5 text-accent-2" />
                       <span className="text-[10px] font-medium text-muted-foreground">{label}</span>

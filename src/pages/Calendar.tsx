@@ -20,6 +20,7 @@ import { exportIcs } from '@/features/calendar/lib/ics';
 import { dayKey, dayStart, addDays } from '@/features/calendar/lib/calendarStore';
 import { useRiderSpot } from '@/features/console/lib/whereRider';
 import { SlidingPill } from '@/components/SlidingPill';
+import { PageTips } from '@/features/guide';
 
 
 type View = 'month' | 'week' | 'list';
@@ -184,7 +185,7 @@ export default function CalendarPage() {
         title={tr("Blacktop Calendar")}
         backTo="/"
         right={
-          <HeaderButton onClick={() => void exportIcs(crew.events)} aria-label={tr("Add to your phone's calendar")}>
+          <HeaderButton data-tip="cal-export" onClick={() => void exportIcs(crew.events)} aria-label={tr("Add to your phone's calendar")}>
             <Download className="w-4 h-4" />
           </HeaderButton>
         }
@@ -212,7 +213,7 @@ export default function CalendarPage() {
       </div>
 
       {/* What's shown. */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div data-tip="cal-filters" className="flex flex-wrap gap-1.5 mb-3">
         {CAL_FILTERS.map((f) => {
           const on = prefs.filters.includes(f);
           return (
@@ -255,7 +256,7 @@ export default function CalendarPage() {
 
       <div className="short:col-start-2 short:row-start-1 short:row-span-2 min-w-0">
       {prefs.view === 'month' && (
-        <section ref={gridRef} {...swipe} className="touch-pan-y select-none" aria-label={monthName}>
+        <section ref={gridRef} {...swipe} data-tip="cal-month" className="touch-pan-y select-none" aria-label={monthName}>
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => step(-1)} aria-label={tr("Previous month")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronLeft className="w-4 h-4" />
@@ -421,6 +422,18 @@ export default function CalendarPage() {
       </div>
       </div>
 
+      <PageTips
+        page="calendar"
+        when={!adding}
+        max={4}
+        scroll
+        tips={[
+          { target: '[data-tip="cal-clock-modes"]', text: tr("Switch the clock to a stopwatch here. It keeps running when you leave the page.") },
+          { target: '[data-tip="cal-filters"]', text: tr("Show or hide each kind. The dots on the days are the same colours.") },
+          { target: '[data-tip="cal-month"]', text: tr("Hold a day to add a ride plan, a reminder, a Track Day or a crew plan. Swipe sideways for other months.") },
+          { target: '[data-tip="cal-export"]', text: tr("Add it all to your phone's own calendar.") },
+        ]}
+      />
       {adding && <AddSheet day={adding} open={!!adding} onOpenChange={(o) => !o && setAdding(null)} crewPlans={crew.available} />}
     </div>
   );

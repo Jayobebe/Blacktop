@@ -4,7 +4,7 @@ import { Suspense, lazy, useState, useRef, useEffect } from 'react';
 import { noteMotionGranted } from '@/lib/motionPermission';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
-import { EmergencyContactSettings, RESCUE_RADIUS_OPTIONS_KM, RescueDrillButton } from '@/features/rescue';
+import { EmergencyContactSettings, MedicalIdSettings, RESCUE_RADIUS_OPTIONS_KM, RescueDrillButton } from '@/features/rescue';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useRideHistory } from '@/features/ride';
 import {
@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
 import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock,
   Maximize,
+  HardDrive, ChevronRight,
 } from 'lucide-react';
 import { askNimiqFullscreen, canNimiqFullscreen, useNimiqFullscreen } from '@/lib/nimiqFullscreen';
 import { clearAlarmPattern, hasAlarmPattern, requestPattern } from '@/features/alarm';
@@ -47,6 +48,7 @@ import { getBlocked, clearBlocked } from '@/features/proximity';
 import { clearParkedSpot } from '@/lib/parkedSpot';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { BackupPanel } from '@/features/settings/components/BackupPanel';
+import { useWhatsNew } from '@/lib/whatsNew';
 import { RecoveryPanel } from '@/features/settings/components/RecoveryPanel';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
 import { clearSurveyAnswers, SurveyResultsTable } from '@/features/speedshop';
@@ -67,6 +69,7 @@ const IS_IOS =
 export default function Settings() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const whatsNew = useWhatsNew();
   const { profile, updateName, resetIdentity } = useProfile();
   const { preferredNavApp, updateNavApp } = useNavigation();
   const [blockedRiders, setBlockedRiders] = useState(() => getBlocked().length);
@@ -130,6 +133,10 @@ export default function Settings() {
   useEffect(() => () => cancelDemoHold(), []);
 
   useEffect(() => {
+    // Opened at Safety (What's new's Medical ID link): bring its Medical ID into view once the section has opened.
+    if (searchParams.get('section') === 'safety') {
+      window.setTimeout(() => document.querySelector('[data-tip="settings-medical"]')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 450);
+    }
     const tipStatus = searchParams.get('tip');
     if (tipStatus === 'success') {
       toast.success(tr("Thank you for your support!"));
@@ -478,6 +485,15 @@ export default function Settings() {
                 </div>
                 <Switch checked={!!settings.setOffPromptEnabled} onCheckedChange={(v) => updateSetting('setOffPromptEnabled', v)} />
               </div>
+              {settings.garageEnabled && (
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium">{tr("Ask when I stop to fill up")}</p>
+                    <p className="text-[10px] text-muted-foreground">{tr("Pausing a ride asks “Filling up?” and writes what you put in into the vehicle's logbook: economy, cost per mile and range.")}</p>
+                  </div>
+                  <Switch checked={settings.fillUpPromptEnabled !== false} onCheckedChange={(v) => updateSetting('fillUpPromptEnabled', v)} />
+                </div>
+              )}
               {settings.collectiblesEnabled && (
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -528,7 +544,7 @@ export default function Settings() {
           </CollapsibleSection>
 
           {/* Safety */}
-        <CollapsibleSection icon={AlertTriangle} label={tr("Safety")} index={2} delayClass="delay-100" tip="settings-safety">
+        <CollapsibleSection icon={AlertTriangle} label={tr("Safety")} index={2} delayClass="delay-100" tip="settings-safety" defaultOpen={searchParams.get('section') === 'safety'}>
           <div className="space-y-5">
             {/* Speed Alerts — they colour the live speed readout, so only for speed-focused riders */}
             {settings.speedFocusEnabled && (
@@ -748,6 +764,11 @@ export default function Settings() {
             {/* A text from the phone itself, for when the server can't be reached. */}
             <div className="pt-4 border-t border-border/30">
               <EmergencyContactSettings />
+            </div>
+
+            {/* What someone helping after a crash should know, on the crash screens. */}
+            <div className="pt-4 border-t border-border/30" data-tip="settings-medical">
+              <MedicalIdSettings />
             </div>
 
             {/* Practice run: the crash check, then what a real call depends on and reaches. */}
@@ -1374,6 +1395,20 @@ export default function Settings() {
               }}
             />
           </div>
+          {/* What Blacktop keeps on this phone, by kind, with a way to clear each. */}
+          <button
+            type="button"
+            data-tip="settings-storage"
+            onClick={() => navigate('/storage')}
+            className="mt-4 w-full flex items-center gap-3 rounded-xl frost-accent bg-card/60 px-3 py-3 text-left touch-target"
+          >
+            <HardDrive className="w-5 h-5 text-accent shrink-0" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-medium">{tr("Storage")}</span>
+              <span className="block text-[10px] text-muted-foreground">{tr("Videos, offline maps, radio and more: see what's using space and clear it.")}</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+          </button>
           <BackupPanel />
           <RecoveryPanel />
           {/* In the app there's no address bar to reach it by: what this phone lets Blacktop do, with a report to copy. */}
@@ -1457,6 +1492,21 @@ export default function Settings() {
           {!demoEnabled && <p className="text-[11px] text-destructive text-center mt-3">{tr("This action cannot be undone")}</p>}
         </section>
 
+        {/* What's new: every release, newest first. Glows (and Home's Settings button with it) until opened after an update. */}
+        <button
+          type="button"
+          data-tip="settings-whats-new"
+          onClick={() => navigate('/whats-new')}
+          className={cn('w-full flex items-center gap-3 rounded-[18px] frost border border-border/60 px-4 py-3.5 text-left touch-target', whatsNew.unread && 'news-glow')}
+        >
+          <Sparkles className="w-5 h-5 text-accent shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold">{tr("What's new")}</span>
+            <span className="block text-[11px] text-muted-foreground">{whatsNew.unread ? tr("There's an update to read") : tr("Every update, newest first")}</span>
+          </span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        </button>
+
         {/* Tip Jar Section — Nimiq Pay, full card below Burn */}
         {NimiqTipCard && paymentsAvailable() && (
           <Suspense fallback={null}>
@@ -1476,6 +1526,23 @@ export default function Settings() {
       {showStations && <StationManager onClose={() => setShowStations(false)} />}
 
       <LanguagePicker open={languageOpen} onOpenChange={setLanguageOpen} />
+      {/* Medical ID, once Safety is open and it's on screen. */}
+      <PageTips
+        page="settings-medical"
+        when={!languageOpen}
+        scroll
+        tips={[{ target: '[data-tip="settings-medical"]', text: tr("Your Medical ID shows on the crash screens for whoever helps you. Fill in only what you'd want a stranger to read.") }]}
+      />
+      {/* Newer rows, a set of their own so riders past the first tips still learn them. */}
+      <PageTips
+        page="settings-more"
+        when={!languageOpen}
+        scroll
+        tips={[
+          { target: '[data-tip="settings-storage"]', text: tr("Storage shows what's using space on this phone, and clears it.") },
+          { target: '[data-tip="settings-whats-new"]', text: tr("What's new: every update, newest first. It glows when there's one you haven't read.") },
+        ]}
+      />
       {/* First-time tips */}
       <PageTips
         page="settings"

@@ -1,5 +1,6 @@
 import type { BurnedAggregate } from '@/features/ride/lib/tripBurner';
 import type { Bike } from '@/features/garage/types';
+import type { VehicleLedger } from '@/features/garage/lib/ledger';
 import type { BadgeType } from '@/types/convoy';
 
 /** One ride as recorded in a vehicle's logbook (no GPS / sensor tracks). */
@@ -62,4 +63,6 @@ export interface LogbookPackage {
   log: InheritedLog;
   fromName: string;
   handedOverAt: number;
+  /** The vehicle's ledger (fill-ups and parts; amounts only if the keeper chose; never receipt photos). Older apps send none. */
+  ledger?: VehicleLedger;
 }

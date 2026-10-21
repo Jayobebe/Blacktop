@@ -18,6 +18,7 @@ import type { RideSession } from '@/types/blacktop';
 import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame } from '../lib/flyover';
 import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
 import { roadGapsForRide, withRoadGaps, type RoadGap } from '../lib/roadGaps';
+import { fillsDuring } from '@/features/garage/lib/ledger';
 import { tr } from '@/lib/i18n';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
@@ -241,6 +242,21 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': accentColor, 'line-width': 5 },
       });
+
+      // Where the rider filled up or charged on this ride (the logbook's ledger): a fuel-blue pin each.
+      const fills = fillsDuring(ride.bikeId, Date.parse(ride.startedAt), ride.endedAt ? Date.parse(ride.endedAt) : Date.parse(ride.startedAt) + ride.duration * 1000).filter((f) => f.station);
+      if (fills.length) {
+        map.addSource('flyover-fills', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: fills.map((f) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [f.station!.lng, f.station!.lat] } })) },
+        });
+        map.addLayer({
+          id: 'flyover-fills',
+          type: 'circle',
+          source: 'flyover-fills',
+          paint: { 'circle-radius': 7, 'circle-color': '#3b82f6', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
+        });
+      }
 
       // Paused, nothing redraws the picture by itself: when the map draws again (the camera was moved, or
       // tiles and terrain arrived), copy it across.

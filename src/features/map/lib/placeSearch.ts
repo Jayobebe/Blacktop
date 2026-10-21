@@ -269,6 +269,8 @@ export async function searchPlaces(
 export interface PlaceDetails {
   hours?: string;
   price: PriceInfo | null;
+  /** Its map id, for station prices. */
+  stationId?: string;
 }
 const details = new Map<string, PlaceDetails | null>();
 
@@ -291,7 +293,7 @@ export async function placeDetails(name: string, lat: number, lng: number, osm: 
       .sort((a, b) => a.km - b.km);
     const lower = name.toLowerCase();
     const hit = near.find(({ el }) => [el.tags?.name, el.tags?.brand].some((n) => n && n.toLowerCase() === lower)) ?? near.find(({ km }) => km < 0.06);
-    if (hit) found = { hours: hit.el.tags?.opening_hours, price: priceInfo(hit.el.tags) };
+    if (hit) found = { hours: hit.el.tags?.opening_hours, price: priceInfo(hit.el.tags), stationId: `op:${hit.el.id}` };
   } catch {
     return null; // not remembered: a failed look can be tried again
   }
