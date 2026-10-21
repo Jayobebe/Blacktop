@@ -573,6 +573,86 @@ export type Database = {
           },
         ]
       }
+      crew_event_rsvps: {
+        Row: {
+          display_name: string
+          event_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string
+          event_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          event_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "crew_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_events: {
+        Row: {
+          created_at: string
+          created_by: string
+          creator_name: string
+          crew_code: string
+          id: string
+          kind: string
+          lat: number | null
+          lng: number | null
+          notes: string
+          place_name: string
+          route: Json | null
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          creator_name?: string
+          crew_code: string
+          id?: string
+          kind: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string
+          place_name?: string
+          route?: Json | null
+          starts_at: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          creator_name?: string
+          crew_code?: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string
+          place_name?: string
+          route?: Json | null
+          starts_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       crew_scores: {
         Row: {
           crew_code: string
@@ -2254,6 +2334,21 @@ export type Database = {
         }[]
       }
       convoy_id_from_topic: { Args: { _topic: string }; Returns: string }
+      create_crew_event: {
+        Args: {
+          _creator_name: string
+          _crew_code: string
+          _kind: string
+          _lat: number
+          _lng: number
+          _notes: string
+          _place_name: string
+          _route: Json
+          _starts_at: string
+          _title: string
+        }
+        Returns: string
+      }
       crew_convoy_detail: {
         Args: { _convoy_id: string }
         Returns: {
@@ -2490,6 +2585,7 @@ export type Database = {
       }
       cw_wild_state: { Args: { _u: string }; Returns: Json }
       cw_wildcard_grant: { Args: { _u: string }; Returns: string[] }
+      delete_crew_event: { Args: { _id: string }; Returns: boolean }
       enterprise_role: { Args: { _org: string }; Returns: string }
       generate_convoy_code: { Args: never; Returns: string }
       get_world_presence: {
@@ -2589,6 +2685,27 @@ export type Database = {
           leader_name: string
           member_count: number
           name: string
+        }[]
+      }
+      list_crew_events: {
+        Args: { _crew_codes: string[]; _from: string; _to: string }
+        Returns: {
+          creator_name: string
+          crew_code: string
+          going: number
+          going_names: string[]
+          id: string
+          kind: string
+          lat: number
+          lng: number
+          maybe: number
+          mine: boolean
+          my_status: string
+          notes: string
+          place_name: string
+          route: Json
+          starts_at: string
+          title: string
         }[]
       }
       list_crew_leaderboard: {
@@ -2713,6 +2830,10 @@ export type Database = {
       report_hazard: {
         Args: { _heading?: number; _kind: string; _lat: number; _lng: number }
         Returns: string
+      }
+      rsvp_crew_event: {
+        Args: { _display_name: string; _id: string; _status: string }
+        Returns: undefined
       }
       set_profile_country: { Args: { _country: number }; Returns: undefined }
       set_push_reminders: {
