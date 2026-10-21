@@ -1533,10 +1533,15 @@ html.thermal .tier-fx { display: none; }
 /* Home's ride tiles notched around the globe (Home.tsx): pressing brightens them
    rather than scaling (a scaled tile's notch slid off the globe and its border),
    and a long press never selects the label or opens the callout menu. */
+.drawn-outline { border-color: transparent !important; }
 .globe-tile {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  /* Its outline is drawn by Home (lib/notchedTile, the overlay over the column): the CSS border and hover glow
+     would meet it at a different weight, and the glow is cut off square by the notch mask. */
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 .globe-tile.pressable:active:not(:disabled) {
   transform: none;

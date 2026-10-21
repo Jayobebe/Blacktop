@@ -23,6 +23,7 @@ import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
+import { notchedTilePath } from '@/lib/notchedTile';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { SlidingPill } from '@/components/SlidingPill';
 import { WhatsNewCard } from '@/components/WhatsNew';
@@ -400,6 +401,8 @@ export default function Home() {
   const trackTileRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<HTMLDivElement>(null);
   const arcOverlayRef = useRef<SVGSVGElement>(null);
+  /** Portrait's own Track Day tile under the others: not notched, but outlined the same way. */
+  const portraitTrackRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const column = tileColumnRef.current;
@@ -442,36 +445,117 @@ export default function Home() {
       globe.style.left = `${cxAbs - colRect.left - r}px`;
       globe.style.top = `${cyAbs - colRect.top - r}px`;
 
-      // Cut a true circle out of every tile so the globe sits in a circular notch.
-      // Per-tile SVG mask (evenodd path): outer rect = shown, inner circle = cut.
-      // Two 180° arcs form the circle path (a full arc from a point to itself is degenerate).
+      // Cut the notch out of every tile so the globe sits in it, its two corners where the circle meets the
+      // tile's edges rounded like the tile's own (lib/notchedTile). The same shape, inset by half a stroke, is
+      // drawn as the tile's outline below, so its straight edges, curves and the notch are one line of one
+      // width (the tile's CSS border is hidden: .globe-tile in index.css).
       const pr = r + 14; // notch radius: 14px padding around the globe rim
+      const FILLET = 12;
+      const outlines: { x: number; y: number; d: string }[] = [];
       tiles.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        const cx = cxAbs - rect.left;
-        const cy = cyAbs - rect.top;
         const w = rect.width;
         const h = rect.height;
-        const hole = `M${cx + pr},${cy} A${pr},${pr} 0 1 0 ${cx - pr},${cy} A${pr},${pr} 0 1 0 ${cx + pr},${cy} Z`;
-        // The shown rect overshoots the box and the picture is stretched to it exactly (viewBox, no aspect): drawn
-        // to the box's own fractional size, the mask's last column came out part see-through and thinned the
-        // tile's border on its right and bottom edges, so the edges looked uneven.
+        const o = { x: cxAbs - rect.left, y: cyAbs - rect.top };
+        const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 24;
+        const shape = notchedTilePath(w, h, radius, o, pr, FILLET);
+        // Stretched to the box exactly (viewBox, no aspect), so no edge pixel is part see-through.
         const svg =
           `<svg xmlns='http://www.w3.org/2000/svg' width='${Math.ceil(w)}' height='${Math.ceil(h)}' viewBox='0 0 ${w} ${h}' preserveAspectRatio='none'>` +
-          `<path fill='white' fill-rule='evenodd' d='M-8,-8H${w + 8}V${h + 8}H-8Z ${hole}'/></svg>`;
+          `<path fill='white' fill-rule='evenodd' d='${shape.d}'/></svg>`;
         const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
         el.style.webkitMaskImage = url;
         el.style.maskImage = url;
         el.style.webkitMaskRepeat = 'no-repeat';
         el.style.maskRepeat = 'no-repeat';
-        // Pin the mask to the tile's exact box (some WebViews round the SVG's
-        // intrinsic size, shifting the notch by a pixel).
         el.style.webkitMaskSize = '100% 100%';
         el.style.maskSize = '100% 100%';
         // Pressed, these brighten instead of shrinking: a scaled tile's notch slid off the
-        // globe and away from its redrawn border (see .globe-tile in index.css).
+        // globe and away from its outline (see .globe-tile in index.css).
         el.classList.add('globe-tile');
+        outlines.push({ x: rect.left - colRect.left, y: rect.top - colRect.top, d: notchedTilePath(w, h, radius, o, pr, FILLET, 0.75).d });
       });
+
+      // Portrait: a tile's content keeps clear of the notch. Where it would run under it, the content moves away
+      // from the side the notch bites (down for the tile below the globe, up for the ones above it), then steps
+      // down in size until it fits (small phones: at 320 px "Join Convoy" ran under the globe).
+      const portrait = !window.matchMedia('(orientation: landscape)').matches;
+      const reach = pr + 3; // clear of the notch's outline
+      const EDGE = 4; // content keeps this far inside its tile too
+      const clashes = (el: HTMLElement) => {
+        const t = el.getBoundingClientRect();
+        return Array.from(el.children).some((c) => {
+          if (getComputedStyle(c).position === 'absolute') return false;
+          const b = c.getBoundingClientRect();
+          if (!b.width || !b.height) return false;
+          if (b.top < t.top + EDGE || b.bottom > t.bottom - EDGE || b.left < t.left + EDGE || b.right > t.right - EDGE) return true;
+          const nx = Math.min(Math.max(cxAbs, b.left), b.right);
+          const ny = Math.min(Math.max(cyAbs, b.top), b.bottom);
+          return Math.hypot(nx - cxAbs, ny - cyAbs) < reach;
+        });
+      };
+      const contentOf = (el: HTMLElement) => Array.from(el.children).filter((c): c is HTMLElement => c instanceof HTMLElement && getComputedStyle(c).position !== 'absolute');
+      const ZOOMS = [1, 0.92, 0.84, 0.76, 0.7];
+      /** The biggest size whose content clears the notch, with as little shift away from it as that needs. */
+      const fit = (el: HTMLElement): { z: number; pad: number; side: 'top' | 'bottom' | null } => {
+        const rect = el.getBoundingClientRect();
+        const side = cyAbs < rect.top ? 'top' : cyAbs > rect.bottom ? 'bottom' : null;
+        const most = side ? Math.min(rect.height * 0.75, side === 'top' ? cyAbs + reach - rect.top : rect.bottom - (cyAbs - reach)) : 0;
+        const set = (z: number, pad: number) => {
+          contentOf(el).forEach((c) => (c.style.zoom = z === 1 ? '' : String(z)));
+          el.style.paddingTop = side === 'top' && pad ? `${pad}px` : '';
+          el.style.paddingBottom = side === 'bottom' && pad ? `${pad}px` : '';
+        };
+        for (const z of ZOOMS) {
+          for (let pad = 0; ; pad = Math.min(most, pad + 2)) {
+            set(z, pad);
+            if (!clashes(el)) return { z, pad, side };
+            if (pad >= most) break;
+          }
+        }
+        set(ZOOMS[ZOOMS.length - 1], most);
+        return { z: ZOOMS[ZOOMS.length - 1], pad: most, side };
+      };
+      tiles.forEach((el) => {
+        el.style.paddingTop = '';
+        el.style.paddingBottom = '';
+        contentOf(el).forEach((c) => (c.style.zoom = ''));
+      });
+      delete join.dataset.psplit;
+      if (portrait) {
+        // Join Convoy with its switch: stacked if that fits at full size, else split like landscape (label left,
+        // switch right) and fitted again.
+        const fitJoin = () => {
+          if (!exp.showGroup) return fit(join);
+          const stacked = fit(join);
+          if (stacked.z === 1) return stacked;
+          join.dataset.psplit = '';
+          return fit(join);
+        };
+        const fits = tiles.map((el) => ({ el, ...(el === join ? fitJoin() : fit(el)) }));
+        // The tiles above the globe share one size, so Convoy and Solo match.
+        const top = fits.filter((f) => f.side === 'bottom');
+        if (top.length > 1) {
+          const z = Math.min(...top.map((f) => f.z));
+          top.forEach((f) => {
+            if (f.z === z) return;
+            contentOf(f.el).forEach((c) => (c.style.zoom = z === 1 ? '' : String(z)));
+            for (let pad = 0; pad <= f.el.getBoundingClientRect().height * 0.75; pad += 2) {
+              f.el.style.paddingBottom = pad ? `${pad}px` : '';
+              if (!clashes(f.el)) break;
+            }
+          });
+        }
+      }
+
+      // Portrait's Track Day tile: the same outline, without a notch.
+      const pTrack = portraitTrackRef.current;
+      if (pTrack && pTrack.getClientRects().length) {
+        const rect = pTrack.getBoundingClientRect();
+        const radius = parseFloat(getComputedStyle(pTrack).borderTopLeftRadius) || 24;
+        const far = { x: -1e4, y: -1e4 };
+        outlines.push({ x: rect.left - colRect.left, y: rect.top - colRect.top, d: notchedTilePath(rect.width, rect.height, radius, far, 0, 0, 0.75).d });
+      }
 
       // In landscape the notch takes a bite out of the bottom tiles' middle. Tell each how much
       // room its label has (where the label's top line sits), so it can drop its icon, then tighten its switch,
@@ -503,51 +587,25 @@ export default function Home() {
         el.dataset.room = room < 205 ? 'tight' : room < 250 ? 'snug' : 'wide';
       });
 
-      // Carry the accent border around the circular cut on Convoy + Solo tiles.
-      // The CSS mask above clips away the buttons' own accent border where the
-      // circle overlaps; this SVG overlay restores it as a circle stroke clipped
-      // to each tile's rounded-rect bounds so it stays inside the tile corners.
+      // Each tile's outline, in the column's coordinates.
       const colW = colRect.width;
       const colH = colRect.height;
       arcSvg.setAttribute('width', String(colW));
       arcSvg.setAttribute('height', String(colH));
       arcSvg.setAttribute('viewBox', `0 0 ${colW} ${colH}`);
-
-      const cx_col = cxAbs - colRect.left;
-      const cy_col = cyAbs - colRect.top;
-
       const svgNS = 'http://www.w3.org/2000/svg';
-
-      const mkClipRect = (id: string, x: number, y: number, w: number, h: number) => {
-        const cp = document.createElementNS(svgNS, 'clipPath');
-        cp.setAttribute('id', id);
-        const r = document.createElementNS(svgNS, 'rect');
-        r.setAttribute('x', String(x)); r.setAttribute('y', String(y));
-        r.setAttribute('width', String(w)); r.setAttribute('height', String(h));
-        r.setAttribute('rx', '24'); r.setAttribute('ry', '24');
-        cp.appendChild(r);
-        return cp;
-      };
-
-      const mkCircle = (clipId: string) => {
-        const c = document.createElementNS(svgNS, 'circle');
-        c.setAttribute('cx', String(cx_col)); c.setAttribute('cy', String(cy_col));
-        // Drawn just inside the tile, as its own border is (centred on the cut, half of it fell in the hole).
-        c.setAttribute('r', String(pr + 0.75)); c.setAttribute('fill', 'none');
-        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '1.5');
-        c.setAttribute('clip-path', `url(#${clipId})`);
-        return c;
-      };
-
-      const defs = document.createElementNS(svgNS, 'defs');
-      // Every tile carries an accent border now, so every tile gets its arc.
-      const arcs = [...topRects, ...bottomTiles.map((el) => el.getBoundingClientRect())].map((rect, i) => {
-        const id = `bt-top-clip-${i}`;
-        defs.appendChild(mkClipRect(id, rect.left - colRect.left, rect.top - colRect.top, rect.width, rect.height));
-        return mkCircle(id);
+      const paths = outlines.map(({ x, y, d }) => {
+        const p = document.createElementNS(svgNS, 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('transform', `translate(${x} ${y})`);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('fill-rule', 'evenodd');
+        p.setAttribute('stroke', accentColor);
+        p.setAttribute('stroke-width', '1.5');
+        p.setAttribute('stroke-linejoin', 'round');
+        return p;
       });
-
-      arcSvg.replaceChildren(defs, ...arcs);
+      arcSvg.replaceChildren(...paths);
     };
 
     apply();
@@ -778,6 +836,8 @@ export default function Home() {
                           }}
                           className={cn(
                             'group/tile pressable flex-1 bg-card/50 border-[1.5px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
+                            // Portrait on a small phone (set by the fit below the globe): the label left and the switch right, as landscape does.
+                            'data-[psplit]:justify-between data-[psplit]:px-4',
                             // With Track beside it the globe is on this tile's right corner, so the label is centred in the rest.
                             // Alone, the globe sits over its centre: the label goes left of it and the
                             // operator / passenger switch right of it.
@@ -789,20 +849,20 @@ export default function Home() {
                           )}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
+                            <div className="w-10 h-10 landscape:w-9 landscape:h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden group-data-[psplit]/tile:hidden">
                               <secondaryTile.icon className="w-5 h-5 landscape:w-4 landscape:h-4 text-accent-2" />
                             </div>
                             <div className="text-left flex flex-col items-start gap-1">
                               <span className="text-base font-semibold tracking-tight block">{secondaryTile.label}</span>
                               {/* Join Convoy: operator or passenger, like Track Day's racer / pit crew. */}
                               {exp.showGroup ? (
-                                <div className={cn(!showTrack && 'landscape:hidden')}>{joinRoleToggle}</div>
+                                <div className={cn(!showTrack && 'landscape:hidden', 'group-data-[psplit]/tile:hidden')}>{joinRoleToggle}</div>
                               ) : (
                                 <span className="text-xs text-muted-foreground landscape:hidden">{secondaryTile.sub}</span>
                               )}
                             </div>
                           </div>
-                          {exp.showGroup && !showTrack && <div className="hidden landscape:block">{joinRoleToggle}</div>}
+                          {exp.showGroup && <div className={cn('hidden group-data-[psplit]/tile:block', !showTrack && 'landscape:block')}>{joinRoleToggle}</div>}
                         </div>
                         {showTrack && (
                           <div
@@ -833,7 +893,8 @@ export default function Home() {
                           tabIndex={0}
                           onClick={openTrack}
                           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                          className="pressable landscape:hidden flex-none h-16 bg-card/50 border-[1.5px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
+                          ref={portraitTrackRef}
+                          className="pressable landscape:hidden flex-none h-16 bg-card/50 border-[1.5px] border-accent drawn-outline hover:bg-accent/10 rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
                         >
                           <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <Zap className="w-5 h-5 text-accent-2" />
