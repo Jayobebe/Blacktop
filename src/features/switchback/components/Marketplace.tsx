@@ -17,6 +17,7 @@ import { Coin } from './Coin';
 import { SbCard } from './SbCard';
 import { shelfLabel } from './ShopPage';
 import { SpinPanel } from './SpinPanel';
+import { SlidingPill } from '@/components/SlidingPill';
 
 /** The tier a trade-up spins for: road → race → GTLM or TT (by what most of the five are) → F1 / MotoGP. The top tier has none. */
 function nextTier(tier: ShopCategory, cars: number): ShopCategory | null {
@@ -112,7 +113,8 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
 
   return (
     <div className="space-y-4 mt-4">
-      <div role="tablist" aria-label={tr("Blacktop Marketplace")} className="flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-sm">
+      <div role="tablist" aria-label={tr("Blacktop Marketplace")} className="relative flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-sm">
+        <SlidingPill />
         {(
           [
             ['sell', tr("Sell"), Coins],
@@ -124,7 +126,7 @@ export function Marketplace({ disabled }: { disabled?: boolean }) {
             type="button"
             role="tab"
             aria-selected={tab === id}
-            className={cn('flex-1 min-h-11 flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors', tab === id ? 'bg-accent text-accent-foreground' : 'text-accent/80')}
+            className={cn('relative z-[1] flex-1 min-h-11 flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-300', tab === id ? 'text-accent-foreground' : 'text-accent/80')}
             onClick={() => setTab(id)}
           >
             <Icon className="w-4 h-4" />

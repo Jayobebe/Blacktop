@@ -175,7 +175,7 @@ export default function PillionRide() {
         <button
           onClick={handleVoice}
           className={cn(
-            'w-28 h-28 rounded-full flex items-center justify-center transition-all touch-target',
+            'w-28 h-28 rounded-2xl flex items-center justify-center transition-all touch-target',
             isConnected && !isMuted
               ? 'bg-ptt-active shadow-glow'
               : isConnected

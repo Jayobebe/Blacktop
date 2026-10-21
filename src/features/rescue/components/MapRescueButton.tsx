@@ -48,7 +48,7 @@ export function MapRescueButton({ isLeader = false }: { isLeader?: boolean }) {
       aria-label={pending ? (inConvoy ? tr("Cancel rescue request") : tr("Rescue call sent")) : tr("Request rescue")}
       data-tip="map-rescue"
       className={cn(
-        'hold-target glove-hit relative overflow-hidden w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] shrink-0 rounded-full flex items-center justify-center bg-[hsl(var(--burn))] text-white shadow-lg border border-white/15',
+        'hold-target glove-hit relative overflow-hidden w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] shrink-0 rounded-xl flex items-center justify-center bg-[hsl(var(--burn))] text-white shadow-lg border border-white/15',
         pending && 'animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]',
       )}
     >

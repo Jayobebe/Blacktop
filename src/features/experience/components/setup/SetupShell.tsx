@@ -38,7 +38,7 @@ export function SetupShell({ stepKey, direction, progress, onBack, eyebrow, titl
             disabled={!onBack}
             aria-label={tr("Back")}
             className={cn(
-              'pressable frost-accent w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-foreground',
+              'pressable frost-accent w-10 h-10 -ml-1 rounded-xl flex items-center justify-center text-foreground',
               !onBack && 'invisible'
             )}
           >

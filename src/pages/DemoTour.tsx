@@ -525,7 +525,7 @@ export default function DemoTour() {
           })}
         </div>
         <div className="flex items-center justify-between mt-2">
-          <button type="button" onClick={close} aria-label={tr("Close the tour")} className="glove-hit w-9 h-9 rounded-full frost-accent flex items-center justify-center">
+          <button type="button" onClick={close} aria-label={tr("Close the tour")} className="glove-hit w-9 h-9 rounded-xl frost-accent flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/60">
@@ -536,7 +536,7 @@ export default function DemoTour() {
             onClick={() => setSoundOn(!soundOn)}
             aria-label={soundOn ? tr("Mute sound") : tr("Play sound")}
             aria-pressed={soundOn}
-            className="glove-hit w-9 h-9 rounded-full frost-accent flex items-center justify-center"
+            className="glove-hit w-9 h-9 rounded-xl frost-accent flex items-center justify-center"
           >
             {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>

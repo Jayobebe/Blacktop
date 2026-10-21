@@ -170,7 +170,7 @@ export function VehicleCard({ card, editable = true }: Props) {
                     onClick={() => setResizing((r) => !r)}
                     aria-label={resizing ? tr("Finish resizing image") : tr("Resize card image")}
                     className={cn(
-                      'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
+                      'inline-flex items-center justify-center w-6 h-6 rounded-md transition-transform active:scale-90',
                       style.chip,
                     )}
                   >
@@ -185,7 +185,7 @@ export function VehicleCard({ card, editable = true }: Props) {
                     onClick={() => setFlipped(true)}
                     aria-label={tr("Flip to show QR code")}
                     className={cn(
-                      'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90',
+                      'inline-flex items-center justify-center w-6 h-6 rounded-md transition-transform active:scale-90',
                       style.chip,
                     )}
                   >
@@ -277,7 +277,7 @@ export function VehicleCard({ card, editable = true }: Props) {
                     type="button"
                     onClick={() => setResizing(false)}
                     aria-label={tr("Confirm image size")}
-                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/90 text-black active:scale-90"
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-white/90 text-black active:scale-90"
                   >
                     <Check className="w-3 h-3" />
                   </button>
@@ -396,7 +396,7 @@ export function VehicleCard({ card, editable = true }: Props) {
                   onClick={() => setFlipped(false)}
                   aria-label={tr("Flip back")}
                   className={cn(
-                    'inline-flex items-center justify-center w-6 h-6 rounded-full transition-transform active:scale-90 shrink-0',
+                    'inline-flex items-center justify-center w-6 h-6 rounded-md transition-transform active:scale-90 shrink-0',
                     style.chip,
                   )}
                 >

@@ -156,7 +156,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
             {onRemoveRecording && (
               <button
                 onClick={handleRemoveVideo}
-                className="absolute top-1 right-1 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
+                className="absolute top-1 right-1 p-1 bg-background/80 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -177,7 +177,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
             />
             <button
               onClick={(e) => handleRemove(photo.id, e)}
-              className="absolute top-1 right-1 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
+              className="absolute top-1 right-1 p-1 bg-background/80 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground"
             >
               <X className="w-3 h-3" />
             </button>
@@ -212,7 +212,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
         >
           <button
             onClick={() => setSelectedPhoto(null)}
-            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors"
+            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-xl hover:bg-muted transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -233,7 +233,7 @@ export function RidePhotos({ photos, onAddPhoto, onRemovePhoto, recording, onRem
         >
           <button
             onClick={() => setSelectedVideo(null)}
-            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-full hover:bg-muted transition-colors z-10"
+            className="glove-hit absolute top-4 right-4 p-2 bg-card rounded-xl hover:bg-muted transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>

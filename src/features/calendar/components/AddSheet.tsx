@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Flag, Bell, Timer, Users, Search, Loader2, Check, MapPin, Route as RouteIcon, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,8 +13,10 @@ import { useTrips, legCount, tripFinished } from '@/features/ride/lib/trips';
 import { useSavedRoutes } from '@/features/map/lib/savedRoutes';
 import { getSavedPOIs } from '@/features/map';
 import { searchPlaces, type MapSearchResult } from '@/features/map/lib/placeSearch';
+import { useRiderSpot } from '@/features/console/lib/whereRider';
 import { addCalendarItem, dayStart, type ReminderType } from '../lib/calendarStore';
 import { useCrewEventActions } from '../lib/crewEvents';
+import { SlidingPill } from '@/components/SlidingPill';
 
 type Tab = 'plan' | 'reminder' | 'track' | 'crew';
 
@@ -52,7 +54,8 @@ export function AddSheet({ day, open, onOpenChange, crewPlans }: { day: string; 
           <SheetTitle>{tr("Add to {0}", [dayStart(day).toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'long' })])}</SheetTitle>
           <SheetDescription>{tr("Kept on your phone; a crew plan is shared with that crew.")}</SheetDescription>
         </SheetHeader>
-        <div role="tablist" className="mt-3 grid gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        <div role="tablist" className="relative mt-3 grid gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          <SlidingPill />
           {tabs.map(([id, label, I]) => (
             <button
               key={id}
@@ -60,7 +63,7 @@ export function AddSheet({ day, open, onOpenChange, crewPlans }: { day: string; 
               role="tab"
               aria-selected={tab === id}
               onClick={() => setTab(id)}
-              className={cn('tall-hit flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-semibold', tab === id ? 'bg-accent text-accent-foreground' : 'text-accent/80')}
+              className={cn('tall-hit relative z-[1] flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-semibold transition-colors duration-300', tab === id ? 'text-accent-foreground' : 'text-accent/80')}
             >
               <I className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{label}</span>
             </button>
@@ -84,22 +87,47 @@ function WherePicker({ value, onChange, trips = true }: { value: Where; onChange
   const routes = useSavedRoutes();
   const open = useTrips().filter((t) => !tripFinished(t) && t.rides.length > 0);
   const saved = getSavedPOIs();
+  const spot = useRiderSpot(true);
+  const spotRef = useRef(spot);
+  spotRef.current = spot;
   const [q, setQ] = useState('');
   const [results, setResults] = useState<MapSearchResult[]>([]);
   const [busy, setBusy] = useState(false);
+  // Only the newest search may answer: a slow one that comes back late is dropped.
+  const seq = useRef(0);
   useEffect(() => {
+    const n = ++seq.current;
     if (q.trim().length < 2) {
       setResults([]);
+      setBusy(false);
       return;
     }
+    setBusy(true);
     const t = window.setTimeout(() => {
-      setBusy(true);
-      void searchPlaces(q, null, null, null)
-        .then((r) => setResults(r.slice(0, 5)))
-        .finally(() => setBusy(false));
+      searchPlaces(q, null, spotRef.current ?? null, null)
+        .then((r) => {
+          if (n === seq.current) setResults(r.slice(0, 5));
+        })
+        .catch(() => {
+          if (n === seq.current) setResults([]);
+        })
+        .finally(() => {
+          if (n === seq.current) setBusy(false);
+        });
     }, 450);
     return () => window.clearTimeout(t);
   }, [q]);
+  // What's typed also finds the rider's own saved routes, open trips and saved places, listed first.
+  const needle = q.trim().toLowerCase();
+  const mineRoutes = needle.length >= 2 ? routes.filter((r) => r.name.toLowerCase().includes(needle)) : [];
+  const mineTrips = needle.length >= 2 && trips ? open.filter((t) => t.name.toLowerCase().includes(needle)) : [];
+  const minePlaces = needle.length >= 2 ? saved.filter((p) => p.name.toLowerCase().includes(needle)) : [];
+  const pickMine = (w: Where) => {
+    haptics.tick();
+    onChange(w);
+    setQ('');
+    setResults([]);
+  };
   const chip = (on: boolean, label: string, onClick: () => void, Icon: typeof Flag) => (
     <button
       key={label}
@@ -108,7 +136,7 @@ function WherePicker({ value, onChange, trips = true }: { value: Where; onChange
         haptics.tick();
         onClick();
       }}
-      className={cn('h-9 max-w-full px-3 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 border truncate', on ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
+      className={cn('h-9 max-w-full px-3 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 border truncate', on ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{label}</span>
     </button>
@@ -124,10 +152,45 @@ function WherePicker({ value, onChange, trips = true }: { value: Where; onChange
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-accent" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("Search for a place")} className={cn(input, 'pl-9')} />
-        {busy && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />}
+        {/* The spin is the icon's own transform, so the centring sits on a box round it (both on one element wobbled). */}
+        {busy && (
+          <span aria-hidden className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </span>
+        )}
       </div>
-      {results.length > 0 && (
+      {mineRoutes.length + mineTrips.length + minePlaces.length + results.length > 0 && (
         <ul className="rounded-xl border border-border overflow-hidden">
+          {mineTrips.map((t) => (
+            <li key={`trip-${t.id}`}>
+              <button type="button" onClick={() => pickMine({ kind: 'trip', id: t.id, leg: t.legsDone, name: t.name })} className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent/10 border-t border-border/50 first:border-t-0 flex items-center gap-2">
+                <RouteIcon className="w-4 h-4 text-accent shrink-0" />
+                <span className="min-w-0 flex-1 truncate font-semibold">{tr("{0}: leg {1} of {2}", [t.name, t.legsDone + 1, legCount(t)])}</span>
+              </button>
+            </li>
+          ))}
+          {mineRoutes.map((r) => (
+            <li key={`route-${r.id}`}>
+              <button type="button" onClick={() => pickMine({ kind: 'route', id: r.id, name: r.name })} className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent/10 border-t border-border/50 first:border-t-0 flex items-center gap-2">
+                <RouteIcon className="w-4 h-4 text-accent shrink-0" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{r.name}</span>
+                  <span className="block text-[11px] text-muted-foreground">{tr("Saved route")}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+          {minePlaces.map((p) => (
+            <li key={`place-${p.id}`}>
+              <button type="button" onClick={() => pickMine({ kind: 'place', lat: p.lat, lng: p.lng, name: p.name })} className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent/10 border-t border-border/50 first:border-t-0 flex items-center gap-2">
+                <Bookmark className="w-4 h-4 text-accent shrink-0" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{p.name}</span>
+                  <span className="block text-[11px] text-muted-foreground">{tr("Saved place")}</span>
+                </span>
+              </button>
+            </li>
+          ))}
           {results.map((r) => (
             <li key={r.id}>
               <button
@@ -231,7 +294,7 @@ function ReminderForm({ day, done }: { day: string; done: () => void }) {
               setType(id);
               setYearly(id !== 'other' && id !== 'tyres');
             }}
-            className={cn('h-9 px-3 rounded-full text-xs font-semibold border', type === id ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
+            className={cn('h-9 px-3 rounded-xl text-xs font-semibold border', type === id ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
           >
             {label}
           </button>
@@ -383,7 +446,7 @@ function CrewForm({ day, done }: { day: string; done: () => void }) {
               key={c.code}
               type="button"
               onClick={() => setCode(c.code)}
-              className={cn('h-9 max-w-[48%] px-3 rounded-full text-xs font-semibold border truncate', code === c.code ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
+              className={cn('h-9 max-w-[48%] px-3 rounded-xl text-xs font-semibold border truncate', code === c.code ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 border-border/60')}
             >
               {c.name}
             </button>

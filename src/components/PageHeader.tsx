@@ -55,14 +55,14 @@ export function PageHeader({ title, subtitle, backTo, onBack, backLabel = 'Back'
   );
 }
 
-/** Circular 40px icon button used in headers. */
+/** The 40px icon button used in headers (a rounded square, like every button). */
 export const HeaderButton = forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }>(function HeaderButton({ className, children, active, ...props }, ref) {
   return (
     <button
       ref={ref}
       type="button"
       className={cn(
-        'pressable w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+        'pressable w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
         'frost-accent text-foreground',
         active ? '!bg-accent/20' : 'hover:!bg-accent/10',
         className

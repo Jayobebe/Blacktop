@@ -63,7 +63,7 @@ export function RadioButton({ variant = 'ride', className }: Props) {
       title={tr("Blacktop Radio — hold for stations")}
       className={cn(
         variant === 'ride'
-          ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target'
+          ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl flex items-center justify-center transition-all touch-target'
           : 'w-9 h-9 flex items-center justify-center transition-colors',
         active
           ? 'bg-accent text-accent-foreground'

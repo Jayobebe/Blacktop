@@ -84,7 +84,7 @@ export default function Install() {
           variant="ghost" 
           size="icon" 
           onClick={() => navigate(-1)}
-          className="rounded-full"
+          className="rounded-xl"
           aria-label={tr("Go back")}
         >
           <ChevronLeft className="w-5 h-5" />

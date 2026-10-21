@@ -1069,7 +1069,7 @@ export default function ActiveRide() {
                 onTap={hasPendingRescue ? () => void cancelRescueRequest() : undefined}
                 dataTip="rescue"
                 className={cn(
-                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
                   hasPendingRescue && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
                 )}
                 title={hasPendingRescue ? tr("Cancel rescue request") : tr("Request rescue")}
@@ -1119,7 +1119,7 @@ export default function ActiveRide() {
                 disabled={soloRescueSending || soloRescueSent}
                 dataTip="rescue"
                 className={cn(
-                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
+                  "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl flex items-center justify-center transition-all touch-target bg-[hsl(var(--burn))] text-white hover:brightness-110 disabled:opacity-100",
                   soloRescueSent && "animate-pulse ring-4 ring-[hsl(var(--burn)/0.4)]"
                 )}
                 title={soloRescueSent ? tr("Rescue call sent") : soloRescueSending ? tr("Sending…") : tr("Call for rescue (your crew and Discord)")}
@@ -1511,7 +1511,7 @@ export default function ActiveRide() {
               toast.info(nextPaused ? tr("{0} paused", [terms.Ride]) : tr("{0} resumed", [terms.Ride]));
             }}
             className={cn(
-              "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full flex items-center justify-center transition-all touch-target",
+              "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl flex items-center justify-center transition-all touch-target",
               rideState.isPaused
                 ? "bg-accent/20 text-accent"
                 : "bg-secondary hover:bg-muted text-muted-foreground"
@@ -1552,7 +1552,7 @@ export default function ActiveRide() {
               }
             }}
 
-            className="h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full bg-secondary hover:bg-muted touch-target"
+            className="h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl bg-secondary hover:bg-muted touch-target"
             title={tr("Open map with route")}
           >
             {/* The Button's own [&_svg]:size-4 would shrink it below its neighbours' icons. */}
@@ -1590,7 +1590,7 @@ export default function ActiveRide() {
                   }
                 }}
                 className={cn(
-                  "w-12 h-12 landscape:w-16 landscape:h-16 [@media(max-height:420px)]:w-12 [@media(max-height:420px)]:h-12 rounded-full flex items-center justify-center transition-all touch-target",
+                  "w-12 h-12 landscape:w-16 landscape:h-16 [@media(max-height:420px)]:w-12 [@media(max-height:420px)]:h-12 rounded-2xl flex items-center justify-center transition-all touch-target",
                   isConnected
                     ? "bg-destructive/20 hover:bg-destructive/30 text-destructive"
                     : "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400"
@@ -1615,7 +1615,7 @@ export default function ActiveRide() {
                     toggleMute();
                   }}
                   className={cn(
-                    "w-16 h-16 landscape:w-20 landscape:h-20 [@media(max-height:420px)]:w-14 [@media(max-height:420px)]:h-14 rounded-full flex items-center justify-center transition-all touch-target",
+                    "w-16 h-16 landscape:w-20 landscape:h-20 [@media(max-height:420px)]:w-14 [@media(max-height:420px)]:h-14 rounded-2xl flex items-center justify-center transition-all touch-target",
                     !isMuted
                       ? "bg-ptt-active scale-105 animate-ptt-pulse shadow-glow"
                       : "bg-ptt-inactive hover:bg-muted"
@@ -1637,7 +1637,7 @@ export default function ActiveRide() {
               variant="ghost"
               onClick={() => setShowMembers(!showMembers)}
               className={cn(
-                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full touch-target",
+                "h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl touch-target",
                 showMembers ? "bg-accent/20 text-accent" : "bg-secondary hover:bg-muted"
               )}
             >

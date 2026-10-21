@@ -24,6 +24,7 @@ import { haptics } from '@/lib/haptics';
 import { sceneCue, uiCue } from '@/lib/radioFx';
 import { cn } from '@/lib/utils';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
+import { SlidingPill } from '@/components/SlidingPill';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
 import { GlobeBanner } from '@/components/GlobeBanner';
@@ -35,6 +36,16 @@ import { isThermal } from '@/lib/thermal';
 import { tr } from '@/lib/i18n';
 import { useConsoleNews, refreshConsoleNews } from '@/features/console/lib/news';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+
+/**
+ * The deck card Home was left on, in memory only (a fresh launch opens on Home):
+ * a page opened from Blacktop Console, whose back button goes straight to Home
+ * (a new history entry with no state), lands back on the Console. Only within
+ * ten minutes, and never once a ride has started (its receipt flies into the
+ * History button on the Home card).
+ */
+let leftOn: { key: string; at: number } | null = null;
+const RETURN_MS = 10 * 60_000;
 
 export default function Home() {
   const peaksHidden = usePeaksHidden();
@@ -62,12 +73,34 @@ export default function Home() {
   useEffect(() => refreshConsoleNews(), []);
   // Back from a package demo page returns to the Doorway (history state).
   const location = useLocation();
-  const [deckKey, setDeckKey] = useState<string>(() =>
-    (location.state as { deck?: string } | null)?.deck === 'doorway'
-      ? 'doorway'
-      : enterprise.activeWorkspaceId
-        ? `ws:${enterprise.activeWorkspaceId}`
-        : 'home',
+  const [deckKey, setDeckKey] = useState<string>(() => {
+    // Back (the history entry remembers its card, below), else where Home was just left.
+    const back = (location.state as { deck?: string } | null)?.deck;
+    if (back === 'doorway' || back === 'console') return back;
+    if (!back && leftOn?.key === 'console' && Date.now() - leftOn.at < RETURN_MS && !rideState.isActive) return 'console';
+    return enterprise.activeWorkspaceId ? `ws:${enterprise.activeWorkspaceId}` : 'home';
+  });
+  // The card on screen is written into this history entry (no change of address, so no warp),
+  // so Back from anything opened on the Console comes back to the Console.
+  useEffect(() => {
+    try {
+      const st = window.history.state as { usr?: Record<string, unknown> | null } | null;
+      if (st && typeof st === 'object' && st.usr?.deck !== deckKey) {
+        window.history.replaceState({ ...st, usr: { ...(st.usr ?? {}), deck: deckKey } }, '');
+      }
+    } catch {
+      // Only a convenience.
+    }
+  }, [deckKey]);
+  const rideActiveRef = useRef(rideState.isActive);
+  rideActiveRef.current = rideState.isActive;
+  const deckKeyRef = useRef(deckKey);
+  deckKeyRef.current = deckKey;
+  useEffect(
+    () => () => {
+      leftOn = rideActiveRef.current ? null : { key: deckKeyRef.current, at: Date.now() };
+    },
+    [],
   );
   const deckIndex = Math.max(0, deckKeys.indexOf(deckKey));
   // Stickers are arranged on the consumer home, whichever card the deck was on.
@@ -242,8 +275,9 @@ export default function Home() {
       role="radiogroup"
       aria-label={tr("Track role")}
       onClick={(e) => e.stopPropagation()}
-      className={cn('flex rounded-xl border border-accent/40 bg-background/60 p-0.5', compact ? 'text-[10px]' : 'text-[11px]')}
+      className={cn('relative flex rounded-xl border border-accent/40 bg-background/60 p-0.5', compact ? 'text-[10px]' : 'text-[11px]')}
     >
+      <SlidingPill />
       {([
         { id: 'racer', label: tr("Racer"), Icon: QrCode },
         { id: 'pit', label: tr("Pit crew"), Icon: ScanLine },
@@ -256,9 +290,9 @@ export default function Home() {
           onClick={() => setTrackRole(id)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setTrackRole(id)}
           className={cn(
-            'tall-hit flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors',
+            'tall-hit relative z-[1] flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors duration-300',
             compact ? 'px-1.5 py-1' : 'px-2.5 py-1.5',
-            trackRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
+            trackRole === id ? 'text-accent-foreground' : 'text-accent/80',
           )}
         >
           <Icon className="w-3 h-3 landscape:group-data-[room=tight]/tile:hidden" />
@@ -291,8 +325,9 @@ export default function Home() {
       role="radiogroup"
       aria-label={tr("Joining as")}
       onClick={(e) => e.stopPropagation()}
-      className="flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-[10px] landscape:text-[10px]"
+      className="relative flex rounded-xl border border-accent/40 bg-background/60 p-0.5 text-[10px] landscape:text-[10px]"
     >
+      <SlidingPill />
       {([
         { id: 'operator', label: tr("Operator"), Icon: Bike },
         { id: 'pillion', label: tr("Passenger"), Icon: UserRound },
@@ -305,8 +340,8 @@ export default function Home() {
           onClick={() => setJoinRole(id)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setJoinRole(id)}
           className={cn(
-            'tall-hit flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors px-1.5 py-1',
-            joinRole === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
+            'tall-hit relative z-[1] flex items-center gap-1 rounded-lg font-semibold cursor-pointer transition-colors duration-300 px-1.5 py-1',
+            joinRole === id ? 'text-accent-foreground' : 'text-accent/80',
           )}
         >
           <Icon className="w-3 h-3 landscape:group-data-[room=tight]/tile:hidden" />

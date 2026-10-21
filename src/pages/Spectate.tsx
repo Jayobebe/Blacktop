@@ -327,7 +327,7 @@ export default function Spectate() {
           type="button"
           onClick={back}
           aria-label={tr("Stop spectating")}
-          className="h-12 w-12 rounded-full frost-accent flex items-center justify-center touch-target flex-shrink-0"
+          className="h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target flex-shrink-0"
         >
           <X className="w-5 h-5" />
         </button>
@@ -397,7 +397,7 @@ export default function Spectate() {
             setFollow(true);
             mapRef.current?.easeTo({ center: [live.lng, live.lat], zoom: 15.5, bearing: live.heading ?? 0, pitch: 45, duration: 600 });
           }}
-          className="absolute right-[calc(1rem+var(--safe-right))] top-1/2 h-12 px-4 rounded-full frost-accent flex items-center gap-2 text-sm font-semibold touch-target"
+          className="absolute right-[calc(1rem+var(--safe-right))] top-1/2 h-12 px-4 rounded-2xl frost-accent flex items-center gap-2 text-sm font-semibold touch-target"
         >
           <Crosshair className="w-4 h-4" />
           {tr("Follow")}

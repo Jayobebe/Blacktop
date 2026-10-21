@@ -70,7 +70,7 @@ export function StationManager({ onClose }: Props) {
           <p className="text-[10px] uppercase tracking-[0.3em] text-accent font-semibold">{tr("Stations")}</p>
           <p className="text-xs text-muted-foreground">{tr("Your own files. Nothing leaves the phone.")}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label={tr("Close station manager")} className="glove-hit w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center">
+        <button type="button" onClick={onClose} aria-label={tr("Close station manager")} className="glove-hit w-9 h-9 rounded-xl bg-secondary hover:bg-muted flex items-center justify-center">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -111,7 +111,7 @@ export function StationManager({ onClose }: Props) {
                   type="button"
                   onClick={() => setEditingId(isEditing ? null : station.id)}
                   aria-label={isEditing ? tr("Done editing station") : tr("Edit station")}
-                  className="w-9 h-9 rounded-full bg-secondary hover:bg-muted flex items-center justify-center"
+                  className="w-9 h-9 rounded-xl bg-secondary hover:bg-muted flex items-center justify-center"
                 >
                   {isEditing ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
                 </button>
@@ -123,7 +123,7 @@ export function StationManager({ onClose }: Props) {
                     toast.success(tr("Station deleted"));
                   }}
                   aria-label={tr("Delete {0}", [station.name])}
-                  className="w-9 h-9 rounded-full bg-secondary hover:bg-destructive/20 text-destructive flex items-center justify-center"
+                  className="w-9 h-9 rounded-xl bg-secondary hover:bg-destructive/20 text-destructive flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -138,7 +138,7 @@ export function StationManager({ onClose }: Props) {
                         type="button"
                         onClick={() => void updateStation(station.id, { color: c.id })}
                         aria-label={tr("{0} cover", [c.label])}
-                        className={cn('w-7 h-7 rounded-full border-2', station.color === c.id ? 'border-foreground' : 'border-transparent')}
+                        className={cn('w-7 h-7 rounded-lg border-2', station.color === c.id ? 'border-foreground' : 'border-transparent')}
                         style={{ backgroundColor: `hsl(${c.hsl})` }}
                       />
                     ))}
@@ -211,7 +211,7 @@ export function StationManager({ onClose }: Props) {
                   type="button"
                   onClick={() => setColor(c.id)}
                   aria-label={tr("{0} cover", [c.label])}
-                  className={cn('w-7 h-7 rounded-full border-2', color === c.id ? 'border-foreground' : 'border-transparent')}
+                  className={cn('w-7 h-7 rounded-lg border-2', color === c.id ? 'border-foreground' : 'border-transparent')}
                   style={{ backgroundColor: `hsl(${c.hsl})` }}
                 />
               ))}

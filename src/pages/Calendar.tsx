@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Download, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { haptics } from '@/lib/haptics';
+import { isThermal } from '@/lib/thermal';
+import { pixelDissolve } from '@/lib/warp';
 import { milesText } from '@/lib/units';
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { useHoldTap } from '@/hooks/useHoldTap';
@@ -17,6 +19,7 @@ import { sunTimes } from '@/features/calendar/lib/sun';
 import { exportIcs } from '@/features/calendar/lib/ics';
 import { dayKey, dayStart, addDays } from '@/features/calendar/lib/calendarStore';
 import { useRiderSpot } from '@/features/console/lib/whereRider';
+import { SlidingPill } from '@/components/SlidingPill';
 
 
 type View = 'month' | 'week' | 'list';
@@ -113,16 +116,35 @@ export default function CalendarPage() {
   }, [data.rideWeeks, thisWeek]);
   const atRisk = !data.rideWeeks.has(thisWeek) && streak.size > 0;
 
-  const select = (k: string) => {
+  // A day picked brings its panel into view (it sits under the grid), once it has drawn with that day.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [scrollSeq, setScrollSeq] = useState(0);
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!scrollSeq || !el) return;
+    const raf = requestAnimationFrame(() => {
+      // Already well in view: leave the page where it is.
+      if (el.getBoundingClientRect().top < window.innerHeight * 0.55) return;
+      const still = isThermal() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [scrollSeq]);
+
+  const select = (k: string, reveal = true) => {
     haptics.tick();
     setSelected(k);
     setParams({ day: k }, { replace: true });
+    if (reveal) setScrollSeq((n) => n + 1);
   };
 
   // Swipes: a month (or a week) at a time.
   const touch = useRef<{ x: number; y: number } | null>(null);
+  const gridRef = useRef<HTMLElement>(null);
   const step = (dir: 1 | -1) => {
     haptics.tick();
+    // The month (or week) going breaks up into pixels over the one arriving.
+    if (gridRef.current) pixelDissolve(gridRef.current);
     if (prefs.view === 'week') {
       const k = addDays(selected, 7 * dir);
       setSelected(k);
@@ -174,7 +196,8 @@ export default function CalendarPage() {
       <CalendarClock />
 
       {/* Month, week or list. */}
-      <div role="tablist" className="grid grid-cols-3 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5 mb-2.5">
+      <div role="tablist" className="relative grid grid-cols-3 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5 mb-2.5">
+        <SlidingPill />
         {(
           [
             ['month', tr("Month")],
@@ -182,7 +205,7 @@ export default function CalendarPage() {
             ['list', tr("Coming up")],
           ] as const
         ).map(([v, label]) => (
-          <button key={v} type="button" role="tab" aria-selected={prefs.view === v} onClick={() => setPrefs({ view: v })} className={cn('tall-hit rounded-lg py-2 text-xs font-semibold', prefs.view === v ? 'bg-accent text-accent-foreground' : 'text-accent/80')}>
+          <button key={v} type="button" role="tab" aria-selected={prefs.view === v} onClick={() => setPrefs({ view: v })} className={cn('tall-hit relative z-[1] rounded-lg py-2 text-xs font-semibold transition-colors duration-300', prefs.view === v ? 'text-accent-foreground' : 'text-accent/80')}>
             {label}
           </button>
         ))}
@@ -198,7 +221,7 @@ export default function CalendarPage() {
               type="button"
               aria-pressed={on}
               onClick={() => setPrefs({ filters: on ? prefs.filters.filter((x) => x !== f) : [...prefs.filters, f] })}
-              className={cn('h-8 px-3 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1.5', on ? 'text-foreground' : 'border-border/60 text-muted-foreground')}
+              className={cn('h-8 px-3 rounded-lg text-[11px] font-semibold border inline-flex items-center gap-1.5 transition-colors duration-300', on ? 'text-foreground' : 'border-border/60 text-muted-foreground')}
               style={on ? { borderColor: FILTER_COLORS[f][0], backgroundColor: `color-mix(in srgb, ${FILTER_COLORS[f][0]} 16%, transparent)` } : undefined}
             >
               {/* The same dots the days carry. */}
@@ -211,10 +234,10 @@ export default function CalendarPage() {
             </button>
           );
         })}
-        <button type="button" aria-pressed={prefs.weather} onClick={() => setPrefs({ weather: !prefs.weather })} className={cn('h-8 px-3 rounded-full text-[11px] font-semibold border', prefs.weather ? 'bg-accent/15 border-accent/60' : 'border-border/60 text-muted-foreground')}>
+        <button type="button" aria-pressed={prefs.weather} onClick={() => setPrefs({ weather: !prefs.weather })} className={cn('h-8 px-3 rounded-lg text-[11px] font-semibold border', prefs.weather ? 'bg-accent/15 border-accent/60' : 'border-border/60 text-muted-foreground')}>
           {tr("Weather")}
         </button>
-        <button type="button" aria-pressed={prefs.heat} onClick={() => setPrefs({ heat: !prefs.heat })} className={cn('h-8 px-3 rounded-full text-[11px] font-semibold border', prefs.heat ? 'bg-accent/15 border-accent/60' : 'border-border/60 text-muted-foreground')}>
+        <button type="button" aria-pressed={prefs.heat} onClick={() => setPrefs({ heat: !prefs.heat })} className={cn('h-8 px-3 rounded-lg text-[11px] font-semibold border', prefs.heat ? 'bg-accent/15 border-accent/60' : 'border-border/60 text-muted-foreground')}>
           {tr("Heat map")}
         </button>
       </div>
@@ -232,7 +255,7 @@ export default function CalendarPage() {
 
       <div className="short:col-start-2 short:row-start-1 short:row-span-2 min-w-0">
       {prefs.view === 'month' && (
-        <section {...swipe} className="touch-pan-y select-none" aria-label={monthName}>
+        <section ref={gridRef} {...swipe} className="touch-pan-y select-none" aria-label={monthName}>
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => step(-1)} aria-label={tr("Previous month")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronLeft className="w-4 h-4" />
@@ -268,7 +291,7 @@ export default function CalendarPage() {
                         heat={prefs.heat ? (data.heat.get(k) ?? 0) / maxHeat : 0}
                         onPick={() => select(k)}
                         onHold={() => {
-                          select(k);
+                          select(k, false);
                           setAdding(k);
                         }}
                       />
@@ -299,7 +322,7 @@ export default function CalendarPage() {
       )}
 
       {prefs.view === 'week' && (
-        <section {...swipe} className="touch-pan-y">
+        <section ref={gridRef} {...swipe} className="touch-pan-y">
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => step(-1)} aria-label={tr("Previous week")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronLeft className="w-4 h-4" />
@@ -384,7 +407,7 @@ export default function CalendarPage() {
 
       </div>
 
-      <div className="short:col-start-1 min-w-0">
+      <div ref={panelRef} className="short:col-start-1 min-w-0 scroll-mt-4">
       {prefs.view !== 'list' && (
         <DayPanel
           day={selected}
@@ -439,7 +462,9 @@ function DayCell({
         selected ? 'ring-2 ring-accent' : '',
         outside && 'opacity-40',
       )}
-      style={heat > 0 ? { backgroundColor: `hsl(var(--accent) / ${0.08 + heat * 0.42})` } : undefined}
+      // Up and down still scroll the page (hold-target alone stops all touch moves, and the grid is
+      // nearly all cells); a scroll cancels the hold, and a sideways swipe is the grid's month step.
+      style={{ touchAction: 'pan-y', ...(heat > 0 ? { backgroundColor: `hsl(var(--accent) / ${0.08 + heat * 0.42})` } : {}) }}
     >
       <span
         className={cn(

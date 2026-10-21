@@ -1153,7 +1153,7 @@ export default function DemoRide() {
                     <button 
                       key={color}
                       className={cn(
-                        "w-8 h-8 rounded-full transition-all",
+                        "w-8 h-8 rounded-lg transition-all",
                         color === 'orange' && "bg-orange-500",
                         color === 'blue' && "bg-blue-500",
                         color === 'pink' && "bg-pink-500",

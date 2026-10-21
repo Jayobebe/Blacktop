@@ -305,7 +305,7 @@ function TrackCard({ track: t, best, selected, onPick }: { track: TrackDef; best
       </button>
       <button
         onClick={() => toggleStar(t.id)}
-        className={cn('absolute top-3 right-3 p-1.5 rounded-full frost-accent', t.starred ? 'text-accent' : 'text-muted-foreground')}
+        className={cn('absolute top-3 right-3 p-1.5 rounded-xl frost-accent', t.starred ? 'text-accent' : 'text-muted-foreground')}
         aria-label={t.starred ? tr("Unfavourite {0}", [t.name]) : tr("Favourite {0}", [t.name])}
         aria-pressed={!!t.starred}
       >

@@ -258,7 +258,7 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
                 changeZoom(by);
               }}
               disabled={by < 0 ? zoom <= ZOOM_MIN : zoom >= ZOOM_MAX}
-              className={cn('glove-hit absolute top-[2%] flex h-8 w-8 items-center justify-center rounded-full frost-accent text-accent disabled:opacity-40', side)}
+              className={cn('glove-hit absolute top-[2%] flex h-8 w-8 items-center justify-center rounded-lg frost-accent text-accent disabled:opacity-40', side)}
             >
               <Icon className="h-4 w-4" />
             </button>

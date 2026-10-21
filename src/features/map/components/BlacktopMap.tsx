@@ -3153,7 +3153,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                         <p className="flex-1 truncate text-xs">{wp.name || tr("Stop")}</p>
                         <button
                           onClick={() => removeSoloStopAt(i)}
-                          className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                          className="p-1 hover:bg-muted rounded-xl transition-colors flex-shrink-0"
                           aria-label={tr("Remove stop {0}", [wp.name || i + 1])}
                         >
                           <X className="w-3.5 h-3.5 text-muted-foreground" />
@@ -3172,7 +3172,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                         {convoy.isLeader && (
                           <button
                             onClick={() => removeWaypoint(wp.id)}
-                            className="p-1 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+                            className="p-1 hover:bg-muted rounded-xl transition-colors flex-shrink-0"
                             aria-label={tr("Remove stop {0}", [wp.name])}
                           >
                             <X className="w-3.5 h-3.5 text-muted-foreground" />

@@ -26,7 +26,7 @@ export function AlarmButton({ variant, className }: { variant: 'home' | 'ride'; 
         'flex items-center justify-center shrink-0 touch-target',
         variant === 'home'
           ? 'pressable h-12 w-12 rounded-2xl border bg-[hsl(var(--burn)/0.1)] border-[hsl(var(--burn)/0.35)]'
-          : 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-full transition-all bg-secondary hover:bg-[hsl(var(--burn)/0.15)]',
+          : 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl transition-all bg-secondary hover:bg-[hsl(var(--burn)/0.15)]',
         className,
       )}
     >

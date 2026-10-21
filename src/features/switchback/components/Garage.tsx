@@ -656,7 +656,7 @@ export function Garage({
                   <button
                     key={id}
                     type="button"
-                    className={cn('h-10 px-4 rounded-full border text-xs font-semibold', filter === id ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground')}
+                    className={cn('h-10 px-4 rounded-xl border text-xs font-semibold', filter === id ? 'border-accent bg-accent/15 text-foreground' : 'border-border text-muted-foreground')}
                     onClick={() => setFilter(id)}
                   >
                     {label}

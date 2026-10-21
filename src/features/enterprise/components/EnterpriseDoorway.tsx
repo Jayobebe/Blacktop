@@ -14,6 +14,7 @@ import { ENTERPRISE_CONTACT_EMAIL, enquiryMailto, tierName } from '../lib/tiers'
 import { enterpriseTiers, type EnterpriseTier, type GuestSessionPayload } from '../types';
 import { TierShowcase } from './TierShowcase';
 import { EnterpriseTitle } from './EnterpriseTitle';
+import { SlidingPill } from '@/components/SlidingPill';
 
 // The camera scanner (html5-qrcode) only loads when the rider opens it.
 const EnterpriseQrScanner = lazy(() => import('./EnterpriseQrScanner'));
@@ -164,7 +165,8 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
           </div>
         </div>
 
-        <div role="tablist" className="grid grid-cols-2 rounded-xl border border-accent/40 bg-background/60 p-0.5 text-xs">
+        <div role="tablist" className="relative grid grid-cols-2 rounded-xl border border-accent/40 bg-background/60 p-0.5 text-xs">
+          <SlidingPill />
           {([
             { id: 'scan', label: tr("Scan QR"), Icon: Camera },
             { id: 'code', label: tr("Enter code"), Icon: KeyRound },
@@ -180,8 +182,8 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
                 if (id !== 'scan') setScanning(false);
               }}
               className={cn(
-                'flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition-colors',
-                tab === id ? 'bg-accent text-accent-foreground' : 'text-accent/80',
+                'relative z-[1] flex items-center justify-center gap-1.5 rounded-lg py-2 font-semibold transition-colors duration-300',
+                tab === id ? 'text-accent-foreground' : 'text-accent/80',
               )}
             >
               <Icon className="w-3.5 h-3.5" />

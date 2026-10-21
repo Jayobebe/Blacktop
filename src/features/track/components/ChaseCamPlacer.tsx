@@ -467,7 +467,7 @@ export function ChaseCamPlacer({
 
             {markers.sf !== null && (
               <div className="flex gap-1.5 overflow-x-auto -mx-3 px-3">
-                <button onClick={() => { setPlaying(false); seek(markers.sf!); }} className="shrink-0 rounded-full border border-white/70 px-2.5 py-1 text-[11px] font-semibold">
+                <button onClick={() => { setPlaying(false); seek(markers.sf!); }} className="shrink-0 rounded-xl border border-white/70 px-2.5 py-1 text-[11px] font-semibold">
                   {tr("S/F")}
                 </button>
                 {orderedMarkers.map((d, i) => (

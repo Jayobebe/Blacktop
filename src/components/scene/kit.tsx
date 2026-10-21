@@ -290,7 +290,7 @@ export function Frame({ children, sound }: { children: ReactNode; sound?: SceneS
           }}
           aria-label={on ? tr("Mute sound") : tr("Play sound")}
           aria-pressed={on}
-          className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center bg-black/55 border border-white/10 text-white/70 hover:text-white transition-colors"
+          className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-lg flex items-center justify-center bg-black/55 border border-white/10 text-white/70 hover:text-white transition-colors"
         >
           {on ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
         </button>

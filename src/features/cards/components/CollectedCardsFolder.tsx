@@ -757,7 +757,7 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
                 image.setFraming(!framing);
               }}
               aria-label={framing ? tr("Finish resizing image") : tr("Resize card image")}
-              className="glove-hit inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/50 text-white transition-transform active:scale-90"
+              className="glove-hit inline-flex items-center justify-center w-6 h-6 rounded-md bg-black/50 text-white transition-transform active:scale-90"
             >
               {framing ? <Check className="w-3 h-3" /> : <Scan className="w-3 h-3" />}
             </button>
@@ -831,7 +831,7 @@ export function FullCard({ card, spectre, stats, image, trend }: { card: Collect
                 image.setFraming(false);
               }}
               aria-label={tr("Confirm image size")}
-              className="glove-hit inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/90 text-black active:scale-90 shrink-0"
+              className="glove-hit inline-flex items-center justify-center w-5 h-5 rounded-md bg-white/90 text-black active:scale-90 shrink-0"
             >
               <Check className="w-3 h-3" />
             </button>

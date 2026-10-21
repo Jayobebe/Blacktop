@@ -343,7 +343,7 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           aria-label={tr("Back to ride")}
-          className="h-12 w-12 rounded-full frost-accent flex items-center justify-center touch-target flex-shrink-0"
+          className="h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target flex-shrink-0"
         >
           <X className="w-5 h-5" />
         </button>

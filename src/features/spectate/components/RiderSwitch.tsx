@@ -10,14 +10,14 @@ export function RiderSwitch({ name, index, total, onStep, tip }: { name: string;
   if (total < 2) return <p data-tip={tip} className="text-xl font-bold text-white truncate">{name}</p>;
   return (
     <div className="flex items-center gap-1 -ml-2">
-      <button type="button" onClick={() => onStep(-1)} aria-label={tr("Previous rider")} className="glove-hit p-1.5 rounded-full text-white/80 hover:text-white">
+      <button type="button" onClick={() => onStep(-1)} aria-label={tr("Previous rider")} className="glove-hit p-1.5 rounded-xl text-white/80 hover:text-white">
         <ChevronLeft className="w-5 h-5" />
       </button>
       <div className="min-w-0">
         <p data-tip={tip} className="text-xl font-bold text-white truncate leading-tight">{name}</p>
         <p className="text-[10px] text-white/60 font-mono">{tr("{0} of {1}", [index + 1, total])}</p>
       </div>
-      <button type="button" onClick={() => onStep(1)} aria-label={tr("Next rider")} className="glove-hit p-1.5 rounded-full text-white/80 hover:text-white">
+      <button type="button" onClick={() => onStep(1)} aria-label={tr("Next rider")} className="glove-hit p-1.5 rounded-xl text-white/80 hover:text-white">
         <ChevronRight className="w-5 h-5" />
       </button>
     </div>

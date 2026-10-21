@@ -102,7 +102,7 @@ export default function History() {
                 type="button"
                 data-tip="history-burn"
                 className={cn(
-                  'pressable h-10 px-3.5 rounded-full flex items-center gap-1.5 frost-accent text-[13px] font-medium',
+                  'pressable h-10 px-3.5 rounded-xl flex items-center gap-1.5 frost-accent text-[13px] font-medium',
                   settings.burnTripsInterval !== 'off' ? 'text-[hsl(var(--burn))]' : 'text-foreground',
                 )}
                 aria-label={tr("Burn trips: {0}", [BURN_LABELS[settings.burnTripsInterval]])}

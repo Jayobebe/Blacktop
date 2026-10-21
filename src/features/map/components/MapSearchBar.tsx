@@ -555,7 +555,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                     <button
                       onClick={() => setRemovingRecent(removing ? null : result.id)}
                       className={cn(
-                        'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
+                        'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
                         removing ? 'bg-destructive/15' : 'bg-accent/10 hover:bg-accent/20',
                       )}
                       aria-label={removing ? tr("Keep {0}", [result.name]) : tr("Remove {0} from recent destinations", [result.name])}

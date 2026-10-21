@@ -529,7 +529,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         <button
           onClick={() => go(spread - 1)}
           disabled={spread === 0}
-          className="w-12 h-12 rounded-full border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
+          className="w-12 h-12 rounded-2xl border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
           aria-label={tr("Previous page")}
         >
           <ChevronLeft className="w-6 h-6" />
@@ -540,7 +540,7 @@ export function LogbookView({ bike, onBack }: { bike: Bike; onBack: () => void }
         <button
           onClick={() => go(spread + 1)}
           disabled={spread === spreads - 1}
-          className="w-12 h-12 rounded-full border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
+          className="w-12 h-12 rounded-2xl border border-border bg-card flex items-center justify-center disabled:opacity-30 active:scale-95"
           aria-label={tr("Next page")}
         >
           <ChevronRight className="w-6 h-6" />

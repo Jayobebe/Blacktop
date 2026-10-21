@@ -5,6 +5,7 @@ import { tr } from '@/lib/i18n';
 import { haptics } from '@/lib/haptics';
 import { isThermal } from '@/lib/thermal';
 import { useStopwatch, elapsed, startStopwatch, stopStopwatch, lapStopwatch, resetStopwatch, stopwatchText } from '../lib/stopwatch';
+import { SlidingPill } from '@/components/SlidingPill';
 
 type Mode = 'clock' | 'stopwatch';
 const MODE_KEY = 'blacktop_calendar_clock';
@@ -121,7 +122,8 @@ export function CalendarClock() {
         )}
       </div>
       {/* What the clock shows. */}
-      <div role="tablist" className="mt-3 mx-auto max-w-xs grid grid-cols-2 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5">
+      <div role="tablist" className="relative mt-3 mx-auto max-w-xs grid grid-cols-2 gap-1 rounded-xl border border-accent/40 bg-background/60 p-0.5">
+        <SlidingPill />
         {(
           [
             ['clock', tr("Clock"), Clock],
@@ -134,7 +136,7 @@ export function CalendarClock() {
             role="tab"
             aria-selected={mode === m}
             onClick={() => choose(m)}
-            className={cn('tall-hit flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold', mode === m ? 'bg-accent text-accent-foreground' : 'text-accent/80')}
+            className={cn('tall-hit relative z-[1] flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors duration-300', mode === m ? 'text-accent-foreground' : 'text-accent/80')}
           >
             <I className="w-3.5 h-3.5" /> {label}
             {m === 'stopwatch' && sw.runningSince && mode !== 'stopwatch' && <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--burn))] motion-safe:animate-pulse" />}

@@ -100,7 +100,10 @@ function snapshot(W: number, H: number): HTMLCanvasElement {
   let node = walk.nextNode() as HTMLElement | null;
   while (node && count < 700) {
     const r = node.getBoundingClientRect();
-    if (r.width > 60 && Math.min(r.right, vw) - Math.max(r.left, 0) < r.width * 0.25) {
+    // Mostly off to one side: left out, unless what it holds spills past its own box. A swipe deck's strip of
+    // cards is one screen wide and slid one card left to show Home (Console comes first), so judged by its own
+    // box it was "off screen" and Home's whole page went missing from every warp taken there.
+    if (r.width > 60 && Math.min(r.right, vw) - Math.max(r.left, 0) < r.width * 0.25 && node.scrollWidth <= node.clientWidth + 1) {
       node = past();
       continue;
     }
@@ -363,4 +366,66 @@ export function installWarpNavigation() {
   };
   // Registered before the router mounts, so this hears Back first, with the old page still up.
   window.addEventListener('popstate', () => go(window.location.pathname, false));
+}
+
+/**
+ * Part of the screen as pixels, for effects that aren't a page change: the
+ * page's own copy (`snapshot`) cut to `rect` (CSS px). Null where the effect
+ * shouldn't run (Thermal mode, less motion).
+ */
+export function pixelCopy(rect: { left: number; top: number; width: number; height: number }): HTMLCanvasElement | null {
+  if (typeof document === 'undefined' || still()) return null;
+  const W = Math.max(8, Math.ceil(window.innerWidth / BLOCK));
+  const H = Math.max(8, Math.ceil(window.innerHeight / BLOCK));
+  const full = snapshot(W, H);
+  const out = document.createElement('canvas');
+  out.width = Math.max(4, Math.round(rect.width / BLOCK));
+  out.height = Math.max(4, Math.round(rect.height / BLOCK));
+  out.getContext('2d')!.drawImage(full, rect.left / BLOCK, rect.top / BLOCK, rect.width / BLOCK, rect.height / BLOCK, 0, 0, out.width, out.height);
+  return out;
+}
+
+/** Draws a pixel copy onto `target` (same size), `grain` blocks to a pixel (1 = as copied). */
+export function drawPixels(target: HTMLCanvasElement, copy: HTMLCanvasElement, grain: number) {
+  if (!coarse) return;
+  target.width = copy.width;
+  target.height = copy.height;
+  const ctx = target.getContext('2d')!;
+  coarse.width = Math.max(2, Math.round(copy.width / grain));
+  coarse.height = Math.max(2, Math.round(copy.height / grain));
+  const cc = coarse.getContext('2d')!;
+  cc.imageSmoothingEnabled = false;
+  cc.clearRect(0, 0, coarse.width, coarse.height);
+  cc.drawImage(copy, 0, 0, coarse.width, coarse.height);
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, target.width, target.height);
+  ctx.drawImage(coarse, 0, 0, target.width, target.height);
+}
+
+/**
+ * What `el` shows now breaks up into coarser pixels and fades, over the new
+ * content drawn underneath: for content swapped in place (the calendar's
+ * months). Call it just before the swap.
+ */
+export function pixelDissolve(el: HTMLElement, ms = 340) {
+  const r = el.getBoundingClientRect();
+  if (r.width < 8 || r.height < 8) return;
+  const copy = pixelCopy(r);
+  if (!copy) return;
+  const c = document.createElement('canvas');
+  c.setAttribute('aria-hidden', 'true');
+  c.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:40;image-rendering:pixelated;pointer-events:none`;
+  document.body.appendChild(c);
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / ms);
+    if (t >= 1 || !c.isConnected) {
+      c.remove();
+      return;
+    }
+    drawPixels(c, copy, 1 + 4 * t);
+    c.style.opacity = String(1 - t * t);
+    requestAnimationFrame(step);
+  };
+  step(start);
 }

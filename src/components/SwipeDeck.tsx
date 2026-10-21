@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { pixelCopy, drawPixels } from '@/lib/warp';
 
 export interface SwipeDeckSlide {
   key: string;
@@ -22,6 +23,11 @@ interface SwipeDeckProps {
  * The gesture only claims clearly sideways drags, so vertical scrolling,
  * pull-to-refresh and long-presses inside the cards keep working, and a
  * swipe never counts as a tap on whatever it started on.
+ *
+ * The card being swiped away turns to pixels as it goes (the app's page
+ * warp, `lib/warp`), coarser the further it's dragged, and is gone by the time
+ * the next card is in; let go short of a change and it sharpens back as it
+ * returns. Not under Thermal mode or less motion (`pixelCopy` answers null).
  */
 export function SwipeDeck({ slides, index, onIndexChange, locked = false, className }: SwipeDeckProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -30,6 +36,54 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
   const suppressClick = useRef(false);
   const placed = useRef(false);
   const count = slides.length;
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const pix = useRef<{ canvas: HTMLCanvasElement; copy: HTMLCanvasElement; p: number; raf: number } | null>(null);
+
+  /** How far through it the swipe is (0 to 1): the copy shows over the card, coarser as it goes. */
+  const drawPix = (p: number) => {
+    const o = pix.current;
+    if (!o) return;
+    o.p = p;
+    drawPixels(o.canvas, o.copy, 1 + 5 * p);
+    o.canvas.style.opacity = String(Math.min(1, p * 3.5));
+  };
+  const dropPix = () => {
+    const o = pix.current;
+    if (!o) return;
+    cancelAnimationFrame(o.raf);
+    o.canvas.remove();
+    pix.current = null;
+  };
+  const startPix = () => {
+    dropPix();
+    const root = rootRef.current;
+    const slide = slideRefs.current[index];
+    if (!root || !slide) return;
+    const copy = pixelCopy(root.getBoundingClientRect());
+    if (!copy) return;
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute('aria-hidden', 'true');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:60;image-rendering:pixelated;pointer-events:none;opacity:0';
+    slide.appendChild(canvas);
+    pix.current = { canvas, copy, p: 0, raf: 0 };
+  };
+  /** After letting go: on to fully broken up (a change) or back to nothing (no change), with the slide's own 320 ms. */
+  const settlePix = (to: 0 | 1) => {
+    const o = pix.current;
+    if (!o) return;
+    const from = o.p;
+    const start = performance.now();
+    const step = (now: number) => {
+      if (pix.current !== o) return;
+      const t = Math.min(1, (now - start) / 320);
+      const e = 1 - (1 - t) ** 3;
+      drawPix(from + (to - from) * e);
+      if (t < 1) o.raf = requestAnimationFrame(step);
+      else dropPix();
+    };
+    o.raf = requestAnimationFrame(step);
+  };
+  useEffect(() => dropPix, []);
 
   const place = (dx: number, animate: boolean) => {
     const track = trackRef.current;
@@ -50,6 +104,7 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
     if (locked && drag.current) {
       drag.current = null;
       place(0, true);
+      dropPix();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locked]);
@@ -76,9 +131,11 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
       } catch {
         /* capture is a nicety */
       }
+      startPix();
     }
     d.dx = dx;
     place(dx, false);
+    drawPix(Math.min(1, Math.abs(dx) / (rootRef.current?.clientWidth || 1)));
   };
 
   const end = (e: React.PointerEvent, cancelled: boolean) => {
@@ -93,11 +150,17 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
     const go = !cancelled && (Math.abs(d.dx) > width * 0.22 || (speed > 0.5 && Math.abs(d.dx) > 30));
     if (!go) {
       place(0, true);
+      settlePix(0);
       return;
     }
     const next = d.dx < 0 ? (index + 1) % count : (index - 1 + count) % count;
-    if (next === index) place(0, true);
-    else onIndexChange(next);
+    if (next === index) {
+      place(0, true);
+      settlePix(0);
+    } else {
+      settlePix(1);
+      onIndexChange(next);
+    }
   };
 
   return (
@@ -130,7 +193,8 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
         {slides.map((s, i) => (
           <div
             key={s.key}
-            className="w-full h-full shrink-0 min-w-0 flex flex-col"
+            ref={(el) => (slideRefs.current[i] = el)}
+            className="relative w-full h-full shrink-0 min-w-0 flex flex-col"
             aria-hidden={i !== index}
             // Off-screen cards stay out of the tab order (React 18's types don't know `inert`).
             {...(i !== index ? ({ inert: '' } as Record<string, string>) : {})}

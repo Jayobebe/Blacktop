@@ -728,7 +728,7 @@ function CrewCard({ active }: { active: boolean }) {
                 setActiveCrew(c.code);
               }}
               className={cn(
-                'tall-hit h-8 max-w-[45%] px-3 rounded-full text-[12px] font-semibold truncate border transition-colors',
+                'tall-hit h-8 max-w-[45%] px-3 rounded-lg text-[12px] font-semibold truncate border transition-colors',
                 on ? 'bg-accent text-accent-foreground border-accent' : 'frost-accent bg-card/60 text-foreground border-border/60',
               )}
             >
