@@ -49,12 +49,12 @@ export function AutoRescueConsentDialog() {
     <AlertDialog open={open} onOpenChange={(o) => !o && answer(false)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{tr("Before you turn on crash detection")}</AlertDialogTitle>
+          <AlertDialogTitle>{tr("Before you turn on Crash check")}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
               <RescueDisclaimer />
               <p className="text-xs text-muted-foreground">
-                {tr("It asks if you're okay after a hard impact and a stop, and alerts the people you chose in Settings → Safety if you don't answer. Always call the emergency services yourself when you can.")}
+                {tr("Crash check is in beta. After a hard knock while moving and a stop, it asks if you're okay, and alerts the people you chose in Settings → Safety if you don't answer. It can miss a crash, or check in when you're fine. Always call the emergency services yourself when you can.")}
               </p>
             </div>
           </AlertDialogDescription>
@@ -66,7 +66,7 @@ export function AutoRescueConsentDialog() {
         <AlertDialogFooter>
           <AlertDialogCancel className="min-h-[48px]">{tr("Cancel")}</AlertDialogCancel>
           <Button className="min-h-[48px]" disabled={!understood} onClick={accept}>
-            {tr("Turn on crash detection")}
+            {tr("Turn on Crash check")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

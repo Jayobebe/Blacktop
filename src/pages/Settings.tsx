@@ -60,6 +60,7 @@ import { CareList, useExperience, VEHICLES, VEHICLE_ORDER, RIDE_STYLES, type Rid
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
 import { kmText } from '@/lib/units';
+import { BetaPill } from '@/components/BetaPill';
 
 /** iPhone / iPad (iPadOS reports itself as a Mac with touch). */
 const IS_IOS =
@@ -630,9 +631,9 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground mb-3">{tr("Auto Rescue")}</p>
               <div className="flex items-center justify-between mb-2">
                 <div className="pr-3">
-                  <p className="text-sm font-medium">{tr("Crash detection")}</p>
+                  <p className="text-sm font-medium flex items-center gap-1.5">{tr("Crash check")} <BetaPill className="text-accent" /></p>
                   <p className="text-[10px] text-muted-foreground">
-                    {tr("If a hard impact is followed by a stop, the app asks \"Are you okay?\". No reply in 5 min → rescue ping fires to your whole convoy and Discord (if connected). Works on solo rides too (Discord only).")}
+                    {tr("After a hard knock while moving and then a stop, Blacktop checks in: \"Are you okay?\" No answer in 5 minutes and it alerts the people you choose below, with where you are. It's in beta: it can miss a crash or check in when you're fine. It isn't an emergency service.")}
                   </p>
                 </div>
                 <Switch

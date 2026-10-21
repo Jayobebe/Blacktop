@@ -13,7 +13,7 @@ import { haptics } from '@/lib/haptics';
 import { kmText } from '@/lib/units';
 import { isThermal } from '@/lib/thermal';
 import { noteLocationGranted } from '@/lib/locationGrant';
-import { loadDarkMapStyle } from '@/features/map/lib/darkStyle';
+import { loadDarkMapStyle, OPENFREEMAP_DARK_STYLE_URL } from '@/features/map/lib/darkStyle';
 import { whenStyleReady } from '@/features/map/lib/whenStyleReady';
 import { searchPlaces, type MapSearchResult } from '@/features/map/lib/placeSearch';
 import { fetchRouteThroughStops, type RouteResult } from '@/features/map/lib/routing';
@@ -135,7 +135,10 @@ export default function SaveRoute() {
     if (!boxRef.current) return;
     let map: maplibregl.Map | null = null;
     let cancelled = false;
-    void loadDarkMapStyle().then((style) => {
+    // With no signal the style can't be fetched: hand MapLibre its address, as the ride's maps do, rather than throw.
+    void loadDarkMapStyle()
+      .catch((): string => OPENFREEMAP_DARK_STYLE_URL)
+      .then((style) => {
       if (cancelled || !boxRef.current) return;
       map = new maplibregl.Map({
         container: boxRef.current,

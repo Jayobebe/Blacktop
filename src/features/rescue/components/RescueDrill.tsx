@@ -116,13 +116,13 @@ function RescueDrillScreens({ onClose }: { onClose: () => void }) {
   const reach = rescueReach(settings);
   const lines: Line[] = [
     settings.autoRescueEnabled
-      ? { state: 'ok', text: tr("Crash detection is on.") }
-      : { state: 'warn', text: tr("Crash detection is off. Turn it on for this to happen by itself after a crash.") },
+      ? { state: 'ok', text: tr("Crash check is on.") }
+      : { state: 'warn', text: tr("Crash check is off. Turn it on for this to happen by itself after a crash.") },
     motion == null
       ? { state: 'off', text: tr("Checking the motion sensors…") }
       : motion
         ? { state: 'ok', text: tr("Motion sensors are working.") }
-        : { state: 'warn', text: tr("No motion sensor readings. Crash detection can't feel a crash on this phone right now.") },
+        : { state: 'warn', text: tr("No motion sensor readings. Crash check can't feel a crash on this phone right now.") },
     status.location === 'denied'
       ? { state: 'warn', text: tr("Location is blocked, so a rescue call can't say where you are.") }
       : status.location === 'granted'

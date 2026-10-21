@@ -79,6 +79,7 @@ export default function Terms() {
           <p className="text-foreground font-medium">{rescueDisclaimer()}</p>
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li>{tr("Crash detection is off until you turn it on, and turning it on asks you to confirm that you understand this notice.")}</li>
+            <li>{tr("Crash detection is called Crash check in the app and is a beta: it hasn't yet been proven on real crashes.")}</li>
             <li>{tr("Your phone can miss a real crash (for example if it's thrown clear, switched off or has no signal) and can mistake a dropped phone or a hard jolt for one.")}</li>
             <li>{tr("Crash detection looks for a hard impact while you're moving, followed by a stop. It can miss a fall at low speed, a crash without a hard impact, or one where your phone keeps moving.")}</li>
             <li>{tr("After a possible crash your phone asks \"Are you okay?\" on a countdown. If nobody answers before it ends, the rescue call is sent.")}</li>

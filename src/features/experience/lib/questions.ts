@@ -58,10 +58,10 @@ export const CARE_QUESTIONS: CareQuestion[] = [
     question: () => tr("Want help sent if you crash?"),
     pitch: (c) =>
       c.rideMode === 'solo'
-        ? tr("If a hard impact is followed by a stop, Blacktop asks if you're okay. No answer and it alerts your Discord server (connect one in Settings).")
-        : tr("If a hard impact is followed by a stop, Blacktop asks if you're okay. No answer and it alerts your group leader."),
-    gets: () => [tr("Crash detection"), tr("Safety status on Home"), tr("\"Are you okay?\" check-in")],
-    hides: () => tr("Crash detection stays off"),
+        ? tr("After a hard knock while moving and then a stop, Blacktop checks in. No answer and it alerts your Discord server (connect one in Settings). In beta.")
+        : tr("After a hard knock while moving and then a stop, Blacktop checks in. No answer and it alerts your group. In beta."),
+    gets: () => [tr("Crash check (beta)"), tr("Safety status on Home"), tr("\"Are you okay?\" check-in")],
+    hides: () => tr("Crash check stays off"),
     features: ['autoRescueEnabled'],
     needsMotion: true,
     recommendedFor: ['commute', 'fitness', 'leisure', 'performance', 'social'],

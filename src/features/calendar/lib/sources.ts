@@ -393,7 +393,7 @@ function safetyCheck(i: CalendarItem): CalEvent {
     kind: 'safety',
     filter: 'safety',
     title: tr("Safety check for tomorrow"),
-    sub: tr("Crash detection, your emergency contact and the safe-arrival text"),
+    sub: tr("Crash check, your emergency contact and the safe-arrival text"),
     color: COLORS.safety,
     icon: ShieldCheck,
     item: i,

@@ -37,7 +37,7 @@ Blacktop suits riders looking for: a motorcycle group ride app, a convoy or road
 
 ## Safety
 
-- Crash detection (opt-in): a hard impact while moving, followed by a stop, asks "Are you okay?". No answer sends a rescue call with your location to your convoy, your crew, Discord and riders nearby (5 to 50 km, your choice); every rider in the convoy gets a route to you and can answer "I'm on my way".
+- Crash check (opt-in, beta; "crash detection"): a hard knock while moving, followed by a stop, asks "Are you okay?". It is not an emergency service and can miss a crash. No answer sends a rescue call with your location to your convoy, your crew, Discord and riders nearby (5 to 50 km, your choice); every rider in the convoy gets a route to you and can answer "I'm on my way".
 - A rescue call can also be made by hand: on the ride screen, on the map (held, then confirmed) or from Home with no ride.
 - An emergency contact on the phone gets a text with a maps link (and the what3words address where available) from your own messages app.
 - A rescue drill checks it all without sending anything.

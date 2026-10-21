@@ -20,19 +20,20 @@ import { requestAutoRescueConsent } from '../lib/rescueConsent';
 import { sendSoloRescueHere } from '../lib/soloRescue';
 import { CrashCheckPrompt } from './CrashCheckPrompt';
 import { useProfile } from '@/features/profile';
+import { BetaPill } from '@/components/BetaPill';
 
 const LEVELS: Record<SafetyLevel, { icon: typeof ShieldCheck; title: string; hint: string; tone: string; bg: string }> = {
   active: {
     icon: ShieldCheck,
-    title: tr("Crash Rescue Active"),
-    hint: tr("Your group gets pinged if you crash"),
+    title: tr("Crash check on"),
+    hint: tr("Blacktop checks in if you might have crashed"),
     tone: 'text-emerald-400',
     bg: 'bg-emerald-500/10 border-emerald-500/30',
   },
   off: {
     icon: ShieldOff,
-    title: tr("Crash Rescue Off"),
-    hint: tr("Tap to turn on crash detection"),
+    title: tr("Crash check off"),
+    hint: tr("Tap to turn on Crash check"),
     tone: 'text-warning',
     bg: 'bg-warning/10 border-warning/30',
   },
@@ -197,16 +198,16 @@ function SafetyPanel({
           {title}
         </SheetTitle>
         <SheetDescription>
-          {tr("If a hard impact is followed by a stop, Blacktop asks \"Are you okay?\". No reply in 5 minutes sends a rescue ping.")}
+          {tr("After a hard knock while moving and then a stop, Blacktop checks in: \"Are you okay?\" No answer in 5 minutes and it alerts the people you chose. In beta, and not an emergency service.")}
         </SheetDescription>
       </SheetHeader>
 
-      {/* Crash detection */}
+      {/* Crash check */}
       <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-card/50 border border-border/50">
         <div>
-          <p className="text-sm font-medium">{tr("Crash detection")}</p>
+          <p className="text-sm font-medium flex items-center gap-1.5">{tr("Crash check")} <BetaPill className="text-accent" /></p>
           <p className="text-[11px] text-muted-foreground">
-            {tr("Impact over")}{" "}{settings.autoRescueGThreshold}{" "}{tr("G, then stopped for")}{" "}{settings.autoRescueStopWindowSec}{tr("s")}
+            {tr("A knock over {0} G, then stopped for {1} s", [settings.autoRescueGThreshold, settings.autoRescueStopWindowSec])}
           </p>
         </div>
         <Switch checked={settings.autoRescueEnabled} onCheckedChange={toggleRescue} />

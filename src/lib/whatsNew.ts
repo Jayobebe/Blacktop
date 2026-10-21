@@ -43,6 +43,14 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-21d',
+      version: '1.23',
+      lines: [
+        { icon: 'rescue', text: tr("Crash detection is now Crash check, marked as a beta, with plain words on what it can and can't do."), to: '/settings?section=safety', link: tr("Open Settings") },
+        { icon: 'route', text: tr("Save a route opens its map even with no signal.") },
+      ],
+    },
+    {
       id: '2026-10-21c',
       version: '1.22',
       lines: [

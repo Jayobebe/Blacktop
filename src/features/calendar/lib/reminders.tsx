@@ -33,12 +33,12 @@ function remindersFor(items: CalendarItem[], longRoutes: Set<string>): PushRemin
       const when = itemTime(i);
       add(`cal:${i.id}:soon`, when - 3600_000, tr("In an hour: {0}", [i.title]), i.place?.name ?? tr("On your Blacktop Calendar."));
       if (i.tripId || (i.routeId && longRoutes.has(i.routeId))) {
-        add(`cal:${i.id}:check`, at(addDays(i.day, -1), '19:00'), tr("Safety check for tomorrow"), tr("Crash detection, your emergency contact and the safe-arrival text"));
+        add(`cal:${i.id}:check`, at(addDays(i.day, -1), '19:00'), tr("Safety check for tomorrow"), tr("Crash check, your emergency contact and the safe-arrival text"));
       }
     } else {
       const left = i.packing.filter((p) => !p.done).map((p) => p.item);
       add(`cal:${i.id}:eve`, at(addDays(i.day, -1), '18:00'), tr("Track Day tomorrow: {0}", [i.circuit]), left.length ? tr("Still to pack: {0}", [left.slice(0, 5).join(', ')]) : tr("All packed."));
-      add(`cal:${i.id}:check`, at(addDays(i.day, -1), '19:00'), tr("Safety check for tomorrow"), tr("Crash detection, your emergency contact and the safe-arrival text"));
+      add(`cal:${i.id}:check`, at(addDays(i.day, -1), '19:00'), tr("Safety check for tomorrow"), tr("Crash check, your emergency contact and the safe-arrival text"));
     }
   }
   return out.sort((a, b) => a.due_at.localeCompare(b.due_at)).slice(0, 200);

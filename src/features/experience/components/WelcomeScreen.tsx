@@ -86,7 +86,7 @@ const FEATURES: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: ShieldCheck,
     title: tr("Crash rescue"),
-    body: tr("Optional crash detection watches for a hard impact followed by a stop and asks if you’re okay. No answer and it alerts everyone in your convoy, your crew and your Discord with your location. Every rider gets a route to you, and whoever answers “I’m on my way” shows up on your screen."),
+    body: tr("Optional Crash check (in beta) watches for a hard knock while moving followed by a stop, and asks if you’re okay. No answer and it alerts the riders and people you chose, with your location. Every rider gets a route to you, and whoever answers “I’m on my way” shows up on your screen. It isn’t an emergency service."),
   },
   {
     icon: Map,

@@ -228,7 +228,7 @@ export function useActions(): ConsoleAction[] {
   out.push({
     id: 'toggle.autoRescueEnabled',
     group: 'safety',
-    label: tr("Crash detection"),
+    label: tr("Crash check"),
     caption: onOff(settings.autoRescueEnabled),
     on: settings.autoRescueEnabled,
     Icon: ShieldCheck,
