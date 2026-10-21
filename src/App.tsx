@@ -377,7 +377,6 @@ const App = () => {
               {/* "Are you okay?" for a rescue asked for by hand off the ride screen (the map's R, Console's rescue action). */}
               <RescueAskHost />
               <CalendarReminders />
-              <StorageWatch />
               {!__STORE_BUILD__ && <NimiqFullscreenPrompt />}
               <PatternGateDialog />
               <BrowserRouter>
@@ -387,6 +386,8 @@ const App = () => {
                 <PushBridge />
                 <PushNudge />
                 <ReceiptFlight />
+                {/* Inside the router: its notice's button opens /storage. */}
+                <StorageWatch />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
                 {/* Finishes the burn flames after the post-burn reload. */}
