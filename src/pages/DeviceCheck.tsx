@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, HelpCircle, Loader2, Copy } from 'lucide-react';
+import { CheckCircle2, XCircle, HelpCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { requestMotionAccess } from '@/lib/motionPermission';
 import { clearCrashTrace, readCrashTrace } from '@/features/ride/lib/crashTrace';
 import type { CrashEvent } from '@/features/ride/lib/crashDetector';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * /device-check: a developer page (not linked anywhere, not translated) that
@@ -221,7 +222,7 @@ async function tapCheck(id: string): Promise<Result> {
 }
 
 function Icon({ state }: { state?: State }) {
-  if (state === 'running') return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+  if (state === 'running') return <PixelLoader className="w-4 h-4 text-muted-foreground" />;
   if (state === 'ok') return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
   if (state === 'fail') return <XCircle className="w-4 h-4 text-destructive" />;
   return <HelpCircle className="w-4 h-4 text-muted-foreground" />;
@@ -293,7 +294,7 @@ export default function DeviceCheck() {
       </div>
 
       <Button className="w-full h-12 rounded-2xl mb-3" onClick={runTaps} disabled={running}>
-        {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+        {running ? <PixelLoader className="w-4 h-4 mr-2" /> : null}
         Run tap checks (allow each prompt)
       </Button>
       <p className="text-[11px] text-muted-foreground mb-3">Hold the phone in your hand and move it a little while the motion checks run.</p>

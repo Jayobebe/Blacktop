@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Fuel, X, Check, ThumbsDown, Loader2, Wallet } from 'lucide-react';
+import { Fuel, X, Check, ThumbsDown, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { openNimiqPayPayment } from '@/features/tips/lib/walletBridge';
 import { useBlacktank } from '../hooks/useBlacktank';
 import type { TankCurrency, TankRequestRow } from '../types';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 function CurrencyToggle({
   value,
@@ -99,7 +100,7 @@ export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
             )
           }
         >
-          {tank.join.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Join the tank")}
+          {tank.join.isPending ? <PixelLoader className="w-4 h-4" /> : tr("Join the tank")}
         </Button>
       </div>
     );
@@ -192,7 +193,7 @@ export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
             onChange={(e) => setPledgeAmount(e.target.value)}
           />
           <Button onClick={submitPledge} disabled={tank.pledge.isPending}>
-            {tank.pledge.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Add")}
+            {tank.pledge.isPending ? <PixelLoader className="w-4 h-4" /> : tr("Add")}
           </Button>
         </div>
         <Input
@@ -231,7 +232,7 @@ export function BlacktankPanel({ onClose }: { onClose?: () => void }) {
               onChange={(e) => setAskAddress(e.target.value)}
             />
             <Button className="w-full" onClick={submitAsk} disabled={tank.request.isPending}>
-              {tank.request.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Send to the crew")}
+              {tank.request.isPending ? <PixelLoader className="w-4 h-4" /> : tr("Send to the crew")}
             </Button>
             <p className="text-[11px] text-muted-foreground">
               {tr("Every other member has to approve. One no, or nobody voting before it runs out, and the request dies.")}

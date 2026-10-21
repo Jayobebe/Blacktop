@@ -5,7 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { X, Play, Pause, Download, Loader2, Rewind, SkipBack, LocateFixed, Move3d } from 'lucide-react';
+import { X, Play, Pause, Download, Rewind, SkipBack, LocateFixed, Move3d } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
 import { roadGapsForRide, withRoadGaps, type RoadGap } from '../lib/roadGaps';
 import { fillsDuring } from '@/features/garage/lib/ledger';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 // Free, key-less global DEM (Terrarium encoding) hosted by AWS Open Data.
@@ -822,7 +823,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
             <p className="absolute bottom-1 right-2 z-10 text-[9px] text-white/50 pointer-events-none">{tr("Map © OpenStreetMap contributors, OpenFreeMap")}</p>
             {!ready && (
               <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Loading terrain…")}
+                <PixelLoader className="w-4 h-4" />{" "}{tr("Loading terrain…")}
               </div>
             )}
           </div>
@@ -915,7 +916,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
           disabled={!ready || !hasRoute || recording || convertProgress !== null}
         >
           {recording || convertProgress !== null ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <PixelLoader className="w-4 h-4 mr-2" />
           ) : (
             <Download className="w-4 h-4 mr-2" />
           )}

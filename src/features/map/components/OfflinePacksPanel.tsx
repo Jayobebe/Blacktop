@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Download, FileUp, Loader2, Trash2, X } from 'lucide-react';
+import { Download, FileUp, Trash2, X } from 'lucide-react';
 import { useRef } from 'react';
 import { isAndroid } from '@/lib/fileKind';
 import { parseGpx, type GpxRoute } from '../lib/gpx';
@@ -23,6 +23,7 @@ import {
 } from '../lib/offlinePacks';
 import { tr } from '@/lib/i18n';
 import { kmText } from '@/lib/units';
+import { PixelLoader } from '@/components/PixelLoader';
 
 interface Props {
   map: MapLibreMap | null;
@@ -153,7 +154,7 @@ export function OfflinePacksPanel({ map, onClose, userLocation, routeCoords, rou
         className="w-full h-10 rounded-lg border border-accent text-accent font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
       >
         {progress ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> {progress.done}/{progress.total}</>
+          <><PixelLoader className="w-4 h-4" /> {progress.done}/{progress.total}</>
         ) : (
           mode === 'route' ? tr("Download route") : mode === 'local' ? tr("Download area around me") : tr("Download this area")
         )}

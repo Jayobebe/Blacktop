@@ -44,8 +44,10 @@ export function MedicalIdCard({ facts, name, open, onClose, preview }: { facts: 
       className="fixed inset-0 z-[10001] bg-black/90 flex items-center justify-center p-4 safe-frame animate-fade-in"
       onClick={onClose}
     >
-      <div className="w-full max-w-md max-h-full overflow-y-auto rounded-3xl bg-[hsl(0_0%_7%)] border-2 border-[hsl(var(--burn))] text-left" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-3 px-5 py-4 bg-[hsl(var(--burn))] text-white rounded-t-[22px]">
+      {/* The card clips its own corners (the header used to be rounded separately inside a scroller, and the two
+          curves didn't meet); the header stays put and only the facts scroll. */}
+      <div className="w-full max-w-md max-h-full flex flex-col overflow-hidden isolate rounded-3xl bg-[hsl(0_0%_7%)] ring-2 ring-inset ring-[hsl(var(--burn))] text-left" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3 px-5 py-4 bg-[hsl(var(--burn))] text-white shrink-0">
           <HeartPulse className="w-7 h-7 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-2xl font-black tracking-wide leading-none">{tr("MEDICAL ID")}</p>
@@ -55,6 +57,7 @@ export function MedicalIdCard({ facts, name, open, onClose, preview }: { facts: 
             <X className="w-5 h-5" />
           </button>
         </div>
+        <div className="min-h-0 overflow-y-auto">
         <dl className="px-5 py-4 space-y-3">
           {rows
             .filter(([, v]) => v && v.trim())
@@ -84,6 +87,7 @@ export function MedicalIdCard({ facts, name, open, onClose, preview }: { facts: 
           )}
         </dl>
         {preview && <p className="px-5 pb-4 text-[11px] text-muted-foreground">{tr("This is how it looks to someone helping you.")}</p>}
+        </div>
       </div>
     </div>,
     document.body,

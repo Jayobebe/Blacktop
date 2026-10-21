@@ -18,6 +18,7 @@ import { setRideRole } from '@/features/pillion';
 import { DemoLockNote, useDemoLocked } from '@/components/DemoLock';
 import { demoBlocked } from '@/lib/demoGuard';
 import { PageTips } from '@/features/guide';
+import { PixelLoader } from '@/components/PixelLoader';
 
 interface CrewConvoyRow {
   id: string;
@@ -100,7 +101,7 @@ export default function CrewConvoys() {
         backLabel={tr("Back to Blacktop World")}
         right={
           <HeaderButton onClick={() => refetch()} aria-label={tr("Refresh crew convoys")}>
-            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? <PixelLoader className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
           </HeaderButton>
         }
       />

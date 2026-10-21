@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
 import { setBackdropPull, surgeBackdrop } from '@/lib/backdropMotion';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * App-wide pull-to-refresh. Dragging down from the top of any screen pulls the
@@ -142,7 +143,7 @@ export function PullToRefresh({ disabled = false }: { disabled?: boolean }) {
     >
       <div
         className={cn(
-          'frost-accent flex h-10 w-10 items-center justify-center rounded-full shadow-lg',
+          'frost-accent flex h-10 w-10 items-center justify-center rounded-xl shadow-lg',
           pull === 0 && 'transition-[transform,opacity] duration-300 ease-out',
         )}
         style={{
@@ -150,10 +151,11 @@ export function PullToRefresh({ disabled = false }: { disabled?: boolean }) {
           opacity: visible ? Math.max(progress, refreshing ? 1 : 0) : 0,
         }}
       >
-        <RefreshCw
-          className={cn('h-4 w-4', refreshing && 'animate-spin')}
-          style={refreshing ? undefined : { transform: `rotate(${progress * 270}deg)` }}
-        />
+        {refreshing ? (
+          <PixelLoader className="h-4 w-4" />
+        ) : (
+          <RefreshCw className="h-4 w-4" style={{ transform: `rotate(${progress * 270}deg)` }} />
+        )}
       </div>
     </div>
   );

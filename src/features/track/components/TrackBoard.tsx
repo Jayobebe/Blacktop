@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Loader2, Trophy } from 'lucide-react';
+import { ChevronDown, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
@@ -8,6 +8,7 @@ import { useSettings } from '@/features/settings';
 import { useExperience, VEHICLES } from '@/features/experience';
 import type { TrackDef } from '../types';
 import { fetchBoard, lapClock, lapDirection } from '../lib/trackRecords';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * A library layout's leaderboard, under the selected track: this direction,
@@ -45,7 +46,7 @@ export function TrackBoard({ track }: { track: TrackDef & { osmId: number } }) {
           )}
           {board.isLoading ? (
             <div className="flex justify-center py-3">
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              <PixelLoader className="w-4 h-4 text-muted-foreground" />
             </div>
           ) : board.isError ? (
             <p className="text-xs text-muted-foreground py-2">{tr("Couldn't load the leaderboard.")}</p>

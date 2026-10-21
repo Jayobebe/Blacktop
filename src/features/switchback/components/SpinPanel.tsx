@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
-import { Coins, Dices, Loader2, RotateCw } from 'lucide-react';
+import { Coins, Dices, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { eventSound } from '@/lib/appSound';
@@ -13,6 +13,7 @@ import { parseOwnedTag } from '../lib/tagRules';
 import { SbCard } from './SbCard';
 import { DogTagPlate } from './DogTagPlate';
 import { SpinReel } from './SpinReel';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /** What a spin won, shown off: the card, the dog tag on its chain, or the RPM. */
 function Won({ result }: { result: SpinResult }) {
@@ -105,7 +106,7 @@ export function SpinPanel({
       {result && <SpinReel key={turn.current} result={spinLabel(result)} labels={labels} onDone={stopped} />}
       {shown && !busy && <Won result={shown} />}
       <Button className="w-full h-12 text-base font-bold gap-2" disabled={busy || disabled} onClick={() => void spin()}>
-        {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Dices className="w-5 h-5" />}
+        {busy ? <PixelLoader className="w-5 h-5" /> : <Dices className="w-5 h-5" />}
         {button}
       </Button>
       {children}

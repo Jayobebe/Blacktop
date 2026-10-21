@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Loader2, Repeat, X } from 'lucide-react';
+import { Repeat, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { generateLoopRoute, LoopVibe } from '../lib/routing';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const VIBES: { id: LoopVibe; label: string; hint: string }[] = [
   { id: 'curvy', label: tr("Twisty"), hint: tr("Maximum corners") },
@@ -111,7 +112,7 @@ export function LoopPlannerPanel({ userLocation, onApply, onClose }: Props) {
         disabled={!userLocation || busy}
         className="w-full h-10 rounded-lg border border-accent text-accent font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        {busy ? <><Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Building loop…")}</> : tr("Generate loop")}
+        {busy ? <><PixelLoader className="w-4 h-4" />{" "}{tr("Building loop…")}</> : tr("Generate loop")}
       </button>
       <p className="mt-2 text-[10px] text-muted-foreground">
         {tr("Loops start and finish where you are now · roughly")}{" "}{Math.round((length / (useMiles ? 38 : 60)) * 60)}{" "}{tr("min riding.")}

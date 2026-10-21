@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Handshake, Loader2, Merge, Ban, X, Users, User } from 'lucide-react';
+import { Handshake, Merge, Ban, X, Users, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { formatDistance, getDistanceLabel } from '@/lib/format';
@@ -10,6 +10,7 @@ import { blockRider, setProximityState, unblockRider, useProximityState } from '
 import { MAX_MERGED_RIDERS, getProximityControls } from '../lib/controls';
 import type { NearbyParty } from '../types';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const INVITE_TTL_S = 45;
 const M_TO_MI = 1 / 1609.344;
@@ -90,7 +91,7 @@ export function HandshakeButton({
         receiving ? tr("Request from {0}, {1}s left", [st.incoming!.fromName, left]) : st.outgoing ? tr("Waiting for {0}", [st.outgoing.toName]) : tr("Nearby riders")
       }
     >
-      {st.busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Handshake className="w-4 h-4" />}
+      {st.busy ? <PixelLoader className="w-4 h-4" /> : <Handshake className="w-4 h-4" />}
       {left !== null && (
         <>
           {/* The time left runs round the button's own edge. */}
@@ -183,7 +184,7 @@ export function HandshakeButton({
 
         {st.outgoing && (
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60 text-xs">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+            <PixelLoader className="w-3.5 h-3.5 text-accent" />
             <p className="flex-1">{tr("Waiting for")}{" "}{st.outgoing.toName}… {left}{tr("s")}</p>
             <button onClick={() => controls?.cancelInvite()} className="font-medium text-muted-foreground hover:text-foreground">
               {tr("Cancel")}

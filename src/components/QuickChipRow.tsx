@@ -139,7 +139,7 @@ export function QuickChipRow<T extends QuickChip>({
       </>
     );
     return interactive ? (
-      <button key={item.id} type="button" onClick={() => onPick(item)} aria-pressed={on} aria-label={item.short ? item.label : undefined} className={cls} style={style}>
+      <button key={item.id} type="button" data-chip={item.id} onClick={() => onPick(item)} aria-pressed={on} aria-label={item.short ? item.label : undefined} className={cls} style={style}>
         {inner}
       </button>
     ) : (

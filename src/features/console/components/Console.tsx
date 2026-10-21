@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useConsoleNavigate } from '../lib/consoleNavigate';
 import {
   Search, X, Pencil, Bell, LifeBuoy, Users, Trophy, Wrench, CloudRain, TriangleAlert, Sparkles, Timer, Plus, Check,
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Navigation, Route, Play, Map as MapIcon, Bike, ShieldCheck, SlidersHorizontal,
@@ -53,7 +53,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
   const [adding, setAdding] = useState(false);
   const inbox = useInbox();
   const [editingCards, setEditingCards] = useState(false);
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   // Something of the rider's own on today (a plan, a reminder, a crew plan they're going to): a dot on the square.
   const calendar = useCalendarStore();
   const somethingToday = useMemo(() => {
@@ -206,7 +206,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
                 )}
               </div>
               {inbox.items.length === 0 ? (
-                <p className="rounded-2xl frost p-4 text-sm text-muted-foreground text-center">{tr("No notifications yet.")}</p>
+                <p className="rounded-2xl frost border border-border/60 p-4 text-sm text-muted-foreground text-center">{tr("No notifications yet.")}</p>
               ) : (
                 <ul className="space-y-1.5">
                   {inbox.items.map((n) => (
@@ -264,7 +264,7 @@ function ActionTile({ action: a, onRun }: { action: ConsoleAction; onRun: () => 
       aria-pressed={a.on === undefined ? undefined : a.on}
       className={cn(
         'pressable flex-1 min-w-0 min-h-[76px] rounded-2xl border px-3 py-2.5 flex flex-col items-start justify-between gap-1.5 text-left transition-colors',
-        a.on ? 'bg-accent/15 border-accent/70' : 'frost border-border/60',
+        a.on ? 'bg-accent/15 border-accent/70' : 'frost border-accent/30',
         a.hold && 'hold-target relative overflow-hidden',
         a.hold && a.on && 'bg-[hsl(var(--burn)/0.15)] border-[hsl(var(--burn)/0.7)] animate-pulse',
       )}
@@ -312,7 +312,7 @@ function ago(at: number): string {
 }
 
 function NotificationRow({ item: n }: { item: InboxItem }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const Icon = KIND_ICON[n.kind] ?? Bell;
   const open = () => {
     if (!n.url) return;
@@ -320,7 +320,7 @@ function NotificationRow({ item: n }: { item: InboxItem }) {
     navigate(n.url);
   };
   return (
-    <li className="flex items-start gap-3 rounded-2xl frost p-3">
+    <li className="flex items-start gap-3 rounded-2xl frost border border-border/60 p-3">
       <span className={cn('mt-0.5 shrink-0 rounded-lg p-1.5', n.kind === 'rescue' ? 'bg-[hsl(var(--burn)/0.15)]' : 'bg-accent/10')}>
         <Icon className={cn('w-4 h-4', n.kind === 'rescue' ? 'text-[hsl(var(--burn))]' : 'text-accent')} />
       </span>
@@ -384,7 +384,7 @@ function NotificationAction({ item: n, onOpen }: { item: InboxItem; onOpen: () =
 
 /** A service reminder: Maintenance opens that vehicle's list in the Garage; Done asks, then marks it serviced. */
 function ServiceActions({ reference, notificationId }: { reference: string; notificationId: string }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { bikes } = useGarage();
   // `maint-<vehicle id>-<item id>`: the vehicle is the one whose id it starts with.
   const bike = bikes.find((b) => reference.startsWith(`maint-${b.id}-`)) ?? null;
@@ -413,7 +413,7 @@ function ServiceActions({ reference, notificationId }: { reference: string; noti
 const fold = (s: string) => s.toLocaleLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 function SearchResults({ query, actions, onRun, onDone }: { query: string; actions: ConsoleAction[]; onRun: (a: ConsoleAction) => void; onDone: () => void }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { rides } = useRideHistory();
   const q = fold(query);
   const hit = (...parts: (string | undefined)[]) => parts.some((p) => p && fold(p).includes(q));
@@ -440,7 +440,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
           onClick();
           onDone();
         }}
-        className="pressable w-full flex items-center gap-3 rounded-2xl frost p-3 text-left min-h-12"
+        className="pressable w-full flex items-center gap-3 rounded-2xl frost border border-border/60 p-3 text-left min-h-12"
       >
         <span className="shrink-0">{icon}</span>
         <span className="flex-1 min-w-0">

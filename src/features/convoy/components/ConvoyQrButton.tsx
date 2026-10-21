@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { QrCode, X, Loader2 } from 'lucide-react';
+import { QrCode, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * The ride screen's convoy QR, for everyone riding (not just the leader): a
@@ -64,7 +65,7 @@ export function ConvoyQrButton({
         data-tip="ride-qr"
         className={cn('glove-hit flex items-center gap-1 text-accent text-xs font-medium px-2 py-0.5 bg-accent/10 rounded pressable', className)}
       >
-        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <QrCode className="w-3 h-3" />}
+        {busy ? <PixelLoader className="w-3 h-3" /> : <QrCode className="w-3 h-3" />}
         QR
       </button>
       {open && qr &&

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { takeMapSearch, useMapSearchSeq } from '../lib/mapConsole';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { Search, MapPin, Loader2, Clock, Bookmark, X, IdCard, Route as RouteIcon, type LucideIcon } from 'lucide-react';
+import { Search, MapPin, Clock, Bookmark, X, IdCard, Route as RouteIcon, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useShortLandscape } from '@/hooks/useShortLandscape';
@@ -34,6 +34,8 @@ import { getLedger, vehicleLedger } from '@/features/garage/lib/ledger';
 import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
 import { openText, openTint, placeStatus } from '@/lib/openingHours';
 import { currencySign } from '@/lib/priceLevel';
+import { useHazards, fetchHazards, boundsAround, HAZARD_BY_KIND, hazardColor, type HazardKind } from '@/features/hazards';
+import { PixelLoader } from '@/components/PixelLoader';
 
 // km → miles for formatDistance (which expects miles input).
 const KM_TO_MILES = 0.621371;
@@ -43,7 +45,20 @@ const FADE_RIGHT = '[mask-image:linear-gradient(to_right,black_calc(100%-28px),t
 
 /** The card drops chip: Blacktop World's own, in the accent. */
 const CARDS_CHIP = { id: 'cards' as const, label: tr("Cards"), query: 'cards', Icon: IdCard as LucideIcon, color: '' };
-type Chip = PlaceCategory | typeof CARDS_CHIP;
+/** Hazards near the rider (Blacktop Console's "Show on the map"): only in the row while it's lit, so it can be tapped off. */
+const HAZARD_CHIP = { id: 'hazards' as const, label: tr("Hazards"), query: 'hazards', Icon: TriangleAlert as LucideIcon, color: '#f59e0b' };
+/** How far round the rider the hazards list reaches (as Console's card). */
+const HAZARD_NEAR_M = 8000;
+type Chip = PlaceCategory | typeof CARDS_CHIP | typeof HAZARD_CHIP;
+
+function agoText(at: number): string {
+  const m = Math.max(0, Math.round((Date.now() - at) / 60_000));
+  if (m < 1) return tr("just now");
+  if (m < 60) return tr("{0} min ago", [m]);
+  const h = Math.floor(m / 60);
+  if (h < 24) return tr("{0} h ago", [h]);
+  return tr("{0} days ago", [Math.floor(h / 24)]);
+}
 /** How many of a quick search's places come back (all of them go on the map). */
 const CATEGORY_MAX = 40;
 
@@ -83,6 +98,10 @@ interface MapSearchBarProps {
   onRoute?: (route: SavedRoute) => void;
   /** Bumped by the map on Back from a place picked here: the list comes back, scrolled where it was. */
   reopenSeq?: number;
+  /** The hazards quick search's reports, to pull the camera out over (null: it's over, back to the rider). */
+  onHazards?: (results: MapSearchResult[] | null, padding: FitPadding) => void;
+  /** A hazard picked from that list (its id): the map opens its card. */
+  onHazardPick?: (id: string) => void;
 }
 
 function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
@@ -96,7 +115,7 @@ function currentViewBounds(map: MapLibreMap | null): MapViewBounds | null {
   };
 }
 
-export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus, onCategory, onPreview, clearSeq, reopenSeq, onRoute }: MapSearchBarProps) {
+export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyCards, inline, autoFocus, onCategory, onPreview, clearSeq, reopenSeq, onRoute, onHazards, onHazardPick }: MapSearchBarProps) {
   const savedRoutes = useSavedRoutes();
   const { settings } = useSettings();
   const { vehicles } = useExperience();
@@ -154,6 +173,59 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     fitPending.current = null;
     onCategory?.(pending.category, pending.results, fitPadding());
   }, [results, isSearching, onCategory, fitPadding]);
+
+  // ── Hazards near the rider, as a quick search (Blacktop Console's "Show on the map") ──
+  const hazards = useHazards();
+  const hazardsMode = activeCategory === 'hazards';
+  const hazardKinds = useRef(new Map<string, HazardKind>());
+  const hazardFitPending = useRef(false);
+  const hazardOrigin = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (!hazardsMode) return;
+    const at = hazardOrigin.current;
+    if (!at) return;
+    const now = Date.now();
+    hazardKinds.current.clear();
+    const near = hazards
+      .filter((h) => h.expiresAt > now)
+      .map((h) => ({ h, d: calculateDistance(at.lat, at.lng, h.lat, h.lng) }))
+      .filter((x) => x.d * 1000 <= HAZARD_NEAR_M)
+      .sort((a, b) => a.d - b.d)
+      .map(({ h, d }): MapSearchResult => {
+        hazardKinds.current.set(`hz:${h.id}`, h.kind);
+        return { id: `hz:${h.id}`, name: HAZARD_BY_KIND[h.kind]?.label ?? h.kind, address: tr("Reported {0}", [agoText(h.createdAt)]), lat: h.lat, lng: h.lng, distance: d };
+      });
+    setResults(near);
+    setIsSearching(false);
+  }, [hazardsMode, hazards]);
+  // Once the list has drawn (it sets the room left), the camera pulls out over the reports; once only.
+  useEffect(() => {
+    if (!hazardsMode || !hazardFitPending.current) return;
+    hazardFitPending.current = false;
+    onHazards?.(results, fitPadding());
+  }, [hazardsMode, results, onHazards, fitPadding]);
+  const startHazards = () => {
+    const view = currentViewBounds(map);
+    const at = userLocation ?? (view ? { lat: (view.north + view.south) / 2, lng: (view.east + view.west) / 2 } : null);
+    if (!at) return;
+    if (placeCategory(activeCategory)) onCategory?.(null, [], fitPadding());
+    searchIdRef.current++;
+    setQuery('');
+    setCardsMode(false);
+    hazardOrigin.current = at;
+    hazardFitPending.current = true;
+    setIsSearching(true);
+    setActiveCategory('hazards');
+    setShowResults(true);
+    void fetchHazards(boundsAround(at, HAZARD_NEAR_M)).finally(() => setIsSearching(false));
+  };
+  const endHazards = () => {
+    hazardFitPending.current = false;
+    setActiveCategory(null);
+    setResults([]);
+    setShowResults(false);
+    onHazards?.(null, fitPadding());
+  };
 
   // A route was set: the quick search is over.
   useEffect(() => {
@@ -257,6 +329,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     setShowResults(true);
     // Typing ends a quick search, pins and all.
     if (placeCategory(activeCategory)) onCategory?.(null, [], fitPadding());
+    if (activeCategory === 'hazards') onHazards?.(null, fitPadding());
     setActiveCategory(null);
     setCardsMode(false);
 
@@ -273,6 +346,12 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
 
   const handleCategoryClick = async (category: Chip) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (category.id === 'hazards') {
+      if (activeCategory === 'hazards') endHazards();
+      else startHazards();
+      return;
+    }
+    if (activeCategory === 'hazards') onHazards?.(null, fitPadding());
     setQuery('');
     const wasPlaces = !!placeCategory(activeCategory);
 
@@ -332,6 +411,10 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
     if (!map) return;
     const req = takeMapSearch();
     if (!req) return;
+    if (req.hazards) {
+      startHazards();
+      return;
+    }
     if (req.category) {
       const chip = quickCategories.find((c) => c.id === req.category);
       if (chip && activeCategory !== chip.id) void handleCategoryClick(chip);
@@ -408,7 +491,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
       ? [...results].sort((a, b) => (priced(a.id) ?? Infinity) - (priced(b.id) ?? Infinity))
       : results;
   const routeMatch = hasRoutes && query.trim().length >= 2 && savedRoutes.some((r) => normaliseName(r.name).includes(normaliseName(query.trim())));
-  const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode || routeMatch);
+  const hasSearchContent = !showIdle && (displayResults.length > 0 || isSearching || cardsMode || hazardsMode || routeMatch);
 
   const hasDisplayContent = hasIdleContent || hasSearchContent;
   // Landscape (short:) with suggestions up: they run sideways in the top row, right of the search column.
@@ -446,12 +529,12 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
           Landscape (short:): the chips only come out while searching, to leave the map clear
           (kept out while a quick search is up, so its lit chip can be tapped off). */}
       <QuickChipRow
-        items={quickCategories}
+        items={hazardsMode ? [HAZARD_CHIP, ...quickCategories] : quickCategories}
         active={activeCategory}
         onPick={handleCategoryClick}
         look="compact"
         resetKey={clearSeq}
-        className={cn(!showResults && !placeCategory(activeCategory) && 'short:hidden')}
+        className={cn(!showResults && !placeCategory(activeCategory) && !hazardsMode && 'short:hidden')}
       />
 
       {showResults && hasDisplayContent && (
@@ -623,13 +706,13 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
           {!showIdle && (
             isSearching ? (
               <div className="p-5 text-center text-muted-foreground">
-                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1.5" />
+                <PixelLoader className="w-5 h-5 mx-auto mb-1.5" />
                 <span className="text-sm">{tr("Finding places...")}</span>
               </div>
             ) : displayResults.length === 0 ? (
               <div className="p-5 text-center text-muted-foreground text-sm">
-                {cardsMode ? tr("No cards dropped nearby") : tr("No results found")}
-                {!cardsMode && (() => {
+                {cardsMode ? tr("No cards dropped nearby") : hazardsMode ? tr("No hazards reported near you") : tr("No results found")}
+                {!cardsMode && !hazardsMode && (() => {
                   // Places come from OpenStreetMap: a missing one can be reported there
                   // (an OSM note needs no account) and shows up once a mapper adds it.
                   const at = map?.getCenter() ?? userLocation;
@@ -648,6 +731,33 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
                 const isCard = result.id.startsWith('card:');
                 const isSavedPOI = result.id.startsWith('poi:');
                 const isRecent = !isSavedPOI && recentLocations.some(r => r.id === result.id);
+                const hazardKind = hazardsMode ? hazardKinds.current.get(result.id) : undefined;
+                if (hazardKind) {
+                  // A hazard report: its own colour and icon, as its pin; a tap opens its card on the map.
+                  const HIcon = HAZARD_BY_KIND[hazardKind]?.icon ?? TriangleAlert;
+                  return (
+                    <button
+                      key={result.id}
+                      onClick={() => {
+                        listScrollRef.current = listRef.current?.scrollTop ?? 0;
+                        setShowResults(false);
+                        onHazardPick?.(result.id.slice(3));
+                      }}
+                      className={cn('w-full flex items-center gap-3 p-3 text-left hover:bg-accent/10 active:bg-accent/20 transition-colors', index !== displayResults.length - 1 && 'border-b border-border')}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white" style={{ background: hazardColor(hazardKind) }}>
+                        <HIcon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{result.name}</p>
+                        <p className={cn('text-xs text-muted-foreground short:hidden', FADE_RIGHT)}>{index === 0 ? tr("Nearest · {0}", [result.address ?? '']) : result.address}</p>
+                      </div>
+                      {distanceText(result.lat, result.lng) && (
+                        <span className="text-[10px] font-mono text-muted-foreground/80 flex-shrink-0 ml-1">{distanceText(result.lat, result.lng)}</span>
+                      )}
+                    </button>
+                  );
+                }
                 const quick = !cardsMode ? placeCategory(activeCategory) : null;
                 if (quick) {
                   // A quick search's place: its category tile, as on the map; the nearest marked; tinted green while

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Camera, KeyRound, Loader2, Mail, ArrowRight, ChevronDown, Check, Lock, LogIn, PlayCircle } from 'lucide-react';
+import { Building2, Camera, KeyRound, Mail, ArrowRight, ChevronDown, Check, Lock, LogIn, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { enterpriseTiers, type EnterpriseTier, type GuestSessionPayload } from '
 import { TierShowcase } from './TierShowcase';
 import { EnterpriseTitle } from './EnterpriseTitle';
 import { SlidingPill } from '@/components/SlidingPill';
+import { PixelLoader } from '@/components/PixelLoader';
 
 // The camera scanner (html5-qrcode) only loads when the rider opens it.
 const EnterpriseQrScanner = lazy(() => import('./EnterpriseQrScanner'));
@@ -215,7 +216,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
             // Scanning isn't open yet: the button pops the Coming soon stamp.
             // (When it opens, this goes back to setScanning(true); the scanner is ready.)
             <Button className="w-full h-12 rounded-xl" disabled={busy} onClick={pulseSoon}>
-              {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Camera className="w-4 h-4 mr-2" />}
+              {busy ? <PixelLoader className="w-4 h-4 mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
               {busy ? tr("Checking…") : tr("Open camera")}
             </Button>
           ))}
@@ -241,7 +242,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
               aria-label={tr("Enterprise code")}
             />
             <Button type="submit" className="h-12 rounded-xl px-4" disabled={busy} aria-label={tr("Connect")}>
-              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              {busy ? <PixelLoader className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
             </Button>
           </form>
         )}

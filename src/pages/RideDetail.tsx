@@ -23,6 +23,7 @@ import { formatLap } from '@/features/track';
 import { tr } from '@/lib/i18n';
 import { PageTips } from '@/features/guide';
 import { usePeaksHidden } from '@/features/ride';
+import { PixelLoader } from '@/components/PixelLoader';
 
 export default function RideDetail() {
   const peaksHidden = usePeaksHidden();
@@ -490,7 +491,7 @@ export default function RideDetail() {
                 </div>
               </div>
               {overlayProgress !== null ? (
-                <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <PixelLoader className="w-5 h-5 text-accent" />
               ) : (
                 <Download className="w-5 h-5 text-accent" />
               )}

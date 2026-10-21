@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Radio, Download, Trash2, X, Loader2, Play } from 'lucide-react';
+import { Radio, Download, Trash2, X, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { tr } from '@/lib/i18n';
@@ -11,6 +11,7 @@ import {
   removePilotVoice,
   warmPilotVoice,
 } from '@/lib/pilotVoice';
+import { PixelLoader } from '@/components/PixelLoader';
 
 function mb(bytes: number) {
   return `${Math.round(bytes / 1_000_000)} MB`;
@@ -54,7 +55,7 @@ export function PilotVoiceSetting() {
 
       {pv.status === 'downloading' && (
         <div className="mt-2 flex items-center gap-2">
-          <Loader2 className="w-4 h-4 text-accent animate-spin shrink-0" />
+          <PixelLoader className="w-4 h-4 text-accent shrink-0" />
           <Progress value={Math.round(pv.progress * 100)} className="h-2 flex-1" />
           <span className="text-xs font-mono text-muted-foreground w-10 text-right">{Math.round(pv.progress * 100)}%</span>
           <button type="button" onClick={cancelPilotVoiceDownload} className="p-1 text-muted-foreground" aria-label={tr("Cancel")}>

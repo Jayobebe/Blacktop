@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Loader2, ScanLine, Share2, Swords, Trophy, Users, X } from 'lucide-react';
+import { Copy, ScanLine, Share2, Swords, Trophy, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { loadQrScanner } from '@/lib/qrScanner';
 import { tr } from '@/lib/i18n';
 import { RULES, showRpm } from '../lib/rules';
 import type { OnlineBattle } from '../lib/online';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const CODE = /^[a-f0-9-]{36}$/i;
 
@@ -150,7 +151,7 @@ export function PlayerBattleSheet({
               </div>
               <p className="text-sm font-semibold">{tr("Have your rival scan this, or send them the invitation.")}</p>
               <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground" role="status">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                <PixelLoader className="w-3.5 h-3.5 text-accent" />
                 {secondsLeft === null ? tr("Waiting for your rival…") : tr("Waiting for your rival · the invitation lasts another {0} s", [secondsLeft])}
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -185,7 +186,7 @@ export function PlayerBattleSheet({
                 </p>
               )}
               <Button className="w-full h-14 text-base font-bold gap-2" disabled={blocked} onClick={onInvite}>
-                {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Swords className="w-5 h-5" />}
+                {busy ? <PixelLoader className="w-5 h-5" /> : <Swords className="w-5 h-5" />}
                 {tr("Invite a player · {0} RPM", [showRpm(RULES.stake)])}
               </Button>
 

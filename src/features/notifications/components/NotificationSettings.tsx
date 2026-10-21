@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, HeartHandshake, IdCard, BellOff, CloudLightning, Fuel, Loader2, Send, Smartphone, Flag, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
+import { AlertTriangle, Bell, HeartHandshake, IdCard, BellOff, CloudLightning, Fuel, Send, Smartphone, Flag, Timer, TrendingDown, Trophy, Users, Wrench } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { disablePush, enablePush, PUSH_CATEGORY_DEFS, refreshPushPermission, sendTestPush, setPushCategory, usePush, type PushCategory } from '../lib/push';
 import { tr } from '@/lib/i18n';
 import { kmText } from '@/lib/units';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const ICONS = {
   rescue: AlertTriangle,
@@ -95,7 +96,7 @@ export function NotificationSettings() {
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" className="h-11 rounded-xl" onClick={() => void test(false)} disabled={testing}>
-              {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              {testing ? <PixelLoader className="w-4 h-4 mr-2" /> : <Send className="w-4 h-4 mr-2" />}
               {tr("Send test")}
             </Button>
             <Button variant="ghost" className="h-11 rounded-xl text-muted-foreground" onClick={() => void disablePush()} disabled={push.busy}>
@@ -137,7 +138,7 @@ export function NotificationSettings() {
           disabled={push.busy || blocked}
           className={cn('w-full h-11 font-semibold rounded-xl touch-target bg-accent hover:bg-accent/90 text-accent-foreground')}
         >
-          {push.busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bell className="w-4 h-4 mr-2" />}
+          {push.busy ? <PixelLoader className="w-4 h-4 mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
           {tr("Turn on notifications")}
         </Button>
       )}

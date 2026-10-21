@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Fuel, HeartPulse, CalendarDays, HardDrive, LayoutGrid, Route, Waypoints, Grid3x3, Square, Undo2, Search, Bell, Volume2, Sparkles, ChevronRight, type LucideIcon } from 'lucide-react';
+import { Fuel, HeartPulse, CalendarDays, HardDrive, LayoutGrid, Route, Waypoints, Grid3x3, Square, Undo2, Search, Bell, Volume2, Sparkles, ChevronRight, Bike, Users, Mic, Map as MapIcon, LifeBuoy, Wrench, IdCard, Globe2, Gamepad2, Shield, Radio, Timer, Languages, Siren, Music, Lock, Smartphone, Clapperboard, Gauge, ParkingSquare, TriangleAlert, Building2, Save, Video, MoveDiagonal, Crosshair, Sticker, Lightbulb, Thermometer, Eye, type LucideIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,36 @@ const ICON: Record<ReleaseIcon, LucideIcon> = {
   back: Undo2,
   search: Search,
   bell: Bell,
+  ride: Bike,
+  convoy: Users,
+  voice: Mic,
+  map: MapIcon,
+  rescue: LifeBuoy,
+  garage: Wrench,
+  cards: IdCard,
+  globe: Globe2,
+  arcade: Gamepad2,
+  crew: Shield,
+  radio: Radio,
+  track: Timer,
+  language: Languages,
+  alarm: Siren,
+  sound: Music,
+  privacy: Lock,
+  phone: Smartphone,
+  tour: Clapperboard,
+  speed: Gauge,
+  parking: ParkingSquare,
+  hazard: TriangleAlert,
+  enterprise: Building2,
+  backup: Save,
+  video: Video,
+  lean: MoveDiagonal,
+  gauge: Crosshair,
+  sticker: Sticker,
+  tips: Lightbulb,
+  battery: Thermometer,
+  eye: Eye,
 };
 
 /** One release's lines, each with its icon and, where it has one, its link. */
@@ -88,7 +118,7 @@ export function WhatsNewCard({ when }: { when: boolean }) {
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-accent" /> {tr("What's new in Blacktop")}
           </DialogTitle>
-          <DialogDescription>{releaseDate(latest.id)}</DialogDescription>
+          <DialogDescription>{tr("Version {0} · {1}", [latest.version, releaseDate(latest.id)])}</DialogDescription>
         </DialogHeader>
         <ReleaseLines release={latest} onGo={close} />
         <div className="mt-2 grid grid-cols-[auto_1fr_1fr] gap-2">

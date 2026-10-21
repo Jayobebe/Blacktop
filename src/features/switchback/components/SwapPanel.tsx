@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeftRight, Check, Loader2, ScanLine, X } from 'lucide-react';
+import { ArrowLeftRight, Check, ScanLine, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { refreshShop, setRpm, useShop } from '../lib/shop';
 import { getVault, updateVault } from '../lib/store';
 import { SWAP_LIMIT, cancelSwap, joinSwap, mySwaps, openSwap, readySwap, setSwap, swapLink, viewSwap, type Swap } from '../lib/swap';
 import { SbCard } from './SbCard';
+import { PixelLoader } from '@/components/PixelLoader';
 
 function why(message: string): string {
   if (message === 'demo') return '';
@@ -195,7 +196,7 @@ export function SwapPanel({ demo, locked }: { demo: boolean; locked?: boolean })
           </div>
           <p className="font-mono text-xl tracking-widest text-accent">{swap.code}</p>
           <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+            <PixelLoader className="w-3.5 h-3.5 text-accent" />
             {tr("Waiting for the other rider to join…")}
           </p>
         </div>

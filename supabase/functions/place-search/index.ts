@@ -739,7 +739,7 @@ serve(async (req) => {
             nwr["shop"]["opening_hours"~"24/7|24 hours|24h"]${around};
             nwr["amenity"~"^(fuel|convenience)$"]["opening_hours"~"24/7|24 hours|24h"]${around};
           );
-          out center ${limit};
+          out center ${limit * 3};
         `;
       } else if (nameQ.length >= 2) {
         const safe = escapeRegexPart(nameQ).replace(/"/g, "");
@@ -764,7 +764,7 @@ serve(async (req) => {
           (
             ${clauses}
           );
-          out center ${limit};
+          out center ${limit * 3};
         `;
       }
 
@@ -785,9 +785,11 @@ serve(async (req) => {
           } else if (filter24h) {
             hits = await photonSearch({ q: "24 hour", center, bbox, osmTags: ["shop", "amenity:fuel"], limit });
           } else {
-            // Photon matches names, not categories, so fuel also searches the big brands.
+            // Photon matches names, not categories (the osm_tag only filters), so
+            // fuel searches the words independents are named with ("Woodlands
+            // Service Station", "… Garage", "… Filling Station") and the big brands.
             const words: Record<string, string[]> = {
-              fuel: ["petrol station", "Shell", "BP", "Esso", "Texaco", "TotalEnergies"],
+              fuel: ["station", "garage", "fuel", "petrol", "filling", "services", "Shell", "BP", "Esso", "Texaco", "TotalEnergies", "Tesco", "Asda", "Sainsbury's"],
               restaurant: ["restaurant"], fast_food: ["fast food"], cafe: ["cafe"],
               supermarket: ["supermarket"], convenience: ["convenience store"],
             };
@@ -806,7 +808,7 @@ serve(async (req) => {
       }
 
       const elements = Array.isArray(data?.elements) ? data.elements : [];
-      const slim = elements
+      const slim0 = elements
         .map((el: any) => ({
           id: `${el.type ?? "n"}${el.id}`,
           lat: typeof el?.lat === "number" ? el.lat : el?.center?.lat,
@@ -814,6 +816,12 @@ serve(async (req) => {
           tags: el.tags ?? {},
         }))
         .filter((el: any) => typeof el.lat === "number" && typeof el.lon === "number");
+      // Overpass cuts "out center N" by id, not by distance: ask for more, keep the nearest.
+      const slim = slim0
+        .map((el: any) => ({ el, d: distanceM(body.lat, body.lon, el.lat, el.lon) }))
+        .sort((a: any, b: any) => a.d - b.d)
+        .slice(0, limit)
+        .map((x: any) => x.el);
 
       return new Response(JSON.stringify(slim), {
         headers: {

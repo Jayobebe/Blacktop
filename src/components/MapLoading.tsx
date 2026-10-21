@@ -1,7 +1,8 @@
-import { Loader2 } from 'lucide-react';
+import {  } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { warpActive } from '@/lib/warp';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * "Loading map…" over the app backdrop: no panel of its own, so the moving
@@ -16,7 +17,7 @@ export function MapLoading({ className }: { className?: string }) {
   return (
     <div className={cn('fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none', className)} aria-busy="true" aria-label={tr("Loading map")}>
       <span className="flex items-center gap-2 rounded-full frost-accent px-4 py-2 text-xs font-medium shadow-lg">
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />{" "}{tr("Loading map…")}
+        <PixelLoader className="w-3.5 h-3.5" />{" "}{tr("Loading map…")}
       </span>
     </div>
   );

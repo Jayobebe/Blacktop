@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SHOP_ITEMS } from '../lib/catalogue';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 interface Row {
   item_id: string;
@@ -64,7 +65,7 @@ export function SurveyResultsTable() {
         <ShoppingBag className="w-[18px] h-[18px] text-accent" />
         <p className="text-[14px] font-semibold flex-1">{tr("Speedshop survey")}</p>
         <button type="button" onClick={() => void load()} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground" aria-label={tr("Refresh survey results")}>
-          <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+          {loading ? <PixelLoader className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
         </button>
       </div>
       <p className="text-[11px] text-muted-foreground mb-3">{tr("Every rider's answers, all in one place. Anonymous totals.")}</p>

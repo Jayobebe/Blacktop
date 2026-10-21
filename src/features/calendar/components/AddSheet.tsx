@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Flag, Bell, Timer, Users, Search, Loader2, Check, MapPin, Route as RouteIcon, Bookmark } from 'lucide-react';
+import { Flag, Bell, Timer, Users, Search, Check, MapPin, Route as RouteIcon, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { haptics } from '@/lib/haptics';
@@ -17,6 +17,7 @@ import { useRiderSpot } from '@/features/console/lib/whereRider';
 import { addCalendarItem, dayStart, type ReminderType } from '../lib/calendarStore';
 import { useCrewEventActions } from '../lib/crewEvents';
 import { SlidingPill } from '@/components/SlidingPill';
+import { PixelLoader } from '@/components/PixelLoader';
 
 type Tab = 'plan' | 'reminder' | 'track' | 'crew';
 
@@ -155,7 +156,7 @@ function WherePicker({ value, onChange, trips = true }: { value: Where; onChange
         {/* The spin is the icon's own transform, so the centring sits on a box round it (both on one element wobbled). */}
         {busy && (
           <span aria-hidden className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            <PixelLoader className="w-4 h-4 text-muted-foreground" />
           </span>
         )}
       </div>
@@ -474,7 +475,7 @@ function CrewForm({ day, done }: { day: string; done: () => void }) {
       </Field>
       <p className="text-[11px] text-muted-foreground">{tr("Everyone in the crew sees it and can say if they're going. It's taken off a week after.")}</p>
       <Button onClick={() => void save()} disabled={busy} className="w-full h-12 rounded-2xl font-semibold">
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Post to the crew")}
+        {busy ? <PixelLoader className="w-4 h-4" /> : tr("Post to the crew")}
       </Button>
     </div>
   );

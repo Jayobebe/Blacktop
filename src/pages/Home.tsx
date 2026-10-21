@@ -453,9 +453,12 @@ export default function Home() {
         const w = rect.width;
         const h = rect.height;
         const hole = `M${cx + pr},${cy} A${pr},${pr} 0 1 0 ${cx - pr},${cy} A${pr},${pr} 0 1 0 ${cx + pr},${cy} Z`;
+        // The shown rect overshoots the box and the picture is stretched to it exactly (viewBox, no aspect): drawn
+        // to the box's own fractional size, the mask's last column came out part see-through and thinned the
+        // tile's border on its right and bottom edges, so the edges looked uneven.
         const svg =
-          `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>` +
-          `<path fill='white' fill-rule='evenodd' d='M0,0H${w}V${h}H0Z ${hole}'/></svg>`;
+          `<svg xmlns='http://www.w3.org/2000/svg' width='${Math.ceil(w)}' height='${Math.ceil(h)}' viewBox='0 0 ${w} ${h}' preserveAspectRatio='none'>` +
+          `<path fill='white' fill-rule='evenodd' d='M-8,-8H${w + 8}V${h + 8}H-8Z ${hole}'/></svg>`;
         const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
         el.style.webkitMaskImage = url;
         el.style.maskImage = url;
@@ -529,8 +532,9 @@ export default function Home() {
       const mkCircle = (clipId: string) => {
         const c = document.createElementNS(svgNS, 'circle');
         c.setAttribute('cx', String(cx_col)); c.setAttribute('cy', String(cy_col));
-        c.setAttribute('r', String(pr)); c.setAttribute('fill', 'none');
-        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '2');
+        // Drawn just inside the tile, as its own border is (centred on the cut, half of it fell in the hole).
+        c.setAttribute('r', String(pr + 0.75)); c.setAttribute('fill', 'none');
+        c.setAttribute('stroke', accentColor); c.setAttribute('stroke-width', '1.5');
         c.setAttribute('clip-path', `url(#${clipId})`);
         return c;
       };
@@ -739,7 +743,7 @@ export default function Home() {
                               tile.onClick();
                             }}
                             className={cn(
-                              'pressable flex-1 bg-card/50 border-2 border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
+                              'pressable flex-1 bg-card/50 border-[1.5px] border-accent text-accent hover:bg-accent/10 rounded-3xl flex items-center justify-center gap-3 hover:shadow-glow touch-target-lg',
                               // One wide tile: in landscape the globe sits dead centre, so push the label left of it.
                               singleTop && 'landscape:justify-start landscape:pl-8'
                             )}
@@ -773,7 +777,7 @@ export default function Home() {
                             secondaryTile.onClick();
                           }}
                           className={cn(
-                            'group/tile pressable flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
+                            'group/tile pressable flex-1 bg-card/50 border-[1.5px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center justify-center gap-3 touch-target-lg cursor-pointer',
                             // With Track beside it the globe is on this tile's right corner, so the label is centred in the rest.
                             // Alone, the globe sits over its centre: the label goes left of it and the
                             // operator / passenger switch right of it.
@@ -808,7 +812,7 @@ export default function Home() {
                             tabIndex={0}
                             onClick={openTrack}
                             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                            className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-center gap-3 pr-4 pl-16 data-[room=tight]:pl-12 touch-target-lg cursor-pointer"
+                            className="group/tile pressable hidden landscape:flex flex-1 bg-card/50 border-[1.5px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl items-center justify-center gap-3 pr-4 pl-16 data-[room=tight]:pl-12 touch-target-lg cursor-pointer"
                           >
                             <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center landscape:group-data-[room=snug]/tile:hidden landscape:group-data-[room=tight]/tile:hidden">
                               <Zap className="w-4 h-4 text-accent-2" />
@@ -829,7 +833,7 @@ export default function Home() {
                           tabIndex={0}
                           onClick={openTrack}
                           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openTrack()}
-                          className="pressable landscape:hidden flex-none h-16 bg-card/50 border-2 border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
+                          className="pressable landscape:hidden flex-none h-16 bg-card/50 border-[1.5px] border-accent hover:bg-accent/10 hover:shadow-glow rounded-3xl flex items-center gap-3 px-4 cursor-pointer"
                         >
                           <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
                             <Zap className="w-5 h-5 text-accent-2" />

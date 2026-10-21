@@ -27,15 +27,25 @@ const FRESH_MS = 10 * 60_000;
 const cache = new Map<string, { at: number; prices: StationPrice[] }>();
 const listeners = new Set<() => void>();
 
-/** Only map stations can be priced ("op:<OpenStreetMap id>"). */
-export const priceableStation = (id: string | undefined): id is string => !!id && /^op:\d{1,15}$/.test(id);
+/**
+ * Only map stations can be priced. Search results carry OpenStreetMap ids as
+ * "op:node123" / "op:way123" (Overpass) or "op:phW123" (the search service's
+ * fallback); the server keeps one form, "op:n123" / "op:w123" / "op:r123", since
+ * a node and a way can share a number.
+ */
+export function stationKey(id: string | undefined): string | null {
+  const m = id ? /^op:(?:ph)?(node|way|relation|[nwr])(\d{1,15})$/i.exec(id) : null;
+  return m ? `op:${m[1][0].toLowerCase()}${m[2]}` : null;
+}
+export const priceableStation = (id: string | undefined): id is string => !!stationKey(id);
 
 export async function reportFuelPrice(stationId: string, fuel: PricedFuel, perUnit: number, currency: string, country: string | null): Promise<boolean> {
-  if (isDemoModeActive() || !priceableStation(stationId) || !(perUnit > 0) || !hasServerCap('fuelPrices')) return false;
+  const key = stationKey(stationId);
+  if (isDemoModeActive() || !key || !(perUnit > 0) || !hasServerCap('fuelPrices')) return false;
   try {
-    const { data, error } = await supabase.rpc('report_fuel_price' as never, { _station_id: stationId, _fuel: fuel, _price: Math.round(perUnit * 10000) / 10000, _currency: currency, _country: country } as never);
+    const { data, error } = await supabase.rpc('report_fuel_price' as never, { _station_id: key, _fuel: fuel, _price: Math.round(perUnit * 10000) / 10000, _currency: currency, _country: country } as never);
     if (error) return false;
-    cache.delete(stationId);
+    cache.delete(key);
     return (data as unknown as string) === 'ok';
   } catch {
     return false;
@@ -55,7 +65,7 @@ function demoPrices(id: string): StationPrice[] {
 }
 
 async function load(ids: string[]) {
-  const want = ids.filter((id) => priceableStation(id) && !(cache.get(id) && Date.now() - cache.get(id)!.at < FRESH_MS)).slice(0, 60);
+  const want = ids.filter((id) => !(cache.get(id) && Date.now() - cache.get(id)!.at < FRESH_MS)).slice(0, 60);
   if (!want.length) return;
   if (isDemoModeActive()) {
     want.forEach((id) => cache.set(id, { at: Date.now(), prices: demoPrices(id) }));
@@ -81,7 +91,9 @@ async function load(ids: string[]) {
 export function useStationPrices(ids: string[]): Map<string, StationPrice[]> {
   const live = useServerCap('fuelPrices') || isDemoModeActive();
   const [, bump] = useState(0);
-  const key = ids.filter(priceableStation).sort().join(',');
+  // The cache is keyed by the server's form; the answer by the ids the caller gave.
+  const pairs = ids.map((id) => [id, stationKey(id)] as const).filter((p): p is readonly [string, string] => !!p[1]);
+  const key = [...new Set(pairs.map((p) => p[1]))].sort().join(',');
   useEffect(() => {
     const l = () => bump((n) => n + 1);
     listeners.add(l);
@@ -94,8 +106,8 @@ export function useStationPrices(ids: string[]): Map<string, StationPrice[]> {
   }, [live, key]);
   const out = new Map<string, StationPrice[]>();
   if (!live) return out;
-  for (const id of key ? key.split(',') : []) {
-    const hit = cache.get(id);
+  for (const [id, k] of pairs) {
+    const hit = cache.get(k);
     if (hit?.prices.length) out.set(id, hit.prices);
   }
   return out;

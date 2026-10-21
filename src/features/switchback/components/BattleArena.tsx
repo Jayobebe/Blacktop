@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { CloudRain, Flag, Loader2, Swords, TrendingDown, TrendingUp, Undo2, Wrench, X } from 'lucide-react';
+import { CloudRain, Flag, Swords, TrendingDown, TrendingUp, Undo2, Wrench, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { eventSound } from '@/lib/appSound';
 import { haptics } from '@/lib/haptics';
@@ -16,6 +16,7 @@ import { RevCounter } from './RevCounter';
 import type { RoundEvent } from '../lib/events';
 import { EVENT_ICON, eventEffect, eventName } from '../lib/eventText';
 import { SbCard, StatBars } from './SbCard';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /** One settled round, played back: the two cards, the category drawn and what it did. */
 export interface Reveal {
@@ -625,7 +626,7 @@ export function BattleArena({
 
           {!reveal && submitted ? (
             <div className="sb-info sb-info-wait">
-              <Loader2 className="w-7 h-7 text-accent animate-spin" />
+              <PixelLoader className="w-7 h-7 text-accent" />
               <h2>{tr("Card locked in")}</h2>
               <p>{tr("Waiting for your rival to play.")}</p>
             </div>

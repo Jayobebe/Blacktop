@@ -4,7 +4,10 @@
  * (Settings, under Burn). Until that list has been opened since the newest
  * release, Home's Settings button glows, and so does What's new in Settings.
  *
- * Releases are written here by hand, newest first, a few short lines each
+ * Releases are written here by hand, newest first, each with its version (the
+ * next one up), a few short lines each. The list goes back to Blacktop's first
+ * ride (December 2025), worked out from the project's history; nothing about
+ * payments goes in (the store build carries none). Lines
  * (every line is translated, so keep them short). A release with nothing worth
  * telling riders gets no entry. A rider who set up after the newest release
  * sees neither the card nor the glow (they get the tour).
@@ -15,7 +18,11 @@
 import { useSyncExternalStore } from 'react';
 import { tr } from '@/lib/i18n';
 
-export type ReleaseIcon = 'fuel' | 'medical' | 'calendar' | 'storage' | 'console' | 'trip' | 'route' | 'pixels' | 'shape' | 'back' | 'search' | 'bell';
+export type ReleaseIcon =
+  | 'fuel' | 'medical' | 'calendar' | 'storage' | 'console' | 'trip' | 'route' | 'pixels' | 'shape' | 'back' | 'search' | 'bell'
+  | 'ride' | 'convoy' | 'voice' | 'map' | 'rescue' | 'garage' | 'cards' | 'globe' | 'arcade' | 'crew' | 'radio' | 'track'
+  | 'language' | 'alarm' | 'sound' | 'privacy' | 'phone' | 'tour' | 'speed' | 'parking' | 'hazard' | 'enterprise' | 'backup'
+  | 'video' | 'lean' | 'gauge' | 'sticker' | 'tips' | 'battery' | 'eye';
 
 export interface ReleaseLine {
   icon: ReleaseIcon;
@@ -27,6 +34,8 @@ export interface ReleaseLine {
 export interface Release {
   /** The day it went out, YYYY-MM-DD, with a letter for a second release that day. */
   id: string;
+  /** Its version number, as shown on the list ("1.22"). */
+  version: string;
   lines: ReleaseLine[];
 }
 
@@ -34,7 +43,18 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-21c',
+      version: '1.22',
+      lines: [
+        { icon: 'hazard', text: tr("Hazards near you on the Console open the map on them, listed like a quick search. Tap Hazards to go back.") },
+        { icon: 'fuel', text: tr("Fuel searches find independent stations too, not only the big brands.") },
+        { icon: 'pixels', text: tr("Loading is drawn in pixels now, and the card you swipe to comes out of them.") },
+        { icon: 'back', text: tr("Crew boards and convoys opened from the Console go straight back to it.") },
+      ],
+    },
+    {
       id: '2026-10-21b',
+      version: '1.21',
       lines: [
         { icon: 'fuel', text: tr("The logbook keeps a ledger: fill-ups, costs and parts. Pause a ride at the pump and it asks what you put in.") },
         { icon: 'fuel', text: tr("Fuel prices on the map, from riders who share what they paid. Opt in when you fill up.") },
@@ -47,6 +67,7 @@ export function releases(): Release[] {
     },
     {
       id: '2026-10-21',
+      version: '1.20',
       lines: [
         { icon: 'calendar', text: tr("Blacktop Calendar: your rides, plans, reminders, services and crew plans, with a clock and stopwatch."), to: '/calendar', link: tr("Open the calendar") },
         { icon: 'trip', text: tr("Trip receipts list every leg: its date, distance, time and speeds, and the best of the trip.") },
@@ -55,10 +76,255 @@ export function releases(): Release[] {
     },
     {
       id: '2026-10-20',
+      version: '1.19',
       lines: [
         { icon: 'console', text: tr("Blacktop Console, to the left of Home: live cards, quick actions, search and notifications.") },
         { icon: 'route', text: tr("Save a route with as many stops as you like, and ride it in legs over several days."), to: '/routes/new', link: tr("Save a route") },
         { icon: 'search', text: tr("Twisty or Direct: pick how to get anywhere you choose on the map.") },
+      ],
+    },
+    {
+      id: '2026-10-19',
+      version: '1.18',
+      lines: [
+        { icon: 'tour', text: tr("The demo tour is narrated, with real roads, real detours and a rescue."), to: '/demo', link: tr("Watch the tour") },
+        { icon: 'map', text: tr("Places you pick on the map fly in with a new camera and show their opening hours and how dear they are.") },
+        { icon: 'rescue', text: tr("A rescue R on the map, held for a second to call for help from wherever you are.") },
+        { icon: 'convoy', text: tr("Your convoy's QR code is on the ride screen, so anyone can join mid-ride.") },
+      ],
+    },
+    {
+      id: '2026-10-17',
+      version: '1.17',
+      lines: [
+        { icon: 'tour', text: tr("The demo tour is one short film in ten chapters.") },
+        { icon: 'tips', text: tr("First-time tips on every screen.") },
+        { icon: 'phone', text: tr("Mid-ride, the screen holds the way it's turned, so leaning can't flip it.") },
+      ],
+    },
+    {
+      id: '2026-10-16',
+      version: '1.16',
+      lines: [
+        { icon: 'voice', text: tr("Voice chat hears talking, not wind and engines, and goes to your intercom by itself.") },
+        { icon: 'map', text: tr("A mini map on the ride screen: tap the G meter to turn it over.") },
+        { icon: 'parking', text: tr("Save where you parked after a ride, floor and bay included, and walk back to it.") },
+        { icon: 'eye', text: tr("Your crew can spectate a convoy live on the map.") },
+      ],
+    },
+    {
+      id: '2026-10-13',
+      version: '1.15',
+      lines: [
+        { icon: 'phone', text: tr("Blacktop runs as an Android app.") },
+        { icon: 'lean', text: tr("Lean reads true in portrait, whatever angle your phone is mounted at.") },
+        { icon: 'speed', text: tr("Every distance and speed is in your own units, Mecha-Nick included.") },
+      ],
+    },
+    {
+      id: '2026-10-12',
+      version: '1.14',
+      lines: [
+        { icon: 'speed', text: tr("Live speed ignores GPS spikes: no more bicycles at motorway speeds.") },
+        { icon: 'ride', text: tr("On the move? Blacktop can ask to start a ride when you set off with the app open.") },
+        { icon: 'convoy', text: tr("An unlocked solo ride becomes a convoy the moment your crew joins.") },
+      ],
+    },
+    {
+      id: '2026-10-08',
+      version: '1.13',
+      lines: [
+        { icon: 'rescue', text: tr("Crash detection catches impacts at speed, and asks if you're okay before sending anything.") },
+        { icon: 'backup', text: tr("Back up your phone to a file, and make a recovery code to get your account back on a new one."), to: '/settings', link: tr("Open Settings") },
+        { icon: 'cards', text: tr("The vault: cards that lift out and turn over, and finishes that catch the light by tier.") },
+      ],
+    },
+    {
+      id: '2026-10-07',
+      version: '1.12',
+      lines: [
+        { icon: 'cards', text: tr("Redline cards and the Wildcard dog tag in SwitchBack.") },
+        { icon: 'cards', text: tr("The Blacktop Marketplace: sell cards on a coin flip, or trade five up.") },
+        { icon: 'pixels', text: tr("Pixel-art cards: your own vehicle's photo redrawn in the SwitchBack look.") },
+      ],
+    },
+    {
+      id: '2026-10-06',
+      version: '1.11',
+      lines: [
+        { icon: 'sticker', text: tr("Stickers: every card in your vault has one to stick on Home.") },
+        { icon: 'pixels', text: tr("Pages change in pixels.") },
+        { icon: 'globe', text: tr("Blacktop World's globe glows where riders are, country by country.") },
+      ],
+    },
+    {
+      id: '2026-10-05',
+      version: '1.10',
+      lines: [
+        { icon: 'cards', text: tr("SwitchBack: a card battler in the Arcade, with real cars and bikes and dog tags."), to: '/arcade/switchback', link: tr("Play SwitchBack") },
+        { icon: 'radio', text: tr("Live radio stations in Blacktop Radio.") },
+        { icon: 'phone', text: tr("Every screen fits every phone: notches, home bars, landscape and small screens.") },
+      ],
+    },
+    {
+      id: '2026-10-01',
+      version: '1.9',
+      lines: [
+        { icon: 'crew', text: tr("Be in up to four crews at once.") },
+        { icon: 'track', text: tr("Track Day: pit lane timing, track records and dog tags for the riders you beat.") },
+        { icon: 'rescue', text: tr("A rescue drill, and a text to your emergency contact from the crash screen.") },
+        { icon: 'map', text: tr("Share your ETA, or hand the route to Google Maps, Apple Maps or Waze.") },
+      ],
+    },
+    {
+      id: '2026-09-30',
+      version: '1.8',
+      lines: [
+        { icon: 'sound', text: tr("App sounds: clicks, switches and dialogs, with a switch to turn them off.") },
+        { icon: 'battery', text: tr("Thermal mode: black and white, no animations, for long hot rides.") },
+        { icon: 'privacy', text: tr("Public Road Privacy: keep your top speed and peak G to yourself.") },
+      ],
+    },
+    {
+      id: '2026-09-29',
+      version: '1.7',
+      lines: [
+        { icon: 'alarm', text: tr("Anti-theft alarm: a pattern lock and a siren if your parked vehicle is moved.") },
+        { icon: 'voice', text: tr("Everything Blacktop says sounds like a fighter-pilot radio, with an optional pilot voice.") },
+        { icon: 'gauge', text: tr("A friction-circle G meter, everywhere G is shown.") },
+        { icon: 'enterprise', text: tr("Blacktop Enterprise: workspaces for schools, dealers, tour operators and race teams.") },
+      ],
+    },
+    {
+      id: '2026-09-28',
+      version: '1.6',
+      lines: [
+        { icon: 'hazard', text: tr("Report hazards on the map, and hear about them before you reach them.") },
+        { icon: 'track', text: tr("A circuit library of 173 tracks for Track Day, or ride your own lap.") },
+        { icon: 'language', text: tr("Blacktop speaks 18 languages.") },
+      ],
+    },
+    {
+      id: '2026-09-27',
+      version: '1.5',
+      lines: [
+        { icon: 'ride', text: tr("Blacktop shapes itself to you: motorcycles, cars, bicycles, e-bikes and e-scooters.") },
+        { icon: 'map', text: tr("Turn-by-turn directions on the Blacktop map.") },
+        { icon: 'convoy', text: tr("Nearby riders, passenger mode and a convoy status bar with regroup.") },
+        { icon: 'garage', text: tr("A logbook for every vehicle, handed over with it when it's sold.") },
+      ],
+    },
+    {
+      id: '2026-09-06',
+      version: '1.4',
+      lines: [
+        { icon: 'radio', text: tr("Blacktop Radio: stations from your own music, a tap away anywhere in the app.") },
+      ],
+    },
+    {
+      id: '2026-09-04',
+      version: '1.3',
+      lines: [
+        { icon: 'cards', text: tr("Drop your card on the map for other riders to pick up.") },
+        { icon: 'ride', text: tr("Badges for how you ride, kept in a wallet on your Stats.") },
+        { icon: 'arcade', text: tr("Gridlock: a light-trail game in the Arcade, played on real streets.") },
+      ],
+    },
+    {
+      id: '2026-09-03',
+      version: '1.2',
+      lines: [
+        { icon: 'video', text: tr("Relive any ride as a 3D flyover, and save it as a video.") },
+        { icon: 'route', text: tr("Twisty routes and round-trip loops, and offline maps for where there's no signal.") },
+        { icon: 'map', text: tr("Weather on your route, with a dry way round when rain's coming.") },
+      ],
+    },
+    {
+      id: '2026-09-02',
+      version: '1.1',
+      lines: [
+        { icon: 'crew', text: tr("Crews: leaderboards, weekly challenges and your crew's convoys to join.") },
+        { icon: 'map', text: tr("Speed camera warnings on the map.") },
+      ],
+    },
+    {
+      id: '2026-06-27',
+      version: '1.0',
+      lines: [
+        { icon: 'globe', text: tr("Blacktop World: a globe of riders, your cards and the Arcade.") },
+        { icon: 'arcade', text: tr("The Arcade: Hit Heavy and Petrol Head.") },
+        { icon: 'map', text: tr("Stops on the way, and saved places on the map.") },
+      ],
+    },
+    {
+      id: '2026-06-25',
+      version: '0.9',
+      lines: [
+        { icon: 'gauge', text: tr("Live G-force, and a receipt for every ride in History.") },
+        { icon: 'globe', text: tr("A globe on Home that opens the map.") },
+        { icon: 'cards', text: tr("Scan other riders' vehicle cards to collect them.") },
+      ],
+    },
+    {
+      id: '2026-06-24',
+      version: '0.8',
+      lines: [
+        { icon: 'map', text: tr("The Blacktop map: search, routes and a rain radar, with your convoy on it.") },
+        { icon: 'privacy', text: tr("Burn deletes your account and everything in it, for good.") },
+      ],
+    },
+    {
+      id: '2026-06-20',
+      version: '0.7',
+      lines: [
+        { icon: 'rescue', text: tr("Crash detection: a hard impact and a stop asks if you're okay, then calls for help.") },
+      ],
+    },
+    {
+      id: '2026-06-18',
+      version: '0.6',
+      lines: [
+        { icon: 'garage', text: tr("The Garage, with Mecha-Nick: your vehicles, their stats and maintenance.") },
+        { icon: 'cards', text: tr("A trading card for each of your vehicles, built from how you ride it.") },
+      ],
+    },
+    {
+      id: '2026-06-17',
+      version: '0.5',
+      lines: [
+        { icon: 'convoy', text: tr("Discord: convoys and rescue calls posted to your server.") },
+      ],
+    },
+    {
+      id: '2025-12-26',
+      version: '0.4',
+      lines: [
+        { icon: 'video', text: tr("A live overlay video of your ride: speed, lean and G, to lay over your footage.") },
+      ],
+    },
+    {
+      id: '2025-12-22',
+      version: '0.3',
+      lines: [
+        { icon: 'lean', text: tr("Lean angle, live on the ride screen.") },
+        { icon: 'ride', text: tr("Solo rides get a lobby of their own.") },
+      ],
+    },
+    {
+      id: '2025-12-17',
+      version: '0.2',
+      lines: [
+        { icon: 'rescue', text: tr("Rescue calls to your convoy.") },
+        { icon: 'route', text: tr("Waypoints for the whole convoy, set by the leader.") },
+        { icon: 'shape', text: tr("Pick your accent colour.") },
+      ],
+    },
+    {
+      id: '2025-12-16',
+      version: '0.1',
+      lines: [
+        { icon: 'ride', text: tr("Blacktop's first ride: tracking, history and stats.") },
+        { icon: 'convoy', text: tr("Convoys: ride together with live positions and voice chat.") },
       ],
     },
   ];
@@ -126,4 +392,10 @@ export function useWhatsNew(): { card: boolean; unread: boolean } {
 export function releaseDate(id: string): string {
   const d = new Date(`${id.slice(0, 10)}T12:00:00`);
   return d.toLocaleDateString(document.documentElement.lang || undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** "December 2025" from a release id. */
+export function releaseMonth(id: string): string {
+  const d = new Date(`${id.slice(0, 10)}T12:00:00`);
+  return d.toLocaleDateString(document.documentElement.lang || undefined, { month: 'long', year: 'numeric' });
 }

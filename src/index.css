@@ -1448,12 +1448,14 @@ html.thermal .tier-fx { display: none; }
   animation: spectre-drift 18s ease-in-out infinite alternate;
 }
 .spectre-fog.alt { animation-duration: 26s; animation-direction: alternate-reverse; opacity: 0.8; }
+/* A band of cold light that crosses the card and leaves it before the loop starts again (a repeating background
+   was still on the card when the loop restarted, and jumped). Moved by transform only. */
 .spectre-shimmer {
-  position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(115deg, transparent 30%, hsl(0 0% 100% / 0.28) 45%, hsl(200 30% 95% / 0.12) 50%, transparent 62%);
-  background-size: 250% 100%;
+  position: absolute; top: -10%; bottom: -10%; left: -70%; width: 70%; pointer-events: none;
+  background: linear-gradient(105deg, transparent 0%, hsl(0 0% 100% / 0.16) 35%, hsl(0 0% 100% / 0.3) 50%, hsl(200 30% 95% / 0.14) 62%, transparent 100%);
   mix-blend-mode: overlay;
-  animation: spectre-sheen 5.5s ease-in-out infinite;
+  transform: translate3d(0, 0, 0);
+  animation: spectre-sheen 5.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 .spectre-metal {
   position: absolute; inset: 0; pointer-events: none; opacity: 0.18;
@@ -1466,7 +1468,7 @@ html.thermal .tier-fx { display: none; }
   50% { transform: translate3d(5%, -4%, 0) scale(1.08); }
   100% { transform: translate3d(-2%, 6%, 0) scale(1.02); }
 }
-@keyframes spectre-sheen { 0% { background-position: 150% 0; } 60%, 100% { background-position: -100% 0; } }
+@keyframes spectre-sheen { 0% { transform: translate3d(0, 0, 0); } 65%, 100% { transform: translate3d(243%, 0, 0); } }
 @keyframes spectre-breathe { 0%, 100% { opacity: 0.86; } 50% { opacity: 0.97; } }
 @media (prefers-reduced-motion: reduce) {
   .spectre-card, .spectre-fog, .spectre-shimmer { animation: none; }
@@ -1904,14 +1906,25 @@ html.thermal .suggest-list.suggest-nudge > * { animation: none; }
 
 /* Something new to read (What's new): Home's Settings button and the What's new row glow in the accent until it's opened. */
 .news-glow {
-  box-shadow: 0 0 0 1.5px hsl(var(--accent) / 0.85), 0 0 14px 2px hsl(var(--accent) / 0.45);
+  /* Kept mostly inside the button: Home's nav sits at the bottom edge of a deck card that clips,
+     and Settings' row at the edge of its scroller, and a wide outer glow was cut off at both. */
+  box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.9), inset 0 0 14px hsl(var(--accent) / 0.35), 0 0 6px hsl(var(--accent) / 0.4);
 }
 @media (prefers-reduced-motion: no-preference) {
   html:not(.thermal) .news-glow { animation: news-glow 1.8s ease-in-out infinite; }
 }
 @keyframes news-glow {
-  0%, 100% { box-shadow: 0 0 0 1.5px hsl(var(--accent) / 0.85), 0 0 10px 1px hsl(var(--accent) / 0.3); }
-  50% { box-shadow: 0 0 0 1.5px hsl(var(--accent) / 1), 0 0 22px 5px hsl(var(--accent) / 0.55); }
+  0%, 100% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.8), inset 0 0 8px hsl(var(--accent) / 0.2), 0 0 3px hsl(var(--accent) / 0.3); }
+  50% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 1), inset 0 0 18px hsl(var(--accent) / 0.45), 0 0 7px hsl(var(--accent) / 0.5); }
 }
 /* Thermal mode draws no shadows: an outline says the same. */
-html.thermal .news-glow { outline: 2px solid #fff; outline-offset: 2px; }
+html.thermal .news-glow { outline: 2px solid #fff; outline-offset: -2px; }
+
+/* Loading (components/PixelLoader): pixels breaking up and coming back, corner to corner. */
+.pixel-loader rect { animation: pixel-loader 900ms steps(4, end) infinite; transform-box: view-box; }
+@keyframes pixel-loader {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  45% { opacity: 0.15; transform: scale(0.45); }
+}
+@media (prefers-reduced-motion: reduce) { .pixel-loader rect { animation: none; opacity: 0.6; } }
+html.thermal .pixel-loader rect { animation: none; opacity: 0.6; }

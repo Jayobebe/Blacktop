@@ -121,6 +121,7 @@ import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { ParkedSpotPin } from './ParkedSpotPin';
 import { glideMarker } from '@/lib/markerGlide';
+import { PixelLoader } from '@/components/PixelLoader';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
 const HOME_MAP_INACTIVITY_MS = 5 * 60 * 1000; // 5 minutes
@@ -1579,6 +1580,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const hazardWarning = useHazardWarning();
   const [hazardId, setHazardId] = useState<string | null>(null);
   const tappedHazard = hazardId ? hazards.find((h) => h.id === hazardId) ?? null : null;
+  /** The hazard card open came from the hazards quick search's list (closing it brings the list back). */
+  const hazardFromListRef = useRef(false);
   useEffect(() => {
     if (!map) return;
     let remove: (() => void) | null = null;
@@ -2701,7 +2704,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <PixelLoader className="w-5 h-5" />
           {tr("Refreshing map…")}
         </div>
       </div>
@@ -2744,6 +2747,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           page="map-place"
           when={!!pin && pinArrived}
           tips={[{ target: '[data-tip="orbit-twisty"]', text: tr("Twisty takes the bendy roads there, Direct the quickest way. Both start guiding straight away.") }]}
+        />
+      )}
+      {/* Its own set, the first time the hazards near the rider are listed (from Blacktop Console). */}
+      {isVisible && (
+        <PageTips
+          page="map-hazards"
+          when={!rideState.isActive && !guiding && showSearchBar}
+          tips={[{ target: '[data-chip="hazards"]', text: tr("These are the hazards riders reported near you. Tap one to see it, or tap Hazards to go back to the map.") }]}
         />
       )}
       {/* Its own set, shown once there's a parked spot on the map. */}
@@ -2842,6 +2853,35 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             onSelect={handleSearchSelect}
             onCategory={handleCategory}
             onPreview={handlePreview}
+            onHazards={(found, padding) => {
+              if (!map) return;
+              const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+              if (!found) {
+                // Back out: the reports' card goes and the camera goes back to following the rider.
+                hazardFromListRef.current = false;
+                setHazardId(null);
+                if (!followRider()) freePanRef.current = false;
+                return;
+              }
+              // The rider and every report near them in view, as a quick search does with its places.
+              const loc = userLocationRef.current;
+              const bounds = new maplibregl.LngLatBounds();
+              if (loc) bounds.extend([loc.lng, loc.lat]);
+              for (const r of found) bounds.extend([r.lng, r.lat]);
+              if (bounds.isEmpty()) return;
+              lastInteractionAtRef.current = Date.now();
+              if (!destinationRef.current) freePanRef.current = true;
+              map.fitBounds(bounds, { padding, maxZoom: 15, pitch: 0, bearing: 0, duration: reduce ? 0 : 1200, essential: true });
+            }}
+            onHazardPick={(id) => {
+              const h = hazards.find((x) => x.id === id);
+              if (!map || !h) return;
+              setHazardId(id);
+              hazardFromListRef.current = true;
+              lastInteractionAtRef.current = Date.now();
+              freePanRef.current = true;
+              map.easeTo({ center: [h.lng, h.lat], zoom: Math.max(map.getZoom(), 15), duration: 900, essential: true });
+            }}
             onRoute={(r) => {
               // A saved route loads as an imported GPX route does: its start and stops on the way, its end the destination.
               quickUpRef.current = false;
@@ -3222,7 +3262,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               <p className="font-semibold text-sm truncate">{destination.name || tr("Destination")}</p>
               {isRouting ? (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />{" "}{tr("Finding route...")}
+                  <PixelLoader className="w-3 h-3" />{" "}{tr("Finding route...")}
                 </p>
               ) : route ? (
                 <p className="text-xs text-muted-foreground">
@@ -3339,7 +3379,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       {tappedHazard && !pin && (
         <HazardCard
           hazard={tappedHazard}
-          onClose={() => setHazardId(null)}
+          onClose={() => {
+            setHazardId(null);
+            // Picked from the hazards list: the list comes back where it was.
+            if (hazardFromListRef.current) setSearchReopenSeq((n) => n + 1);
+            hazardFromListRef.current = false;
+          }}
           className="absolute left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] bottom-[calc(0.75rem+var(--safe-bottom))] short:right-auto short:w-[22rem] z-30"
         />
       )}
@@ -3466,7 +3511,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110"
               onClick={() => void navigateWith("twisty")}
             >
-              {styleBusy === "twisty" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Waves className="w-3.5 h-3.5" />}{" "}{tr("Twisty")}
+              {styleBusy === "twisty" ? <PixelLoader className="w-3.5 h-3.5" /> : <Waves className="w-3.5 h-3.5" />}{" "}{tr("Twisty")}
             </Button>
             <Button
               size="sm"

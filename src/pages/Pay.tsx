@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Loader2, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { BTLogo } from '@/components/BTLogo';
 import { Button } from '@/components/ui/button';
 import { getEvmProvider, getNimiqProvider, polygonscanTxUrl, sendUsdtViaWallet } from '@/features/tips/lib/walletBridge';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 type Status = 'idle' | 'pending' | 'success' | 'error' | 'no-wallet';
 
@@ -95,7 +96,7 @@ export default function Pay() {
 
       {status === 'pending' && (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin" />{" "}{tr("Confirm the payment in your wallet…")}
+          <PixelLoader className="w-4 h-4" />{" "}{tr("Confirm the payment in your wallet…")}
         </p>
       )}
 

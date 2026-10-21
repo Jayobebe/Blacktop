@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Film, Map as MapIcon, Layers, Radio, Mic, Archive, Trash2, ShieldCheck, Loader2, type LucideIcon } from 'lucide-react';
+import { Film, Map as MapIcon, Layers, Radio, Mic, Archive, Trash2, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -18,6 +18,7 @@ import { useSavedRoutes } from '@/features/map/lib/savedRoutes';
 import { useRadioStations, deleteStation } from '@/features/radio';
 import { useRideHistory, getActiveRideStatus } from '@/features/ride';
 import { PageTips } from '@/features/guide';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const DAY = 86_400_000;
 type Cat = 'videos' | 'packs' | 'cache' | 'radio' | 'voice' | 'data';
@@ -137,7 +138,7 @@ export default function StoragePage() {
       {/* The room the phone gives Blacktop, split by kind. */}
       <section className="rounded-2xl frost border border-border/60 p-4 mb-4">
         {loading ? (
-          <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> {tr("Counting…")}</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-2"><PixelLoader className="w-4 h-4" /> {tr("Counting…")}</p>
         ) : (
           <>
             <div className="h-3 rounded-full overflow-hidden flex bg-background/70 border border-border/50" aria-hidden>
@@ -306,7 +307,7 @@ export default function StoragePage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={working}>{tr("Cancel")}</AlertDialogCancel>
             <AlertDialogAction disabled={working} onClick={(e) => { e.preventDefault(); void run(); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {working ? <Loader2 className="w-4 h-4 animate-spin" /> : tr("Delete")}
+              {working ? <PixelLoader className="w-4 h-4" /> : tr("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

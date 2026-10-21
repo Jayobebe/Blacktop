@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import {  } from 'lucide-react';
 import { toast } from 'sonner';
 import { mountWorkspace, parseEnterpriseCode, verifyEnterpriseCode } from '@/features/enterprise';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * Deep link: /enterprise?org=…&token=… (what an enterprise QR opens when
@@ -45,7 +46,7 @@ export default function EnterpriseLink() {
 
   return (
     <div className="h-dvh flex items-center justify-center gap-2 text-muted-foreground text-sm">
-      <Loader2 className="w-4 h-4 animate-spin text-accent" />
+      <PixelLoader className="w-4 h-4 text-accent" />
       {tr("Checking…")}
     </div>
   );

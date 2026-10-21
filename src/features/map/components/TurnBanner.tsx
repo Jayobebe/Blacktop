@@ -1,8 +1,7 @@
 import {
-  ArrowUp,
+  ArrowUp,
   ExternalLink,
   Flag,
-  Loader2,
   Share2,
   X,
 } from 'lucide-react';
@@ -11,6 +10,7 @@ import { ManeuverIcon } from './ManeuverIcon';
 import { shortDistance, type DistanceUnit, type NavManeuver, type NavProgress } from '../lib/navigation';
 import { tr } from '@/lib/i18n';
 import { etaClock, travelTime, type EtaSpread } from '../lib/eta';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /** "25–31 min" rather than "25 min–31 min" when both ends are under an hour (lib/eta). */
 const timeLeft = travelTime;
@@ -67,7 +67,7 @@ export function TurnBanner({ progress, describe, unit, arrived, rerouting: rerou
       <div className="flex items-center gap-3 pl-3 pr-10 py-2.5">
         <div className="w-12 h-12 rounded-lg bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0">
           {rerouting ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
+            <PixelLoader className="w-6 h-6" />
           ) : arrived ? (
             <Flag className="w-7 h-7" />
           ) : next ? (

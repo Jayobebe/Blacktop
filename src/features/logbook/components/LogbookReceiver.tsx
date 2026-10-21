@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Html5Qrcode } from 'html5-qrcode';
 import { loadQrScanner } from '@/lib/qrScanner';
-import { ArrowLeft, BookOpen, Check, Loader2, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { haptics } from '@/lib/haptics';
@@ -13,6 +13,7 @@ import { setInheritedLog } from '../lib/logbookStore';
 import { importVehicleLedger } from '@/features/garage/lib/ledger';
 import { parseLogbookQr, receiveLogbook } from '../lib/transfer';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const SCANNER_ID = 'logbook-qr-scanner';
 
@@ -129,7 +130,7 @@ export function LogbookReceiver({ trigger }: { trigger: (open: () => void) => Re
                   <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
                     <div className="h-full bg-accent transition-[width]" style={{ width: `${Math.round(state.progress * 100)}%` }} />
                   </div>
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  <PixelLoader className="w-5 h-5 text-muted-foreground" />
                 </>
               )}
               {state.phase === 'done' && (

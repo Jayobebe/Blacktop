@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, MapPin, Plus, X, Loader2, LocateFixed, Clock, Building2, Bookmark, IdCard, Route as RouteIcon, type LucideIcon } from 'lucide-react';
+import { Search, MapPin, Plus, X, LocateFixed, Clock, Building2, Bookmark, IdCard, Route as RouteIcon, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ import { useExperience, placeCategories, REFUEL_NOMINATIM } from '@/features/exp
 import { tr } from '@/lib/i18n';
 import { resolveWhat3WordsResult, what3wordsResults } from '@/lib/what3words';
 import { QuickChipRow } from '@/components/QuickChipRow';
+import { PixelLoader } from '@/components/PixelLoader';
 
 interface SearchResult {
   id: string;
@@ -760,7 +761,7 @@ export function DestinationSearch({
           />
           {isSearching && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+              <PixelLoader className="w-4 h-4 text-muted-foreground" />
             </div>
           )}
         </div>
@@ -776,7 +777,7 @@ export function DestinationSearch({
           title={tr("Use my location")}
         >
           {isLocating ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <PixelLoader className="w-5 h-5" />
           ) : (
             <LocateFixed className="w-5 h-5" />
           )}
@@ -883,7 +884,7 @@ export function DestinationSearch({
           )}
           {isSearching ? (
             <div className="p-6 text-center text-muted-foreground">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <PixelLoader className="w-6 h-6 mx-auto mb-2" />
               <span className="text-sm">{tr("Finding places...")}</span>
             </div>
           ) : displayResults.length === 0 && !hasSavedPOIs && !routeList.length ? (

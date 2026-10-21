@@ -12,6 +12,8 @@ export interface MapSearchRequest {
   category?: string;
   /** Words to search for. */
   query?: string;
+  /** The hazard reports near the rider, as a quick search: listed, the camera pulled out over them. */
+  hazards?: boolean;
 }
 
 let pending: MapSearchRequest | null = null;

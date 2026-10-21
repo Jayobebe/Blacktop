@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { CloudRain, Loader2, Route, Waves } from 'lucide-react';
+import { CloudRain, Route, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/features/settings';
 import { planRouteOptions, RoutePlan } from '../lib/routing';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 export type RouteMode = 'direct' | 'twisty';
 
@@ -101,7 +102,7 @@ export function RouteOptions({ start, stops, destination, mode, onModeChange, on
               </div>
               <div className="mt-1 text-sm font-semibold tabular-nums">
                 {busy ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  <PixelLoader className="w-3.5 h-3.5 text-muted-foreground" />
                 ) : data ? (
                   formatDuration(data.durationSeconds)
                 ) : (

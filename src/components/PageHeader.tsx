@@ -1,5 +1,6 @@
 import { forwardRef, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { openedFromConsole } from '@/features/console/lib/consoleNavigate';
 import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/lib/haptics';
@@ -25,9 +26,12 @@ interface PageHeaderProps {
  */
 export function PageHeader({ title, subtitle, backTo, onBack, backLabel = 'Back', right, sticky, className }: PageHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const goBack = () => {
     haptics.tick();
     if (onBack) return onBack();
+    // Opened from Blacktop Console: straight back to it (Home's history entry remembers the Console card).
+    if (openedFromConsole(location.state) && window.history.length > 1) return navigate(-1);
     if (typeof backTo === 'string') return navigate(backTo);
     if (window.history.length > 1) navigate(-1);
     else navigate('/');

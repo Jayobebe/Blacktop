@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsRight, QrCode, Loader2, Check, X, PenLine } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsRight, QrCode, Check, X, PenLine } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ import { Page, PageTitle, Row, fmtDate } from './BookPage';
 import { useLedgerBook } from './LedgerPages';
 import { getLedger, vehicleLedger } from '@/features/garage/lib/ledger';
 import { Switch } from '@/components/ui/switch';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const RIDES_PER_PAGE = 7;
 /** Rough line budget of a page, used to flow notes onto as many pages as they need. */
@@ -660,7 +661,7 @@ export function LogbookView({ bike, onBack, openAt }: { bike: Bike; onBack: () =
             )}
             {handover.phase === 'sending' && (
               <>
-                <Loader2 className="w-10 h-10 animate-spin text-accent" />
+                <PixelLoader className="w-10 h-10 text-accent" />
                 <p className="text-sm font-semibold">{tr("Handing over to")}{" "}{handover.who}…</p>
                 <p className="text-xs text-muted-foreground">{tr("Keep both phones open.")}</p>
               </>

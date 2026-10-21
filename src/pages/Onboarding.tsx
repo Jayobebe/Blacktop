@@ -5,10 +5,11 @@ import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
+import { ChevronRight, Smartphone, Share, MoreVertical, PlusSquare, Shield, AlertTriangle } from 'lucide-react';
 import { SetupFlow, SetupShell, WelcomeScreen, useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
+import { PixelLoader } from '@/components/PixelLoader';
 
 // consent → vehicles → mode → style → care deck → preview → name
 const TOTAL_STEPS = 7;
@@ -182,7 +183,7 @@ export default function Onboarding() {
         >
           {isCreating ? (
             <>
-              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              <PixelLoader className="w-5 h-5 mr-2" />
               {tr("Setting up…")}
             </>
           ) : (

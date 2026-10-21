@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Library, Loader2, MapPin, Search, Star, X } from 'lucide-react';
+import { ChevronDown, Library, MapPin, Search, Star, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { LatLng, TrackDef } from '../types';
@@ -8,6 +8,7 @@ import { trackLength } from '../lib/trackStore';
 import { metres } from '../lib/geometry';
 import { tr } from '@/lib/i18n';
 import { kmText, metresText } from '@/lib/units';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const km = (m: number | null | undefined) => (m == null ? '' : metresText(m, 2));
 
@@ -213,7 +214,7 @@ function Row({
         <span className="block text-sm font-medium truncate">{name}</span>
         {detail && <span className="block text-[11px] text-muted-foreground">{detail}</span>}
       </span>
-      {busy && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+      {busy && <PixelLoader className="w-4 h-4 shrink-0" />}
       {expanded !== undefined && <ChevronDown className={cn('w-4 h-4 shrink-0 text-accent transition-transform', expanded && 'rotate-180')} />}
     </button>
   );

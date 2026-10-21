@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useConsoleNavigate } from './consoleNavigate';
 import {
   Play, Pause, Users, UserPlus, Navigation, MapPin, Map as MapIcon, SquareParking, Siren, LifeBuoy, ShieldCheck, Gauge,
   CloudRain, CloudSun, Camera, Volume2, Radio, TriangleAlert, Ban, Coins, Ship, Mountain, Thermometer, Video, Megaphone,
@@ -91,7 +91,7 @@ export type ToggleKey = {
  * saved places and vehicles. Things a tap from Home doesn't already reach.
  */
 export function useActions(): ConsoleAction[] {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { settings, updateSetting } = useSettings();
   const exp = useExperience();
   const { startRide, rideState } = useActiveRide();

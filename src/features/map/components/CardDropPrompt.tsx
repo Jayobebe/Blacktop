@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { IdCard, Loader2 } from 'lucide-react';
+import { IdCard } from 'lucide-react';
 import { TierFx } from '@/components/TierFx';
 import { TIER_STYLES } from '@/features/cards/types';
 import type { VehicleCardData } from '@/features/cards/hooks/useVehicleCards';
@@ -7,6 +7,7 @@ import { useCardArt } from '@/hooks/useCardArt';
 import { GARAGE_SHOP } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /**
  * "Drop this card here?", in the middle of the screen and above everything on
@@ -48,7 +49,7 @@ export function CardDropPrompt({ card, left, ready, onYes, onNo }: { card: Vehic
             <p className="text-sm font-semibold mt-2">{left === 1 ? tr("1 copy left to drop") : tr("{0} copies left to drop", [left])}</p>
             <div className="grid grid-cols-2 gap-3 mt-4">
               <button type="button" onClick={onYes} disabled={!ready} className="pressable h-16 rounded-2xl bg-accent text-accent-foreground text-xl font-bold disabled:opacity-60 flex items-center justify-center gap-2">
-                {!ready && <Loader2 className="w-5 h-5 animate-spin" />}
+                {!ready && <PixelLoader className="w-5 h-5" />}
                 {tr("Yes")}
               </button>
               <button type="button" onClick={onNo} className="pressable h-16 rounded-2xl bg-secondary text-xl font-bold">

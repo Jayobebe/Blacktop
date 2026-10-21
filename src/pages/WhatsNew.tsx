@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { ReleaseLines } from '@/components/WhatsNew';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
-import { markWhatsNewOpened, releaseDate, releases } from '@/lib/whatsNew';
+import { markWhatsNewOpened, releaseDate, releaseMonth, releases } from '@/lib/whatsNew';
 
 /** Every release, newest first (Settings, under Burn). Opening it stops the glow on Settings. */
 export default function WhatsNewPage() {
@@ -13,10 +13,16 @@ export default function WhatsNewPage() {
     <div className="min-h-dvh px-4 pt-4 pb-10 safe-top safe-bottom md:px-5">
       <PageHeader title={tr("What's new")} subtitle={tr("Every update, newest first")} backTo="/settings" />
       <div className="space-y-3 max-w-xl mx-auto">
+        <p className="text-xs text-muted-foreground px-1">
+          {tr("{0} updates since Blacktop's first ride in {1}.", [list.length, releaseMonth(list[list.length - 1].id)])}
+        </p>
         {list.map((r, i) => (
           <section key={r.id} className={cn('rounded-2xl frost border p-4', i === 0 ? 'border-accent/50' : 'border-border/60')}>
             <div className="flex items-baseline justify-between gap-2 mb-3">
-              <h2 className="text-sm font-semibold">{releaseDate(r.id)}</h2>
+              <h2 className="text-sm font-semibold">
+                {tr("Version {0}", [r.version])}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">{releaseDate(r.id)}</span>
+              </h2>
               {i === 0 && <span className="text-[10px] font-semibold uppercase tracking-widest text-accent">{tr("Latest")}</span>}
             </div>
             <ReleaseLines release={r} />

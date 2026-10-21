@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useConsoleNavigate } from '../lib/consoleNavigate';
 import { useQuery } from '@tanstack/react-query';
 import {
   Sun, Moon, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Wind, Snowflake, Sunset, Sunrise,
@@ -23,6 +23,7 @@ import { useRideHistory, useActiveRide, setSoloRoute, usePeaksHidden, PEAK_HIDDE
 import { useTrips, legCount, tripFinished, chooseTrip, chooseRouteTrip, type Trip } from '@/features/ride/lib/trips';
 import { useSavedRoutes, type SavedRoute } from '@/features/map/lib/savedRoutes';
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
+import { requestMapSearch } from '@/features/map/lib/mapConsole';
 import { useGarage, useBikeStats, dueItems, useLedger, vehicleLedger, ledgerSums, ledgerCurrency, powerOf, economyText } from '@/features/garage';
 import { armAlarm } from '@/features/alarm';
 import { useCrew, setActiveCrew } from '@/features/crew/useCrew';
@@ -107,7 +108,7 @@ function Card({
   return (
     <section
       onClick={step}
-      className={cn('rounded-2xl frost border p-3.5', tone === 'live' ? 'border-[hsl(150_60%_50%/0.55)]' : 'border-border/60', n > 1 && pin == null && 'cursor-pointer')}
+      className={cn('rounded-2xl frost border p-3.5', tone === 'live' ? 'border-[hsl(150_60%_50%/0.55)]' : 'border-accent/35', n > 1 && pin == null && 'cursor-pointer')}
     >
       <div className="flex items-center gap-1.5 mb-2 min-h-[20px]">
         <Icon className={cn('w-3.5 h-3.5 shrink-0', tone === 'live' ? 'text-[hsl(150_60%_55%)]' : 'text-accent')} />
@@ -201,7 +202,7 @@ function lengthText(ms: number): string {
 
 /** Starting a planned route: set it, start the ride, open the map guiding (as Console's route actions do). */
 function useStartRoute() {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { startRide, rideState } = useActiveRide();
   return (plan: { destination: { lat: number; lng: number; name?: string; address?: string }; stops: Array<{ lat: number; lng: number; name?: string; address?: string }> } | null) => {
     if (rideState.isActive) return navigate('/ride');
@@ -320,7 +321,7 @@ function unriddenRoutes(routes: SavedRoute[], trips: Trip[]): SavedRoute[] {
 }
 
 function PickUpCard({ active }: { active: boolean }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const trips = useTrips();
   const routes = useSavedRoutes();
   const start = useStartRoute();
@@ -374,7 +375,7 @@ function PickUpCard({ active }: { active: boolean }) {
 
 function VehicleCard({ spot, active }: { spot: Spot | null; active: boolean }) {
   const { settings } = useSettings();
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { bikes, activeBike, setActiveBike } = useGarage();
   const stats = useBikeStats(activeBike);
   const ledger = useLedger();
@@ -641,7 +642,7 @@ interface BoardRow {
 const RANK_KEY = 'blacktop_console_crew_rank';
 
 function CrewCard({ active }: { active: boolean }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const crew = useCrew();
   const { settings } = useSettings();
   const { enabled: demo } = useDemoMode();
@@ -838,6 +839,12 @@ function CrewCard({ active }: { active: boolean }) {
 
 const NEAR_M = 8000;
 
+/** The map opens on the hazards near the rider, listed as a quick search (its lit chip backs out). */
+function showHazardsOnMap() {
+  requestMapSearch({ hazards: true });
+  openBlacktopMap();
+}
+
 function HazardsCard({ spot, active }: { spot: Spot | null; active: boolean }) {
   const all = useHazards();
   const lastFetch = useRef(0);
@@ -863,7 +870,7 @@ function HazardsCard({ spot, active }: { spot: Spot | null; active: boolean }) {
         sub={tr("Reported by riders near you")}
       />
       <div className="mt-2.5">
-        <Btn onClick={() => openBlacktopMap()} className="w-full">
+        <Btn onClick={showHazardsOnMap} className="w-full">
           <MapIcon className="w-4 h-4" /> {tr("Show on the map")}
         </Btn>
       </div>
@@ -884,7 +891,7 @@ function HazardsCard({ spot, active }: { spot: Spot | null; active: boolean }) {
           </div>
         </div>
         <div className="mt-2.5">
-          <Btn onClick={() => openBlacktopMap()} className="w-full">
+          <Btn onClick={showHazardsOnMap} className="w-full">
             <MapIcon className="w-4 h-4" /> {tr("Show on the map")}
           </Btn>
         </div>
@@ -898,7 +905,7 @@ function HazardsCard({ spot, active }: { spot: Spot | null; active: boolean }) {
 
 /** The rider's next few things on the calendar (14 days), each with that day's forecast; a tap opens the day. */
 function UpNextCard({ spot, active }: { spot: Spot | null; active: boolean }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const { items } = useCalendarStore();
   const forecast = useDailyForecast(spot, active);
   const today = dayKey(Date.now());
@@ -954,7 +961,7 @@ function useTodaysPlan() {
 // ── Suggestion ───────────────────────────────────────────────────────────────
 
 function SuggestionCard({ weather, active }: { weather: WeatherRead | null; active: boolean }) {
-  const navigate = useNavigate();
+  const navigate = useConsoleNavigate();
   const trips = useTrips();
   const routes = useSavedRoutes();
   const { terms } = useExperience();

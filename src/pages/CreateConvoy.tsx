@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useConvoyState } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Copy, Check, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Users, Copy, Check, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
@@ -11,6 +11,7 @@ import { useDiscordIntegration, announceConvoyToDiscord } from '@/features/integ
 import { PageHeader, HeaderButton } from '@/components/PageHeader';
 import { tr } from '@/lib/i18n';
 import { PageTips } from '@/features/guide';
+import { PixelLoader } from '@/components/PixelLoader';
 
 // Client-side floor on re-clicking "Generate Convoy Code", on top of the
 // persistent already-a-leader guard in createConvoy() itself: a quick retry
@@ -134,7 +135,7 @@ export default function CreateConvoy() {
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    <PixelLoader className="w-5 h-5 mr-2" />
                     {tr("Creating...")}
                   </>
                 ) : (

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import * as maplibregl from 'maplibre-gl';
 import '@/lib/maplibreWorker';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
-import { ArrowLeft, Loader2, LocateFixed, MapPin, Flag, Save, Download, Plus, Waves, Navigation, X, Bookmark } from 'lucide-react';
+import { ArrowLeft, LocateFixed, MapPin, Flag, Save, Download, Plus, Waves, Navigation, X, Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import { getSavedPOIs, type SavedPOI } from '@/features/map/lib/poiStore';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import '@/features/map/components/blacktopMap.css';
 import { PageTips } from '@/features/guide';
+import { PixelLoader } from '@/components/PixelLoader';
 
 const ORBIT_DEG_PER_S = 9;
 const GROUND = 16.8;
@@ -368,7 +369,7 @@ export default function SaveRoute() {
         <div ref={hazeRef} aria-hidden className="map-switch-haze" />
         {routing && !candidate && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Loader2 className="w-6 h-6 text-accent animate-spin" />
+            <PixelLoader className="w-6 h-6 text-accent" />
           </div>
         )}
 
@@ -388,7 +389,7 @@ export default function SaveRoute() {
                 <ArrowLeft className="w-3.5 h-3.5" /> {tr("Back")}
               </Button>
               <Button size="sm" data-tip="route-twisty" disabled={!!styleBusy} className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110" onClick={() => void choose('twisty')}>
-                {styleBusy === 'twisty' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Waves className="w-3.5 h-3.5" />} {tr("Twisty")}
+                {styleBusy === 'twisty' ? <PixelLoader className="w-3.5 h-3.5" /> : <Waves className="w-3.5 h-3.5" />} {tr("Twisty")}
               </Button>
               <Button size="sm" disabled={!!styleBusy} className="flex-1 gap-1 btn-accent-2" onClick={() => void choose('direct')}>
                 <Navigation className="w-3.5 h-3.5" /> {tr("Direct")}
@@ -546,7 +547,7 @@ function PlaceField({
           autoFocus={autoFocus}
           className="flex-1 min-w-0 bg-transparent text-[15px] outline-none"
         />
-        {busy && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+        {busy && <PixelLoader className="w-4 h-4 text-muted-foreground" />}
         {onRemove && (
           <button type="button" onClick={onRemove} aria-label={tr("Remove")} className="glove-hit p-1 text-muted-foreground">
             <X className="w-4 h-4" />

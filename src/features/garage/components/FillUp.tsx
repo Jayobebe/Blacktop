@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Fuel, PlugZap, Loader2, MapPin, Check } from 'lucide-react';
+import { Fuel, PlugZap, MapPin, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -18,6 +18,7 @@ import {
   addFill, CHARGES, economyText, FUELS, fuelName, ledgerCurrency, ledgerSums, litresFrom, moneyText, phoneRegion, powerOf,
   getLedger, setLedgerPrefs, useLedger, vehicleLedger, volumeUnit, type Fill, type FuelType, type Station,
 } from '../lib/ledger';
+import { PixelLoader } from '@/components/PixelLoader';
 
 /** Close enough to a station's mapped point to be at it. */
 const AT_STATION_KM = 0.08;
@@ -158,7 +159,7 @@ export function FillUpForm({
         <Switch checked={full} onCheckedChange={setFull} />
       </label>
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground min-h-5">
-        {looking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5 text-accent" />}
+        {looking ? <PixelLoader className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5 text-accent" />}
         {looking ? tr("Finding the station…") : station ? station.name : at ? tr("Not at a mapped station") : ''}
         {ok && <span className="ml-auto font-mono">{moneyText(paidN / units, currency, 3)} / {power === 'electric' ? tr("kWh") : tr("L")}</span>}
       </p>
