@@ -3559,7 +3559,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           <MapCredits weather />
         </span>
       </div>
-      <div className="hidden short:[@media(max-width:739px)]:block absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left)+11rem)] right-[calc(var(--safe-right)+5rem)] z-20 pointer-events-none text-center">
+      <div className="hidden short:[@media(max-width:739px)]:block absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left)+11rem)] right-[calc(var(--safe-right)+5rem)] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(var(--safe-right)+12rem)] z-20 pointer-events-none text-center">
         <span className="inline-block px-2 py-0.5 rounded-md bg-background/40 text-[10px] leading-tight text-muted-foreground/80">
           <MapCredits weather />
         </span>

@@ -5,6 +5,7 @@ import { DEMO_BIKE, GARAGE_SHOP, MECHA_NICK } from '@/lib/pictures';
 import { tr } from '@/lib/i18n';
 import { sceneCue, type SceneCueKind } from '@/lib/radioFx';
 import { isThermal } from '@/lib/thermal';
+import { FrameCadence } from '@/lib/frameCadence';
 
 /**
  * The scene kit behind Blacktop's animated showcases (the Enterprise package
@@ -55,13 +56,16 @@ export function useSceneTime(from = 0): number {
     if (isThermal()) return; // Thermal / High-Speed Mode: a still frame
     let raf = 0;
     let last = 0;
+    // ~30 a second on whole frames (lib/frameCadence: a 33 ms timer judders).
+    const cadence = new FrameCadence();
     // Carries on from where it was held.
     const begin = tRef.current;
     const start = performance.now() - begin * 1000;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      if (now - last < 33) return;
+      const gap = last ? now - last : 0;
       last = now;
+      if (!cadence.tick(gap, 33)) return;
       // A frame's timestamp can be a touch earlier than when this effect
       // started the clock: never let time run backwards past the start.
       const next = Math.max(begin, (now - start) / 1000);

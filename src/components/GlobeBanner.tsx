@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { isThermal } from '@/lib/thermal';
+import { FrameCadence } from '@/lib/frameCadence';
 
 /**
  * The band that orbits Home's globe and names what a tap on it opens (the map,
@@ -16,8 +17,11 @@ import { isThermal } from '@/lib/thermal';
  * fades to the new one over the same time as the globe's, and the lettering
  * whips round (`burst`) and coasts back to its usual pace while its word
  * changes. The lettering is moved from one small loop here (not SMIL, whose
- * speed can't be changed mid-run), ~30 times a second, every frame during a
- * burst, and not at all while the band is off screen or the page hidden.
+ * speed can't be changed mid-run), ~30 times a second on whole frames
+ * (lib/frameCadence), every frame during a burst, and not at all while the band
+ * is off screen or the page hidden. Its glyphs are placed exactly
+ * (`geometricPrecision`): snapped to whole pixels, text sliding half a pixel a
+ * frame shimmered.
  *
  * Units: the globe is a circle of radius 50 at the origin.
  */
@@ -64,13 +68,15 @@ export function GlobeBanner({ layer, word, color, dim, burst }: { layer: 'back' 
     if (layer !== 'front' || still) return;
     let raf = 0;
     let last = performance.now();
-    let drawn = 0;
+    // Every Nth frame for ~30 a second, evenly (a 33 ms timer judders).
+    const cadence = new FrameCadence();
     let seen = true;
     const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(([e]) => (seen = e.isIntersecting)) : null;
     if (svg.current) io?.observe(svg.current);
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
-      const dt = Math.min(0.1, (now - last) / 1000);
+      const gap = now - last;
+      const dt = Math.min(0.1, gap / 1000);
       last = now;
       if (!seen || document.hidden) return;
       const m = motion.current;
@@ -80,8 +86,7 @@ export function GlobeBanner({ layer, word, color, dim, burst }: { layer: 'back' 
       const speed = PACE + (bursting ? BURST_PEAK * (1 - since / BURST_MS) ** 2 : 0);
       // Against the globe's spin: the lettering runs right to left across the front.
       m.offset = (m.offset - speed * dt) % m.unit;
-      if (!bursting && now - drawn < 33) return;
-      drawn = now;
+      if (!cadence.tick(gap, bursting ? 0 : 33)) return;
       run.current?.setAttribute('startOffset', m.offset.toFixed(2));
     };
     raf = requestAnimationFrame(tick);
@@ -106,7 +111,7 @@ export function GlobeBanner({ layer, word, color, dim, burst }: { layer: 'back' 
           <g clipPath={`url(#${id}h)`}>
             <path d={ORBIT} fill="none" style={{ stroke: `hsl(${color})`, transition: still ? undefined : `stroke ${COLOR_MS}ms ease-in-out` }} strokeWidth={BAND} opacity={layer === 'back' ? 0.55 : 1} />
             {layer === 'front' && (
-              <text style={{ opacity: dim ? 0 : 1, fill: `hsl(${WHITE})`, stroke: '#000', strokeWidth: 0.7, strokeLinejoin: 'round', paintOrder: 'stroke', transition: 'opacity 180ms linear' }} fontSize={6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" letterSpacing="0.12em">
+              <text textRendering="geometricPrecision" style={{ opacity: dim ? 0 : 1, fill: `hsl(${WHITE})`, stroke: '#000', strokeWidth: 0.7, strokeLinejoin: 'round', paintOrder: 'stroke', transition: 'opacity 180ms linear' }} fontSize={6} fontWeight={800} dominantBaseline="central" textLength={unit * count} lengthAdjust="spacing" letterSpacing="0.12em">
                 <textPath ref={run} href={`#${id}o`} startOffset={still ? -unit * 0.3 : 0}>
                   {Array.from({ length: count }, () => `${label} · `).join('')}
                 </textPath>

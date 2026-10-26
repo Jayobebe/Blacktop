@@ -4,6 +4,7 @@ import { feature } from 'topojson-client';
 import landTopo from 'world-atlas/land-110m.json';
 import { cn } from '@/lib/utils';
 import { isThermal } from '@/lib/thermal';
+import { FrameCadence } from '@/lib/frameCadence';
 
 // Pre-extract the world land outline once at module load. Stroking these
 // polygons (no fill) draws thin coastlines; the 110m resolution keeps the
@@ -123,13 +124,15 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
 
     let rotation = 0;
     let last = performance.now();
+    let lastFrame = last;
+    const cadence = new FrameCadence();
     // Only while on screen (Home's deck can be on an Enterprise card), at ~30 fps:
     // at 6°/s the spin is under a pixel a frame, and each frame re-projects every coastline.
     let visible = true;
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       if (visible && !raf) {
-        last = performance.now();
+        last = lastFrame = performance.now();
         raf = requestAnimationFrame(draw);
       }
     });
@@ -143,8 +146,11 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
       const p = paint.current;
       const sinceBurst = now - p.burstAt;
       const bursting = sinceBurst >= 0 && sinceBurst < BURST_MS && !isThermal();
-      // Every frame during a burst (it's moving fast); ~30 a second the rest of the time.
-      if (!bursting && now - last < 32) {
+      // Every frame during a burst (it's moving fast); ~30 a second the rest of the time, on whole
+      // frames (lib/frameCadence: a 32 ms timer judders). The spin is worked out from the time itself.
+      const gap = now - lastFrame;
+      lastFrame = now;
+      if (!cadence.tick(gap, bursting ? 0 : 33)) {
         raf = requestAnimationFrame(draw);
         return;
       }

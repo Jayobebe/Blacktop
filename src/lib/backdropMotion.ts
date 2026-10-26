@@ -1,4 +1,5 @@
 import type { BackdropFrame, BackdropRenderer } from './backdropGL';
+import { FrameCadence } from './frameCadence';
 
 /**
  * Motion for the app backdrop's wordmark (see components/AppBackdrop).
@@ -62,7 +63,8 @@ let stretchTarget = 0;
 let stretch = 0;
 let raf = 0;
 let lastFrame = 0;
-let lastDraw = 0;
+/** Whole-frame spacing while drifting (lib/frameCadence: a 33 ms timer judders). */
+const cadence = new FrameCadence();
 let layoutDirty = true;
 
 const reducedMotion = () =>
@@ -100,7 +102,8 @@ function step(now: number) {
     lastFrame = 0;
     return;
   }
-  const dt = lastFrame ? Math.min(64, now - lastFrame) : 16;
+  const gap = lastFrame ? now - lastFrame : 16;
+  const dt = Math.min(64, gap);
   lastFrame = now;
   const k = (ease: number) => 1 - Math.pow(1 - ease, dt / 16.7);
 
@@ -129,9 +132,8 @@ function step(now: number) {
     beltTime += (dt / 1000) * rate;
     // Drifting only: fewer frames. Moving: every frame.
     const spacing = settled && !layoutDirty ? (flat ? RIDE_FRAME_MS : DRIFT_FRAME_MS) : 0;
-    if (now - lastDraw >= spacing) {
+    if (cadence.tick(gap, spacing)) {
       renderer.draw(frame());
-      lastDraw = now;
       layoutDirty = false;
     }
     raf = requestAnimationFrame(step);
