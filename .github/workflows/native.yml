@@ -4,7 +4,9 @@
 #            (the android-test release) for the hidden download on the welcome screen. With the signing secrets set, also the
 #            signed release bundle (.aab) for Google Play.
 #   iOS:     compiles the app for the simulator, unsigned: the proof that it builds, with no Mac to hand.
-#            The signed build for TestFlight needs an Apple Developer account (see ios-setup.md).
+#            Run by hand with "Upload to TestFlight" ticked, it also signs the app and uploads it to
+#            App Store Connect (TestFlight), with the Apple secrets below (see ios-setup.md).
+#   Versions: the version is What's new's newest (scripts/app-version.mjs); the build number is the run number.
 #
 # Runs when the app or the native projects change, and by hand from the Actions tab (Run workflow).
 # The files are under the run's Artifacts.
@@ -14,10 +16,19 @@
 #   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
 # Optional, for push notifications in the app:
 #   GOOGLE_SERVICES_JSON      the contents of Firebase's google-services.json
+# For TestFlight (an App Store Connect API key with the Admin role, Users and Access → Integrations):
+#   APPLE_TEAM_ID             the team id (Membership details)
+#   ASC_KEY_ID, ASC_ISSUER_ID the key's id and the issuer id shown above the keys
+#   ASC_KEY_P8_BASE64         the downloaded AuthKey_….p8, base64
 name: Native apps
 
 on:
   workflow_dispatch:
+    inputs:
+      testflight:
+        description: "Also sign the iOS app and upload it to TestFlight"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -34,6 +45,7 @@ on:
       - "scripts/cap-sync-store.mjs"
       - "scripts/check-store-build.mjs"
       - "scripts/fix-ios-spm.mjs"
+      - "scripts/app-version.mjs"
       - ".github/workflows/native.yml"
 
 concurrency:
@@ -64,6 +76,8 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - run: npm ci
+      - name: Version
+        run: echo "BT_VERSION_NAME=$(node scripts/app-version.mjs)" >> "$GITHUB_ENV"
       - name: Push notifications (only with Firebase's file)
         if: env.GOOGLE_SERVICES_JSON != ''
         run: |
@@ -146,3 +160,80 @@ jobs:
         with:
           name: blacktop-ios-build-log
           path: xcodebuild.log
+
+  # Signed and uploaded to App Store Connect, only when asked (Run workflow → "Upload to TestFlight").
+  # Signing is automatic through the API key (-allowProvisioningUpdates): Xcode makes the certificate and
+  # profile itself, so none are stored here. The app record must exist in App Store Connect first.
+  ios-testflight:
+    name: iOS (TestFlight)
+    if: github.event_name == 'workflow_dispatch' && inputs.testflight
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+      # Registering for push needs the entitlement this build is signed with; Apple's own push service, no Firebase.
+      VITE_NATIVE_PUSH: "1"
+    steps:
+      - name: The Apple secrets are set
+        run: |
+          for v in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v isn't set (see the top of this file)"; exit 1; fi
+          done
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Store build of the web app, checked, then into the native projects
+        run: npm run cap:sync:store
+      - name: API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey.p8" >> "$GITHUB_ENV"
+          echo "BT_VERSION_NAME=$(node scripts/app-version.mjs)" >> "$GITHUB_ENV"
+      - name: Archive
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Blacktop.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$BT_VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            | tee archive.log | grep -E "error:|ARCHIVE (SUCCEEDED|FAILED)|\*\* " || true
+          grep -q "ARCHIVE SUCCEEDED" archive.log
+      - name: Upload to App Store Connect
+        run: |
+          set -o pipefail
+          cp ios/ExportOptions.plist "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Blacktop.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            | tee export.log | grep -E "error:|EXPORT (SUCCEEDED|FAILED)|Upload|\*\* " || true
+          grep -q "EXPORT SUCCEEDED" export.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blacktop-ios-testflight-log
+          path: |
+            archive.log
+            export.log

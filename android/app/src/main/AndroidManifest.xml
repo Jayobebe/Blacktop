@@ -24,7 +24,8 @@
 
             <!-- blacktoplive.com links open the app (App Links). Verified once
                  https://blacktoplive.com/.well-known/assetlinks.json lists the
-                 app's signing key; until then they keep opening in the browser. -->
+                 app's signing key (npm run app-links writes it, from the same
+                 paths); until then they keep opening in the browser. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -34,7 +35,8 @@
                 <data android:pathPrefix="/crew/join" />
                 <data android:pathPrefix="/enterprise" />
                 <data android:pathPrefix="/rescue" />
-                <data android:pathPrefix="/arcade/derez-legacy" />
+                <data android:pathPrefix="/spectate" />
+                <data android:pathPrefix="/arcade" />
             </intent-filter>
 
         </activity>

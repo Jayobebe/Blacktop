@@ -17,7 +17,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Google Play wants a higher number with every upload: the build workflow passes its run number.
         versionCode((System.getenv("BT_VERSION_CODE") ?: "1") as Integer)
-        versionName "1.0"
+        // The version riders read in What's new (scripts/app-version.mjs, passed in by the build workflow).
+        versionName(System.getenv("BT_VERSION_NAME") ?: "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

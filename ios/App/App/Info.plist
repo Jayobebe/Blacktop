@@ -61,6 +61,9 @@
 	<string>Blacktop uses motion sensors to measure lean angle during rides, to detect a possible crash, and for the anti-theft alarm.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Blacktop can attach photos from your library to your rides and vehicles. Photos stay on your device.</string>
+	<!-- Only standard HTTPS: exempt from export paperwork, so App Store uploads don't stop to ask. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

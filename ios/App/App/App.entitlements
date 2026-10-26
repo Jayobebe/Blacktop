@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Push notifications (APNs; the App Store build turns "development" into
+  "production" when it's exported) and universal links: blacktoplive.com links
+  open the app once https://blacktoplive.com/.well-known/apple-app-site-association
+  lists it (npm run app-links, with the team id filled in). Automatic signing
+  turns both capabilities on for the app id.
+-->
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:blacktoplive.com</string>
+	</array>
+</dict>
+</plist>
