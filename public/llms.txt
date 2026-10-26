@@ -14,6 +14,7 @@ Blacktop suits riders looking for: a motorcycle group ride app, a convoy or road
 ## Ride tracking
 
 - Live speed, distance, time, lean angle (from the phone on its mount, portrait or landscape) and a G-force friction circle with peaks for braking, acceleration and each side.
+- The road's speed limit (from OpenStreetMap) as a sign on the live speed, which turns amber over it and red at 10 % over (or at the rider's own set points).
 - A round dial that turns between the G meter and a mini map with the route, hazards, convoy riders and the next turn.
 - Ride GPS keeps going with the screen locked in the Android and iOS apps; the screen holds its orientation at speed.
 - Spoken ride updates, a battery saver that switches to a light Thermal mode at low battery, and a high-speed Thermal mode.

@@ -12,7 +12,9 @@ import { eventSound } from '@/lib/appSound';
 
 type MapLibreMap = maplibregl.Map;
 
-export type Cam = { center: [number, number]; zoom: number; bearing: number; pitch: number };
+type Padding = { top: number; bottom: number; left: number; right: number };
+/** `padding`: where on screen `center` lands (the follow view keeps the rider low); eased in over the leg that sets it. */
+export type Cam = { center: [number, number]; zoom: number; bearing: number; pitch: number; padding?: Padding };
 
 /**
  * One stretch of the camera's path. `spinIn` winds a turn up over it at `spinIn`
@@ -39,6 +41,12 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): num
   const r = Math.PI / 180;
   const a = Math.sin(((lat2 - lat1) * r) / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(((lng2 - lng1) * r) / 2) ** 2;
   return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** The camera's padding now, every side filled in. */
+function padOf(map: MapLibreMap): Padding {
+  const p = map.getPadding();
+  return { top: p.top ?? 0, bottom: p.bottom ?? 0, left: p.left ?? 0, right: p.right ?? 0 };
 }
 
 /** The basemap's own tiles are in (radar, hazards and the rest can keep loading behind). */
@@ -123,7 +131,7 @@ export function playLegs(
 ): () => void {
   const { high, ground, haze, alive, onDone } = opts;
   const c = map.getCenter();
-  let from: Cam = { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+  let from: Cam = { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch(), padding: padOf(map) };
   let i = 0;
   let raf = 0;
   let began = performance.now();
@@ -162,8 +170,9 @@ export function playLegs(
       lastHeld = 0;
     }
     if (u >= 1) {
-      map.jumpTo({ ...leg.to, bearing: leg.to.bearing + spun });
-      from = { ...leg.to, bearing: leg.to.bearing + spun };
+      const padding = leg.to.padding ?? from.padding;
+      map.jumpTo({ ...leg.to, bearing: leg.to.bearing + spun, padding });
+      from = { ...leg.to, bearing: leg.to.bearing + spun, padding };
       if (++i >= legs.length) {
         setHaze(haze, 0);
         onDone();
@@ -184,6 +193,16 @@ export function playLegs(
       zoom,
       bearing: from.bearing + turn(from.bearing, leg.to.bearing) * e + spun + sway * (leg.swerve?.bearing ?? 0),
       pitch: lerp(from.pitch, leg.to.pitch) + sway * (leg.swerve?.pitch ?? 0),
+      ...(leg.to.padding && from.padding
+        ? {
+            padding: {
+              top: lerp(from.padding.top, leg.to.padding.top),
+              bottom: lerp(from.padding.bottom, leg.to.padding.bottom),
+              left: lerp(from.padding.left, leg.to.padding.left),
+              right: lerp(from.padding.right, leg.to.padding.right),
+            },
+          }
+        : {}),
     });
     if (high != null) {
       // Thicker the higher the camera, a flash of it at every jump, and the cloud swelling as the camera drops through it.

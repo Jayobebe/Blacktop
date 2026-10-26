@@ -35,6 +35,8 @@ import { AutoRescueConsentDialog, RescueDrillHost, RescueAskHost } from "@/featu
 import { CalendarReminders } from "@/features/calendar/lib/reminders";
 import { StorageWatch } from "@/components/StorageWatch";
 import { ReceiptFlight } from "@/features/ride/components/ReceiptFlight";
+import { SpeedLimitFeed } from "@/components/SpeedLimitFeed";
+import { speedBands, useSpeedLimit } from "@/lib/speedLimit";
 import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
 import { BurnReveal } from "@/components/BurnFlameOverlay";
 import Onboarding from "./pages/Onboarding";
@@ -232,11 +234,12 @@ function BackdropHost({ mapOpen }: { mapOpen: boolean }) {
   const rideScreen = RIDE_SCREENS.has(pathname);
   const onRide = pathname === "/ride" && rideState.isActive && settings.speedFocusEnabled;
   const speed = rideState.currentSpeed;
+  const bands = speedBands(settings, useSpeedLimit());
   const cruise = mapLoading
     ? CRUISE_MAP_LOADING
-    : onRide && speed >= settings.redSpeedThreshold
+    : onRide && speed >= bands.red
       ? CRUISE_RED
-      : onRide && speed >= settings.amberSpeedThreshold
+      : onRide && speed >= bands.amber
         ? CRUISE_AMBER
         : 1;
   useEffect(() => setBackdropCruise(cruise), [cruise]);
@@ -390,6 +393,8 @@ const App = () => {
                 <StorageWatch />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
+                {/* The road's speed limit, for the live speed card and its colours. */}
+                <SpeedLimitFeed />
                 {/* Finishes the burn flames after the post-burn reload. */}
                 <BurnReveal />
                 {/* Each page's title, description and indexing (index.html has the landing page's). */}

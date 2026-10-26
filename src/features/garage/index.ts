@@ -9,5 +9,5 @@ export type { Bike, BikePhotos, MaintItem, GarageState } from './types';
 export { serviceStatus, dueItems } from './lib/serviceReminders';
 export type { ServiceStatus } from './lib/serviceReminders';
 export { MaintenanceNotifier } from './components/MaintenanceNotifier';
-export { FillUpPrompt, FillUpForm } from './components/FillUp';
-export { useLedger, getLedger, vehicleLedger, ledgerSums, ledgerCurrency, economyText, moneyText, volumeText, fuelName, powerOf, fillsDuring, type Fill, type Ledger, type VehicleLedger } from './lib/ledger';
+export { FillUpPrompt } from './components/FillUp';
+export { useLedger, getLedger, vehicleLedger, ledgerSums, ledgerCurrency, moneyText, fuelName, powerOf, type Fill, type Ledger, type VehicleLedger } from './lib/ledger';

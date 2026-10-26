@@ -1,7 +1,7 @@
 /**
  * Station fuel and charging prices from riders who opted in (the ledger's
  * "Help map fuel prices"; migration 20261029000000_fuel_prices.sql, cap
- * `fuelPrices`). `reportFuelPrice` sends one fill-up's price per litre / kWh
+ * `fuelPrices`). `reportFuelPrice` sends one station's price per litre / kWh (asked when a ride pauses there)
  * with the station's map id, the fuel, the currency and the country, nothing
  * else. `useStationPrices` reads the stations on screen (a station card, a fuel
  * search's list), kept for ten minutes so scrolling and reopening ask nothing.

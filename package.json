@@ -17,6 +17,7 @@
     "switchback:balance": "esbuild scripts/make-switchback-balance.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/switchback-balance.mjs --log-level=warning && node node_modules/.cache/switchback-balance.mjs",
     "crash:check": "esbuild scripts/check-crash-detection.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/crash-check.mjs --log-level=warning && node node_modules/.cache/crash-check.mjs",
     "setoff:check": "esbuild scripts/check-set-off.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/setoff-check.mjs --log-level=warning && node node_modules/.cache/setoff-check.mjs",
+    "speedlimit:check": "esbuild scripts/check-speed-limits.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/speedlimit-check.mjs --log-level=warning && node node_modules/.cache/speedlimit-check.mjs",
     "backup:check": "esbuild scripts/check-backup.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/backup-check.mjs --log-level=warning && node node_modules/.cache/backup-check.mjs",
     "switchback:best": "esbuild scripts/search-switchback-best.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/sb-best.mjs --log-level=warning && node node_modules/.cache/sb-best.mjs",
     "switchback:wild": "esbuild scripts/sim-switchback-wild.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/wild-sim.mjs --log-level=warning && node node_modules/.cache/wild-sim.mjs",

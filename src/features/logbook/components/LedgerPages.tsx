@@ -1,28 +1,24 @@
 import { useState } from 'react';
-import { Fuel, Receipt, Wrench, Settings2, PenLine } from 'lucide-react';
+import { Receipt, Wrench, Settings2, PenLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { SlidingPill } from '@/components/SlidingPill';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { haptics } from '@/lib/haptics';
 import { useDemoMode } from '@/lib/demoMode';
-import { useServerCap } from '@/lib/serverCaps';
 import { useSettings } from '@/features/settings';
 import type { Bike } from '@/features/garage';
-import { FillUpForm } from '@/features/garage/components/FillUp';
 import { compressImageFile } from '@/features/garage/lib/compressImage';
 import {
-  addCost, addPart, COST_CATEGORIES, costName, CURRENCIES, economyText, fuelName, ledgerCurrency, ledgerSums, moneyText, PART_KINDS, partName, partWear,
-  powerOf, setLedgerPrefs, updateVehicleLedger, useLedger, usesGallons, vehicleLedger, volumeText, type CostCategory, type PartKind, type Power,
+  addCost, addPart, COST_CATEGORIES, costName, CURRENCIES, ledgerCurrency, ledgerSums, moneyText, PART_KINDS, partName, partWear,
+  powerOf, setLedgerPrefs, updateVehicleLedger, useLedger, vehicleLedger, type CostCategory, type PartKind, type Power,
 } from '@/features/garage/lib/ledger';
 import { Page, PageButton, PageTitle, Row, fmtDate } from './BookPage';
 
 type PageFn = (n: number, side: 'l' | 'r') => React.ReactNode;
-const FILLS_PER_PAGE = 6;
 const COSTS_PER_PAGE = 7;
 const PARTS_PER_PAGE = 5;
 const KM_PER_MI = 1.609344;
@@ -30,32 +26,31 @@ const KM_PER_MI = 1.609344;
 const DEFAULT_LIFE_KM: Record<PartKind, number | undefined> = { tyre_front: 9000, tyre_rear: 6000, chain: 25000, pads: 15000, battery: undefined, other: undefined };
 
 /**
- * The ledger's pages in the logbook: running costs (economy, cost per mile,
- * range, spending by kind, the economy line), the fuel log, costs, and parts
- * with how worn they are, each section ending in its own "write in it" button,
- * plus the forms they open. `start` is where each section's first page sits
- * among these, for the bookmarks.
+ * The ledger's pages in the logbook: running costs (cost per mile, spending by
+ * kind), costs, and parts with how worn they are, each section ending in its
+ * own "write in it" button, plus the forms they open. `start` is where each
+ * section's first page sits among these, for the bookmarks. (The fuel log went,
+ * 2026-10-26: pausing at a station now only asks its price, for the map.)
  */
 export function useLedgerBook(bike: Bike, odometerKm: number): { pages: PageFn[]; start: { ledger: number }; dialogs: React.ReactNode } {
   const ledger = useLedger();
   const { settings } = useSettings();
   const { enabled: demo } = useDemoMode();
-  const sharing = useServerCap('fuelPrices');
   const v = vehicleLedger(ledger, bike.id);
   const power = powerOf(v);
   const currency = ledgerCurrency(ledger);
-  const sums = ledgerSums(v, odometerKm, currency);
+  const sums = ledgerSums(v, currency);
   const miles = settings.distanceUnit !== 'km';
   const distText = (km: number) => (miles ? tr("{0} mi", [Math.round(km / KM_PER_MI).toLocaleString()]) : tr("{0} km", [Math.round(km).toLocaleString()]));
   const money = (n: number) => moneyText(n, currency);
-  const [open, setOpen] = useState<null | 'fill' | 'cost' | 'part' | 'prefs'>(null);
+  const [open, setOpen] = useState<null | 'cost' | 'part' | 'prefs'>(null);
   const [partKind, setPartKind] = useState<PartKind>('tyre_rear');
   const blockedInDemo = () => {
     if (!demo) return false;
     toast(tr("The ledger is read-only in demo mode"));
     return true;
   };
-  const openForm = (f: 'fill' | 'cost' | 'part' | 'prefs') => {
+  const openForm = (f: 'cost' | 'part' | 'prefs') => {
     if (f !== 'prefs' && blockedInDemo()) return;
     haptics.tick();
     setOpen(f);
@@ -67,67 +62,16 @@ export function useLedgerBook(bike: Bike, odometerKm: number): { pages: PageFn[]
   pages.push((n, side) => (
     <Page n={n} side={side}>
       <PageTitle>{tr("Running costs")}</PageTitle>
-      {power !== 'none' && <Row label={tr("Economy")} value={sums.economy ? economyText(sums.economy, power, miles) : '—'} />}
-      {sums.rangeKm !== null && <Row label={tr("Range left")} value={distText(sums.rangeKm)} />}
-      <Row label={miles ? tr("Cost per mile") : tr("Cost per km")} value={sums.perKm ? moneyText(sums.perKm * (miles ? KM_PER_MI : 1), currency, 2) : '—'} />
       <Row label={tr("This month")} value={money(sums.monthSpent)} />
-      <Row label={tr("Total spent")} value={money(sums.fuelSpent + sums.costSpent)} />
+      <Row label={tr("Total spent")} value={money(sums.costSpent)} />
       {sums.byCategory.map((c) => (
-        <Row key={c.key} label={c.key === 'fuel' ? (power === 'electric' ? tr("Charging") : tr("Fuel")) : costName(c.key)} value={money(c.amount)} />
+        <Row key={c.key} label={costName(c.key)} value={money(c.amount)} />
       ))}
-      {sums.cheapest && <p className="mt-0.5 text-[8px] font-mono text-[#2b2118]/65 truncate">{tr("Cheapest: {0}", [sums.cheapest.station])}</p>}
-      {/* The economy at each full tank, as a pencil line. */}
-      {sums.economyHistory.length > 1 && (() => {
-        const vals = sums.economyHistory.map((h) => h.value);
-        const lo = Math.min(...vals);
-        const hi = Math.max(...vals);
-        const pts = vals.map((val, i) => `${(i / (vals.length - 1)) * 100},${28 - ((val - lo) / Math.max(0.0001, hi - lo)) * 24}`).join(' ');
-        return (
-          <svg viewBox="0 0 100 30" className="mt-1 w-full h-8" aria-hidden preserveAspectRatio="none">
-            <polyline points={pts} fill="none" stroke="#1f2a5a" strokeWidth="1.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-          </svg>
-        );
-      })()}
       <PageButton onClick={() => openForm('prefs')}>
         <Settings2 className="w-3 h-3" /> {tr("Ledger settings")}
       </PageButton>
     </Page>
   ));
-
-  // Fuel log (not for a vehicle without fuel or charge).
-  const fillPages = Math.max(1, Math.ceil(v.fills.length / FILLS_PER_PAGE));
-  const fills = [...v.fills].reverse();
-  if (power !== 'none') {
-    for (let i = 0; i < fillPages; i++) {
-      const slice = fills.slice(i * FILLS_PER_PAGE, (i + 1) * FILLS_PER_PAGE);
-      const last = i === fillPages - 1;
-      pages.push((n, side) => (
-        <Page n={n} side={side}>
-          <PageTitle>{power === 'electric' ? tr("Charging log") : tr("Fuel log")}{i > 0 ? ` (${i + 1})` : ''}</PageTitle>
-          {slice.length === 0 && <p className="text-[9px] italic text-[#2b2118]/60">{tr("Pause a ride to fill up, or write one in below.")}</p>}
-          <div className="space-y-[3px]">
-            {slice.map((f) => (
-              <div key={f.id} className="text-[9px] leading-[11px] border-b border-dashed border-[#2b2118]/20 pb-[3px]">
-                <div className="flex justify-between gap-1">
-                  <span className="font-bold truncate">{f.station?.name ?? fuelName(f.fuel)}</span>
-                  <span className="font-mono">{moneyText(f.paid, f.currency)}</span>
-                </div>
-                <div className="flex justify-between gap-1 font-mono text-[8px] text-[#2b2118]/65">
-                  <span className="truncate">{fmtDate(f.at)} · {fuelName(f.fuel)}{f.full ? '' : ` · ${tr("part")}`}</span>
-                  <span>{power === 'electric' ? tr("{0} kWh", [f.amount.toFixed(1)]) : volumeText(f.amount)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {last && (
-            <PageButton onClick={() => openForm('fill')}>
-              <Fuel className="w-3 h-3" /> {power === 'electric' ? tr("Add a charge") : tr("Add a fill-up")}
-            </PageButton>
-          )}
-        </Page>
-      ));
-    }
-  }
 
   // Costs.
   const costs = [...v.costs].reverse();
@@ -219,24 +163,6 @@ export function useLedgerBook(bike: Bike, odometerKm: number): { pages: PageFn[]
 
   const dialogs = (
     <>
-      <Dialog open={open === 'fill'} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{power === 'electric' ? tr("Add a charge") : tr("Add a fill-up")}</DialogTitle>
-          </DialogHeader>
-          <FillUpForm
-            bikeId={bike.id}
-            odometerKm={odometerKm}
-            at={null}
-            manual
-            onCancel={() => setOpen(null)}
-            onSaved={() => {
-              setOpen(null);
-              toast.success(tr("Written into the logbook"));
-            }}
-          />
-        </DialogContent>
-      </Dialog>
       {open === 'cost' && <CostDialog bikeId={bike.id} currency={currency} onClose={() => setOpen(null)} />}
       {open === 'part' && <PartDialog bikeId={bike.id} odometerKm={odometerKm} miles={miles} initialKind={partKind} onClose={() => setOpen(null)} />}
       <Dialog open={open === 'prefs'} onOpenChange={(o) => !o && setOpen(null)}>
@@ -245,7 +171,7 @@ export function useLedgerBook(bike: Bike, odometerKm: number): { pages: PageFn[]
             <DialogTitle>{tr("Ledger settings")}</DialogTitle>
             <DialogDescription>{bike.name}</DialogDescription>
           </DialogHeader>
-          <PrefsForm bikeId={bike.id} power={power} tank={v.tank} currency={currency} share={!!ledger.share} sharing={sharing} demo={demo} />
+          <PrefsForm bikeId={bike.id} power={power} currency={currency} />
         </DialogContent>
       </Dialog>
     </>
@@ -254,10 +180,7 @@ export function useLedgerBook(bike: Bike, odometerKm: number): { pages: PageFn[]
   return { pages, start: { ledger: 0 }, dialogs };
 }
 
-function PrefsForm({ bikeId, power, tank, currency, share, sharing, demo }: { bikeId: string; power: Power; tank?: number; currency: string; share: boolean; sharing: boolean; demo: boolean }) {
-  const electric = power === 'electric';
-  const gal = !electric && usesGallons();
-  const [tankText, setTankText] = useState(tank ? String(gal ? +(tank / 3.785411784).toFixed(1) : tank) : '');
+function PrefsForm({ bikeId, power, currency }: { bikeId: string; power: Power; currency: string }) {
   const label = 'block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1';
   const write = (fn: () => boolean) => {
     if (!fn()) toast(tr("The ledger is read-only in demo mode"));
@@ -282,22 +205,6 @@ function PrefsForm({ bikeId, power, tank, currency, share, sharing, demo }: { bi
           ))}
         </div>
       </div>
-      {power !== 'none' && (
-        <label className="block">
-          <span className={label}>{electric ? tr("Battery size (kWh)") : gal ? tr("Tank size (gallons)") : tr("Tank size (litres)")}</span>
-          <Input
-            value={tankText}
-            inputMode="decimal"
-            onChange={(e) => setTankText(e.target.value.replace(/[^\d.,]/g, '').slice(0, 6))}
-            onBlur={() => {
-              const n = parseFloat(tankText.replace(',', '.'));
-              write(() => updateVehicleLedger(bikeId, (v) => ({ ...v, tank: n > 0 ? (gal ? n * 3.785411784 : n) : undefined })));
-            }}
-            placeholder={electric ? '0.5' : '15'}
-          />
-          <span className="block text-[11px] text-muted-foreground mt-1">{tr("With it, the Console says how far you can go before the next fill-up.")}</span>
-        </label>
-      )}
       <label className="block">
         <span className={label}>{tr("Currency")}</span>
         <select
@@ -312,15 +219,6 @@ function PrefsForm({ bikeId, power, tank, currency, share, sharing, demo }: { bi
           ))}
         </select>
       </label>
-      {sharing && power !== 'none' && (
-        <label className="flex items-start gap-3 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3">
-          <span className="flex-1 min-w-0">
-            <span className="block text-sm font-semibold">{tr("Help map fuel prices")}</span>
-            <span className="block text-[11px] text-muted-foreground">{tr("Share the price per litre you paid at each station, so everyone's map shows real local prices. Nothing else about you or your ride is sent.")}</span>
-          </span>
-          <Switch checked={share} disabled={demo} onCheckedChange={(on) => write(() => setLedgerPrefs({ share: on }))} aria-label={tr("Help map fuel prices")} />
-        </label>
-      )}
     </div>
   );
 }

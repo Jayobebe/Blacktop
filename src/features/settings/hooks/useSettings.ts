@@ -29,6 +29,8 @@ export interface AppSettings {
   secondaryAccentColor: AccentColor | null;
   amberSpeedThreshold: number;
   redSpeedThreshold: number;
+  /** The live speed turns amber over the road's speed limit and red at 10 % over (lib/speedLimit), the sliders above only where no limit is mapped. */
+  speedLimitColours: boolean;
   leanAngleEnabled: boolean;
   leanAngleThreshold: number; // Degrees - warning threshold
   gForceEnabled: boolean; // Live G-force gauge + max-G tracking
@@ -161,6 +163,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   secondaryAccentColor: null,
   amberSpeedThreshold: 80,
   redSpeedThreshold: 100,
+  speedLimitColours: true,
   leanAngleEnabled: false,
   leanAngleThreshold: 45, // Default warning at 45 degrees
   gForceEnabled: false,

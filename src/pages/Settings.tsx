@@ -489,8 +489,8 @@ export default function Settings() {
               {settings.garageEnabled && (
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium">{tr("Ask when I stop to fill up")}</p>
-                    <p className="text-[10px] text-muted-foreground">{tr("Pausing a ride asks “Filling up?” and writes what you put in into the vehicle's logbook: economy, cost per mile and range.")}</p>
+                    <p className="text-sm font-medium">{tr("Ask fuel prices when I stop")}</p>
+                    <p className="text-[10px] text-muted-foreground">{tr("Pausing a ride at a fuel or charging station asks the price there, for everyone's map. Only the station, the fuel and the price are sent.")}</p>
                   </div>
                   <Switch checked={settings.fillUpPromptEnabled !== false} onCheckedChange={(v) => updateSetting('fillUpPromptEnabled', v)} />
                 </div>
@@ -551,6 +551,16 @@ export default function Settings() {
             {settings.speedFocusEnabled && (
             <div>
               <p className="text-xs text-muted-foreground mb-3">{tr("Speed Alerts")}</p>
+              {/* Tied to the road's limit (lib/speedLimit): the sliders below then only count where no limit is mapped. */}
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-sm font-medium">{tr("Use the speed limit")}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {tr("Amber over the road's limit, red at 10 % over, and the map pulls out once on red. The limits come from OpenStreetMap; where a road has none, the sliders below count.")}
+                  </p>
+                </div>
+                <Switch checked={settings.speedLimitColours !== false} onCheckedChange={(v) => updateSetting('speedLimitColours', v)} />
+              </div>
               {(() => {
                 const u = settings.speedUnit;
                 const label = getSpeedLabel(u);

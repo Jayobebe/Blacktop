@@ -43,6 +43,17 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-26',
+      version: '1.24',
+      lines: [
+        { icon: 'map', text: tr("The map keeps you low on the screen, just above your speed, so you see more of the road ahead, in landscape too.") },
+        { icon: 'speed', text: tr("At amber and red speeds the map pulls out a little. Zoom to keep your own view; recentre hands it back.") },
+        { icon: 'map', text: tr("Your pin and the map glide smoothly between GPS fixes, and in 3D names and pins stay above the buildings.") },
+        { icon: 'speed', text: tr("The road's speed limit shows on your speed, and your speed turns amber over it and red at 10 % over. Your own set points are in Settings."), to: '/settings?section=safety', link: tr("Open Settings") },
+        { icon: 'fuel', text: tr("Pausing at a fuel station just asks today's price there, for everyone's map. The fuel log has left the logbook.") },
+      ],
+    },
+    {
       id: '2026-10-21d',
       version: '1.23',
       lines: [

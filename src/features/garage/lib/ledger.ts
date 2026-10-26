@@ -140,17 +140,13 @@ export function updateVehicleLedger(bikeId: string, fn: (v: VehicleLedger) => Ve
   commit({ ...real, vehicles: { ...real.vehicles, [bikeId]: fn(vehicleLedger(real, bikeId)) } });
   return true;
 }
-export function setLedgerPrefs(patch: Partial<Pick<Ledger, 'currency' | 'share'>>): boolean {
+export function setLedgerPrefs(patch: Partial<Pick<Ledger, 'currency'>>): boolean {
   if (isDemoModeActive()) return false;
   commit({ ...real, ...patch });
   return true;
 }
 
 const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-export function addFill(bikeId: string, fill: Omit<Fill, 'id'>): Fill | null {
-  const f = { ...fill, id: newId() };
-  return updateVehicleLedger(bikeId, (v) => ({ ...v, lastFuel: f.fuel, fills: [...v.fills, f].sort((a, b) => a.at - b.at) })) ? f : null;
-}
 export function addCost(bikeId: string, cost: Omit<Cost, 'id'>): boolean {
   return updateVehicleLedger(bikeId, (v) => ({ ...v, costs: [...v.costs, { ...cost, id: newId() }].sort((a, b) => a.at - b.at) }));
 }
@@ -217,18 +213,8 @@ export function moneyText(amount: number, currency: string, digits?: number): st
 
 /** Fuel by the gallon where the pumps sell it so (the US); litres everywhere else. */
 export const usesGallons = () => phoneRegion() === 'US';
-const US_GAL = 3.785411784;
-const UK_GAL = 4.54609;
-export const litresFrom = (n: number) => (usesGallons() ? n * US_GAL : n);
-export const volumeText = (litres: number) => (usesGallons() ? tr("{0} gal", [(litres / US_GAL).toFixed(1)]) : tr("{0} L", [litres.toFixed(1)]));
-export const volumeUnit = () => (usesGallons() ? tr("Gallons") : tr("Litres"));
 
 /** Economy in the rider's units: mpg (UK gallons in the UK, US elsewhere on miles), L/100 km, or per kWh. */
-export function economyText(kmPerUnit: number, power: Power, miles: boolean): string {
-  if (power === 'electric') return miles ? tr("{0} mi/kWh", [(kmPerUnit / 1.609344).toFixed(1)]) : tr("{0} km/kWh", [kmPerUnit.toFixed(1)]);
-  if (miles) return tr("{0} mpg", [Math.round((kmPerUnit / 1.609344) * (phoneRegion() === 'GB' ? UK_GAL : US_GAL))]);
-  return tr("{0} L/100 km", [(100 / kmPerUnit).toFixed(1)]);
-}
 
 export function fuelName(f: FuelType): string {
   switch (f) {
@@ -286,91 +272,43 @@ export function partName(k: PartKind): string {
 // ── What it adds up to ───────────────────────────────────────────────────
 
 export interface LedgerSums {
-  /** Km per litre (or per kWh), from the last two full fill-ups and what went in between. */
-  economy: number | null;
-  /** Economy at each full fill-up after the first, oldest first (the chart). */
-  economyHistory: Array<{ at: number; value: number }>;
-  /** Km covered since the last full fill-up was made (at the odometer given). */
-  sinceFullKm: number | null;
-  /** Range left, km, when the tank size and economy are known. */
-  rangeKm: number | null;
-  fuelSpent: number;
   costSpent: number;
   monthSpent: number;
-  /** Everything spent per km covered since the first fill-up. */
-  perKm: number | null;
-  /** Spending by category, fuel first. */
-  byCategory: Array<{ key: 'fuel' | CostCategory; amount: number }>;
-  /** Price per litre or kWh: the cheapest station used. */
-  cheapest: { station: string; perUnit: number } | null;
+  /** Spending by category. */
+  byCategory: Array<{ key: CostCategory; amount: number }>;
 }
 
-export function ledgerSums(v: VehicleLedger, odometerKm: number, currency: string): LedgerSums {
-  const fills = v.fills.filter((f) => f.currency === currency);
+/**
+ * What the costs add up to, in the ledger's currency. Fill-ups no longer count
+ * (2026-10-26: the fuel log went, and pausing at a station only asks its price
+ * for the map); ones written before stay stored, for a hand-over, but unread.
+ */
+export function ledgerSums(v: VehicleLedger, currency: string): LedgerSums {
   const costs = v.costs.filter((c) => c.currency === currency);
-  const fullIdx = fills.map((f, i) => (f.full ? i : -1)).filter((i) => i >= 0);
-  const history: Array<{ at: number; value: number }> = [];
-  for (let k = 1; k < fullIdx.length; k++) {
-    const a = fills[fullIdx[k - 1]];
-    const b = fills[fullIdx[k]];
-    const units = fills.slice(fullIdx[k - 1] + 1, fullIdx[k] + 1).reduce((n, f) => n + f.amount, 0);
-    const km = b.odometerKm - a.odometerKm;
-    if (units > 0 && km > 0) history.push({ at: b.at, value: km / units });
-  }
-  const economy = history.length ? history.slice(-3).reduce((n, h) => n + h.value, 0) / Math.min(3, history.length) : null;
-  const lastFull = fullIdx.length ? fills[fullIdx[fullIdx.length - 1]] : null;
-  const sinceFullKm = lastFull ? Math.max(0, odometerKm - lastFull.odometerKm) : null;
-  const rangeKm = economy && v.tank && sinceFullKm !== null ? Math.max(0, v.tank * economy - sinceFullKm) : null;
-  const fuelSpent = fills.reduce((n, f) => n + f.paid, 0);
   const costSpent = costs.reduce((n, c) => n + c.amount, 0);
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
-  const monthSpent = [...fills.map((f) => ({ at: f.at, n: f.paid })), ...costs.map((c) => ({ at: c.at, n: c.amount }))]
-    .filter((x) => x.at >= monthStart.getTime())
-    .reduce((n, x) => n + x.n, 0);
-  const firstKm = fills[0]?.odometerKm;
-  const covered = firstKm !== undefined ? odometerKm - firstKm : 0;
-  const perKm = covered > 50 ? (fuelSpent + costSpent) / covered : null;
-  const byCategory = [{ key: 'fuel' as const, amount: fuelSpent }, ...COST_CATEGORIES.map((c) => ({ key: c, amount: costs.filter((x) => x.category === c).reduce((n, x) => n + x.amount, 0) }))].filter((x) => x.amount > 0);
-  let cheapest: LedgerSums['cheapest'] = null;
-  for (const f of fills) {
-    if (!f.station || f.amount <= 0) continue;
-    const perUnit = f.paid / f.amount;
-    if (!cheapest || perUnit < cheapest.perUnit) cheapest = { station: f.station.name, perUnit };
-  }
-  return { economy, economyHistory: history, sinceFullKm, rangeKm, fuelSpent, costSpent, monthSpent, perKm, byCategory, cheapest };
+  const monthSpent = costs.filter((c) => c.at >= monthStart.getTime()).reduce((n, c) => n + c.amount, 0);
+  const byCategory = COST_CATEGORIES.map((c) => ({ key: c, amount: costs.filter((x) => x.category === c).reduce((n, x) => n + x.amount, 0) })).filter((x) => x.amount > 0);
+  return { costSpent, monthSpent, byCategory };
 }
 
 /** How far through its expected life a part is (0 to 1+), by distance; null without a life set. */
 export const partWear = (p: Part, odometerKm: number) => (p.lifeKm ? Math.max(0, (odometerKm - p.fittedKm) / p.lifeKm) : null);
-
-/** Fill-ups made on this vehicle during a ride (its receipt and map). */
-export function fillsDuring(bikeId: string | undefined, from: number, to: number): Fill[] {
-  if (!bikeId) return [];
-  return vehicleLedger(current(), bikeId).fills.filter((f) => f.at >= from && f.at <= to);
-}
 
 // ── The demo bike's sample ───────────────────────────────────────────────
 
 function demoLedger(): Ledger {
   const day = 86_400_000;
   const now = Date.now();
-  const fills: Fill[] = [
-    { at: 52, km: 9330, l: 15.1, p: 21.6, s: 'Shell, Lewes Road' },
-    { at: 41, km: 9590, l: 14.3, p: 20.3, s: 'Esso, Brighton' },
-    { at: 30, km: 9820, l: 13.6, p: 19.5, s: 'BP, Ditchling' },
-    { at: 18, km: 9960, l: 9.2, p: 13.4, s: 'Tesco, Hollingbury' },
-    { at: 6, km: 10060, l: 5.3, p: 7.7, s: 'Shell, Lewes Road' },
-  ].map((f, i) => ({ id: `demo-fill-${i}`, at: now - f.at * day, odometerKm: f.km, fuel: 'super' as FuelType, amount: f.l, paid: f.p, currency: 'GBP', full: true, station: { name: f.s, lat: 50.84, lng: -0.12 } }));
   return {
     currency: 'GBP',
     vehicles: {
       [DEMO_BIKE_ID]: {
         power: 'fuel',
-        tank: 15,
         lastFuel: 'super',
-        fills,
+        fills: [],
         costs: [
           { id: 'demo-cost-1', at: now - 80 * day, category: 'insurance', amount: 412, currency: 'GBP', note: 'Fully comp, 12 months' },
           { id: 'demo-cost-2', at: now - 45 * day, category: 'service', amount: 189, currency: 'GBP', note: "Mecha-Nick's Garage: oil and filter" },

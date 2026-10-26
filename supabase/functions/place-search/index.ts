@@ -76,6 +76,15 @@ type RoadsBody = {
   north: number;
 };
 
+/** Speed limits: every drivable road in a small box (at most 0.03 degrees a side), with its maxspeed. */
+type SpeedLimitsBody = {
+  kind: "speedlimits";
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+};
+
 type RouteBody = RoutePrefs & {
   kind: "route";
   // [lng, lat] pairs, in order from start to destination.
@@ -377,7 +386,7 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody | RoadsBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody | RoadsBody | SpeedLimitsBody;
 
     if (body.kind === "twisty") {
       const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
@@ -544,6 +553,55 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ pieces }), {
         headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+        status: 200,
+      });
+    }
+
+    // Speed limits: every road a vehicle drives in a small box (the phone asks one
+    // map cell at a time as the rider goes), as each way's OpenStreetMap maxspeed
+    // and its line, flattened and rounded, so the phone can match the rider to
+    // the road they're on. The phone reads the maxspeed (lib/speedLimit.ts).
+    if (body.kind === "speedlimits") {
+      const { west, south, east, north } = body;
+      const valid =
+        [west, south, east, north].every((n) => typeof n === "number" && Number.isFinite(n)) &&
+        south >= -90 && north <= 90 && south < north && west >= -180 && east <= 180 && west < east &&
+        north - south <= 0.03 && east - west <= 0.03;
+      if (!valid) {
+        return new Response(JSON.stringify({ error: "Invalid bounds" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      const query = `
+        [out:json][timeout:15];
+        way["highway"~"^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street|road)$"](${south},${west},${north},${east});
+        out tags geom;
+      `;
+      let data: any;
+      try {
+        data = await fetchOverpass(query, 16000);
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Speed limits unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "overpass_unavailable" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+      const r5 = (n: number) => Math.round(n * 1e5) / 1e5;
+      const ways: [string | null, number[]][] = [];
+      for (const el of Array.isArray(data?.elements) ? data.elements : []) {
+        if (el?.type !== "way" || !Array.isArray(el.geometry) || el.geometry.length < 2) continue;
+        const t = el.tags ?? {};
+        const raw = t.maxspeed ?? t["maxspeed:forward"] ?? t["maxspeed:backward"] ?? null;
+        const line: number[] = [];
+        for (const g of el.geometry) {
+          if (g && typeof g.lat === "number" && typeof g.lon === "number") line.push(r5(g.lon), r5(g.lat));
+        }
+        if (line.length >= 4) ways.push([raw == null ? null : String(raw).slice(0, 40), line]);
+      }
+      return new Response(JSON.stringify({ ways }), {
+        headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
         status: 200,
       });
     }

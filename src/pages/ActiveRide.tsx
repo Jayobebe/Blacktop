@@ -32,6 +32,8 @@ import { useWaypoints } from '@/features/waypoints';
 
 import { useDiscordIntegration } from '@/features/integrations/discord';
 import { useGarage, FillUpPrompt } from '@/features/garage';
+import { SpeedLimitSign } from '@/components/SpeedLimitSign';
+import { speedBands, useSpeedLimit } from '@/lib/speedLimit';
 import { useOrientationLock } from '@/hooks/useOrientationLock';
 import { useLeanAngle } from '@/hooks/useLeanAngle';
 import { useGForce } from '@/hooks/useGForce';
@@ -159,6 +161,9 @@ export default function ActiveRide() {
   const { terms, canLean, showGroup } = useExperience();
   // Riders who said they don't care about speed get distance as the hero number.
   const speedHero = settings.speedFocusEnabled;
+  // The road's limit (lib/speedLimit): its sign by the speed, and the amber / red it sets when the rider has that on.
+  const speedLimit = useSpeedLimit();
+  const bands = speedBands(settings, speedLimit);
   // Lean angle only exists for vehicles that lean into corners.
   const leanOn = settings.leanAngleEnabled && canLean;
   const { activeBike } = useGarage();
@@ -1222,7 +1227,7 @@ export default function ActiveRide() {
         onDismiss={dismissRescue}
       />
 
-      {/* Paused on a vehicle that takes fuel or charge: "Filling up?" into the logbook's ledger. */}
+      {/* Paused at a mapped fuel or charging station: its price, for the map's fuel prices. */}
       <FillUpPrompt
         paused={rideState.isPaused}
         rideMi={rideState.distance}
@@ -1377,6 +1382,15 @@ export default function ActiveRide() {
               },
             ]}
           />
+          {/* The speed limit sign: its own set, once a sign is up. */}
+          {speedHero && speedLimit && (
+            <PageTips
+              page="ride-speedlimit"
+              onShowing={onRideTipsShowing}
+              when={rideState.isActive && rideState.currentSpeed < 3 && !crashPromptOpen && !rescueAsk && !showEndConfirm && !tipsShelved}
+              tips={[{ target: '[data-tip="speed-limit"]', text: settings.speedLimitColours !== false ? tr("The road's speed limit, from OpenStreetMap. Your speed turns amber over it and red at 10 % over. It can be out of date, so the signs on the road come first.") : tr("The road's speed limit, from OpenStreetMap. It can be out of date, so the signs on the road come first.") }]}
+            />
+          )}
           {/* Things a rider wouldn't find by themselves: a set of its own, so riders who saw the first one get these too. */}
           <PageTips
             page="ride-more"
@@ -1395,15 +1409,19 @@ export default function ActiveRide() {
 
           {/* Hero number - live speed for speed-focused riders, distance for everyone else */}
           <div className="text-center">
-            <div className="inline-block">
+            <div className="inline-block relative">
+            {/* The road's limit, like a sign beside the speed. */}
+            {speedHero && speedLimit && (
+              <SpeedLimitSign limit={speedLimit} unit={settings.speedUnit} size={52} className="absolute top-1 left-full ml-2 landscape:[@media(max-height:500px)]:scale-75 origin-top-left" />
+            )}
             <div data-ride-speed className={cn(
               "font-mono font-black transition-all leading-none",
               speedHero
                 ? "text-[8rem] [@media(max-height:820px)]:text-[6rem] [@media(max-height:700px)]:text-[5rem] md:text-[11rem] lg:text-[14rem] landscape:text-[7.5rem] landscape:[@media(max-height:500px)]:text-[5.5rem] landscape:[@media(max-height:420px)]:text-[4.5rem]"
                 : "text-[6.5rem] [@media(max-height:820px)]:text-[5rem] [@media(max-height:700px)]:text-[4rem] md:text-[9rem] lg:text-[11rem] landscape:text-[6rem] landscape:[@media(max-height:500px)]:text-[4.5rem] landscape:[@media(max-height:420px)]:text-[3.75rem]",
-              speedHero && rideState.currentSpeed >= settings.redSpeedThreshold && "text-destructive animate-speed-glow-red",
-              speedHero && rideState.currentSpeed >= settings.amberSpeedThreshold &&
-              rideState.currentSpeed < settings.redSpeedThreshold && "text-warning animate-speed-glow"
+              speedHero && rideState.currentSpeed >= bands.red && "text-destructive animate-speed-glow-red",
+              speedHero && rideState.currentSpeed >= bands.amber &&
+              rideState.currentSpeed < bands.red && "text-warning animate-speed-glow"
             )}>
               {speedHero ? formatSpeed(rideState.currentSpeed, settings.speedUnit) : formatDistance(rideState.distance, settings.distanceUnit)}
             </div>

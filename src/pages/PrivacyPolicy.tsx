@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
             <li>{tr("Your garage, settings, language and preferences")}</li>
             <li>{tr("Your Track Day tracks, sessions and lap times")}</li>
             <li>{tr("Your emergency contact's name and number, if you add one (used only to open a text from your own phone after a crash)")}</li>
-            <li>{tr("Your vehicles' ledger: fill-ups, what you spent, the parts fitted, receipt photos you add")}</li>
+            <li>{tr("Your vehicles' ledger: what you spent, the parts fitted, receipt photos you add")}</li>
             <li>{tr("Your Medical ID, if you fill one in (shown on your own crash screens; sent to riders in your convoy with a rescue call only if you switch that on, over the live link, never stored on our servers; in a backup only if you include it)")}</li>
             <li>{tr("Your saved places, recent destinations and where the map was last centred")}</li>
             <li>{tr("Offline map areas you download")}</li>
@@ -172,6 +172,9 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             {tr("The places, icons and names on the Blacktop map come from the map tiles themselves, so showing them sends nothing extra. Searching first looks through the map already on your phone; it then sends what you typed, with your approximate area, to our search service, which asks OpenStreetMap's Nominatim and Photon and returns the results. We don't keep your searches. Your recent destinations, saved places and last map position stay on your device.")}
           </p>
+          <p className="text-muted-foreground">
+            {tr("Speed limits: while you have the live speed on and are riding or have the map open, the phone asks our search service for the roads in the square of about a kilometre and a half you're in (just the square's corners, no account details), which it gets from OpenStreetMap's Overpass. Which road you're on is worked out on your phone; we don't keep the squares asked for.")}
+          </p>
         </section>
 
         <section className="space-y-2">
@@ -219,7 +222,7 @@ export default function PrivacyPolicy() {
         <section className="space-y-2">
           <h2 className="text-base font-semibold">{tr("Fuel prices")}</h2>
           <p className="text-muted-foreground">
-            {tr("Your vehicle's ledger (fill-ups, costs and parts) stays on your phone. If you turn on Help map fuel prices, each fill-up at a station on the map sends our server that station's map id, the fuel type, the price per litre or kWh, the currency, your country and the date: not your account, your route, your vehicle or how much you bought. Prices are shown to everyone as ranges per station and deleted after 60 days.")}
+            {tr("Your vehicle's ledger (costs and parts) stays on your phone. When you pause a ride at a fuel or charging station on the map, Blacktop can ask the price there; if you send it, our server gets that station's map id, the fuel type, the price per litre, gallon or kWh, the currency, your country and the date: not your account, your route or your vehicle. Nothing is sent unless you tap Send. Prices are shown to everyone as ranges per station and deleted after 60 days.")}
           </p>
         </section>
 
