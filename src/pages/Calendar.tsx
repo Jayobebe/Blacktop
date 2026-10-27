@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Download, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
@@ -171,6 +171,9 @@ export default function CalendarPage() {
   };
 
   const lang = document.documentElement.lang || undefined;
+  // Wrapped for a month or a week (pages/Wrapped), from its title or a week's road line.
+  const navigate = useNavigate();
+  const openWrapped = (period: 'week' | 'month', day: string) => navigate(`/wrapped/${period}?at=${day}`);
   const monthName = dayStart(cursor).toLocaleDateString(lang, { month: 'long', year: 'numeric' });
   const weekdays = Array.from({ length: 7 }, (_, i) => dayStart(addDays('2024-01-01', i)).toLocaleDateString(lang, { weekday: 'short' }));
 
@@ -261,7 +264,9 @@ export default function CalendarPage() {
             <button type="button" onClick={() => step(-1)} aria-label={tr("Previous month")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="text-base font-semibold capitalize">{monthName}</h2>
+            <button type="button" onClick={() => openWrapped('month', cursor)} data-tip="cal-wrapped" className="text-base font-semibold capitalize underline decoration-dotted decoration-accent/50 underline-offset-4 touch-target px-2">
+              {monthName}
+            </button>
             <button type="button" onClick={() => step(1)} aria-label={tr("Next month")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -300,12 +305,19 @@ export default function CalendarPage() {
                   })}
                 </div>
                 {/* The streak: a road's centre line along each week ridden, joined week to week; this week's glows. */}
-                <div className="h-2 my-0.5 flex items-center" aria-hidden>
+                <div className="h-2 my-0.5 flex items-center">
                   {ridden ? (
+                    <button
+                      type="button"
+                      onClick={() => openWrapped('week', monday)}
+                      aria-label={tr("That week's Wrapped")}
+                      className="block w-full py-1 -my-1"
+                    >
                     <span
                       className={cn('block w-full h-[3px] rounded-full', isThis && 'shadow-[0_0_8px_hsl(var(--accent))]')}
                       style={{ backgroundImage: `repeating-linear-gradient(90deg, ${isThis ? 'hsl(var(--accent))' : 'hsl(0 0% 92%)'} 0 14px, transparent 14px 24px)` }}
                     />
+                    </button>
                   ) : isThis && atRisk ? (
                     <span className="block w-full h-[3px] rounded-full opacity-40" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(0 0% 92%) 0 6px, transparent 6px 24px)' }} />
                   ) : null}
@@ -328,9 +340,9 @@ export default function CalendarPage() {
             <button type="button" onClick={() => step(-1)} aria-label={tr("Previous week")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <h2 className="text-sm font-semibold">
+            <button type="button" onClick={() => openWrapped('week', weekStart)} className="text-sm font-semibold underline decoration-dotted decoration-accent/50 underline-offset-4 touch-target px-2">
               {dayStart(weekStart).toLocaleDateString(lang, { day: 'numeric', month: 'short' })} – {dayStart(addDays(weekStart, 6)).toLocaleDateString(lang, { day: 'numeric', month: 'short' })}
-            </h2>
+            </button>
             <button type="button" onClick={() => step(1)} aria-label={tr("Next week")} className="glove-hit h-9 w-9 rounded-xl frost-accent inline-flex items-center justify-center">
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -422,6 +434,11 @@ export default function CalendarPage() {
       </div>
       </div>
 
+      <PageTips
+        page="calendar-wrapped"
+        when={!adding && prefs.view === 'month'}
+        tips={[{ target: '[data-tip="cal-wrapped"]', text: tr("Tap the month, or the road under a week you rode, for its Wrapped.") }]}
+      />
       <PageTips
         page="calendar"
         when={!adding}

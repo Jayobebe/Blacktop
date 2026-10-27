@@ -94,6 +94,7 @@ function metaFor(path: string): Meta {
     [/^\/install$/, 'Install Blacktop'],
     [/^\/routes\/new$/, 'Plan a route'],
     [/^\/trip\//, 'Trip'],
+    [/^\/wrapped\//, 'Wrapped'],
     [/^\/calendar$/, 'Blacktop Calendar'],
     [/^\/storage$/, 'Storage'],
     [/^\/whats-new$/, "What's new"],

@@ -29,3 +29,5 @@ export { RideDial } from './components/RideDial';
 export { ReceiptFlight } from './components/ReceiptFlight';
 export { flyReceipt } from './lib/receiptFlight';
 export { placeName } from './lib/rideNames';
+export { WrappedPanel } from './components/WrappedPanel';
+export { finishedWraps, useWrappedSeen } from './lib/wrapped';

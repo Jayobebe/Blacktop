@@ -26,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { notchedTilePath } from '@/lib/notchedTile';
 import { SwipeDeck, SwipeDeckPips } from '@/components/SwipeDeck';
 import { SlidingPill } from '@/components/SlidingPill';
-import { WhatsNewCard } from '@/components/WhatsNew';
 import { settleForNewRider, useWhatsNew } from '@/lib/whatsNew';
 import { useEnterprise } from '@/features/enterprise/hooks/useEnterprise';
 import { HomeStickers, useArranging } from '@/features/stickers';
@@ -38,7 +37,7 @@ import { isThermal } from '@/lib/thermal';
 
 import { tr } from '@/lib/i18n';
 import { useConsoleNews, refreshConsoleNews } from '@/features/console/lib/news';
-import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
+import { PEAK_HIDDEN, usePeaksHidden, finishedWraps, useWrappedSeen } from '@/features/ride';
 
 /**
  * The deck card Home was left on, in memory only (a fresh launch opens on Home):
@@ -54,7 +53,10 @@ export default function Home() {
   const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { stats } = useRideHistory();
+  const { stats, rides } = useRideHistory();
+  // A finished week, month or year of riding not opened yet: Stats glows (its Wrapped is waiting).
+  useWrappedSeen();
+  const wrappedNew = finishedWraps(rides).some((w) => w.isNew);
   const { rideState, startRide } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
@@ -374,7 +376,7 @@ export default function Home() {
   const navItems = [
     ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage') }] : []),
     { icon: History, label: tr("History"), onClick: () => navigate('/history'), nav: 'history' },
-    { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats') },
+    { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats'), glow: wrappedNew },
     { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings'), glow: whatsNew.unread },
   ];
 
@@ -717,8 +719,6 @@ export default function Home() {
       />
       {/* Just set up: offer the two-minute tour once (the tips wait for it). */}
       <TourOffer blocked={deckKey !== 'home' || arrangingStickers || rideState.isActive} />
-      {/* After an update: what's new, once (held back while riding, in a convoy, guided or arranging stickers). */}
-      <WhatsNewCard when={deckKey === 'home' && !arrangingStickers && !rideState.isActive && !convoy.isActive && !guiding && !mapOpen} />
       {/* Things nobody finds by themselves: a set of its own, so riders past the first tips still get it. */}
       <PageTips
         page="home-more"

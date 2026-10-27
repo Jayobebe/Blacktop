@@ -207,25 +207,25 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
       const goal = nextMilestone(shown);
       const left = unit === 'km' ? (goal - shown) / 1.609344 : goal - shown;
       const goalMiles = unit === 'km' ? goal / 1.609344 : goal;
-      out.push({ id: 'total', label: tr("All time"), value: tr("{0} · {1} to {2}", [milesText(stats.totalDistance, unit), milesText(left, unit), milesText(goalMiles, unit)]), onTap: () => navigate('/stats') });
+      out.push({ id: 'total', label: tr("All time"), value: tr("{0} · {1} to {2}", [milesText(stats.totalDistance, unit), milesText(left, unit), milesText(goalMiles, unit)]), onTap: () => navigate('/wrapped/all') });
       const laps = stats.totalDistance / 24_901;
       if (stats.totalDistance >= 25) {
         out.push({
           id: 'earth',
           label: tr("Round the world"),
           value: laps >= 1 ? tr("{0} times round", [laps.toFixed(1)]) : tr("{0}% of the way", [(laps * 100).toFixed(laps < 0.1 ? 1 : 0)]),
-          onTap: () => navigate('/stats'),
+          onTap: () => navigate('/wrapped/all'),
         });
       }
     }
     if (stats.totalDuration >= 3600) {
-      out.push({ id: 'saddle', label: terms.car ? tr("Behind the wheel") : tr("In the saddle"), value: tr("{0} h all told", [Math.floor(stats.totalDuration / 3600).toLocaleString()]), onTap: () => navigate('/stats') });
+      out.push({ id: 'saddle', label: terms.car ? tr("Behind the wheel") : tr("In the saddle"), value: tr("{0} h all told", [Math.floor(stats.totalDuration / 3600).toLocaleString()]), onTap: () => navigate('/wrapped/all') });
     }
     if (stats.totalRides > 0) {
       const marks = [10, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
       const mark = marks.find((m) => m > stats.totalRides) ?? (Math.floor(stats.totalRides / 500) + 1) * 500;
       const left = mark - stats.totalRides;
-      out.push({ id: 'next', label: tr("Coming up"), value: left === 1 ? tr("Your next one is number {0}", [mark]) : tr("{0} more to number {1}", [left, mark]) });
+      out.push({ id: 'next', label: tr("Coming up"), value: left === 1 ? tr("Your next one is number {0}", [mark]) : tr("{0} more to number {1}", [left, mark]), onTap: () => navigate('/wrapped/all') });
     }
 
     // Riding now, worldwide.
@@ -262,7 +262,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
         id: 'year',
         label: tr("This year"),
         value: tr("{0} · {1} to {2}", [milesText(thisYear, unit), milesText(left, unit), milesText(goalMiles, unit)]),
-        onTap: () => navigate('/stats'),
+        onTap: () => navigate('/wrapped/year'),
       });
     }
 
@@ -280,7 +280,12 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
       weeks.set(w, (weeks.get(w) ?? 0) + r.distance);
     }
     const bestWeek = Math.max(0, ...weeks.values());
-    if (weeks.size > 1 && bestWeek > 0) bests.push({ id: 'best', label: tr("Best week"), value: milesText(bestWeek, unit), onTap: () => navigate('/stats') });
+    const bestWeekAt = [...weeks.entries()].find(([, v]) => v === bestWeek)?.[0];
+    if (weeks.size > 1 && bestWeek > 0 && bestWeekAt != null) {
+      const d = new Date(bestWeekAt);
+      const at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      bests.push({ id: 'best', label: tr("Best week"), value: milesText(bestWeek, unit), onTap: () => navigate(`/wrapped/week?at=${at}`) });
+    }
     if (bests.length) out.push(bests[Math.floor(now / DAY_MS) % bests.length]);
 
 

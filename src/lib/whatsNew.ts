@@ -49,6 +49,7 @@ export function releases(): Release[] {
         { icon: 'radio', text: tr("Home's header is a tuner now: sunset, a year ago today, this year's distance, your bests, cheap fuel and riders near you. Drag it, tap one, hold it to choose.") },
         { icon: 'radio', text: tr("Blacktop Radio is a head unit: a band to tune with static between stations, six presets (hold one to save), and what's playing on live stations.") },
         { icon: 'console', text: tr("Crash check, the alarm and rescue live on the Console now, a swipe from Home.") },
+        { icon: 'tips', text: tr("Wrapped: your week, month, year or all time as slides, with a card to share. Stats glows when a new one is ready."), to: '/stats', link: tr("Open Stats") },
       ],
     },
     {

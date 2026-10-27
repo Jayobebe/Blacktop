@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Fuel, HeartPulse, CalendarDays, HardDrive, LayoutGrid, Route, Waypoints, Grid3x3, Square, Undo2, Search, Bell, Volume2, Sparkles, ChevronRight, Bike, Users, Mic, Map as MapIcon, LifeBuoy, Wrench, IdCard, Globe2, Gamepad2, Shield, Radio, Timer, Languages, Siren, Music, Lock, Smartphone, Clapperboard, Gauge, ParkingSquare, TriangleAlert, Building2, Save, Video, MoveDiagonal, Crosshair, Sticker, Lightbulb, Thermometer, Eye, type LucideIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Fuel, HeartPulse, CalendarDays, HardDrive, LayoutGrid, Route, Waypoints, Grid3x3, Square, Undo2, Search, Bell, Sparkles, ChevronRight, Bike, Users, Mic, Map as MapIcon, LifeBuoy, Wrench, IdCard, Globe2, Gamepad2, Shield, Radio, Timer, Languages, Siren, Music, Lock, Smartphone, Clapperboard, Gauge, ParkingSquare, TriangleAlert, Building2, Save, Video, MoveDiagonal, Crosshair, Sticker, Lightbulb, Thermometer, Eye, type LucideIcon } from 'lucide-react';
 import { tr } from '@/lib/i18n';
-import { notify } from '@/lib/inbox';
-import { speak } from '@/features/map';
-import { markWhatsNewSeen, releaseDate, releases, useWhatsNew, type Release, type ReleaseIcon } from '@/lib/whatsNew';
+import { type Release, type ReleaseIcon } from '@/lib/whatsNew';
 
 const ICON: Record<ReleaseIcon, LucideIcon> = {
   medical: HeartPulse,
@@ -88,63 +82,3 @@ export function ReleaseLines({ release, onGo }: { release: Release; onGo?: () =>
   );
 }
 
-/**
- * The card after an update, once on Home (the caller holds it back during a
- * ride, a convoy, guidance or sticker arranging). Closing it, either way,
- * keeps it in Blacktop Console's notifications; All updates opens the list,
- * which is what stops the Settings glow.
- */
-export function WhatsNewCard({ when }: { when: boolean }) {
-  const navigate = useNavigate();
-  const { card } = useWhatsNew();
-  const [open, setOpen] = useState(false);
-  // A moment after Home settles, so it doesn't land in the same breath as the page.
-  useEffect(() => {
-    if (!card || !when) return;
-    const t = window.setTimeout(() => setOpen(true), 1200);
-    return () => window.clearTimeout(t);
-  }, [card, when]);
-  const latest = releases()[0];
-  if (!latest) return null;
-  const close = () => {
-    setOpen(false);
-    markWhatsNewSeen();
-    notify({ kind: 'general', title: tr("What's new in Blacktop"), body: latest.lines.map((l) => l.text).join(' '), url: '/whats-new' });
-  };
-  return (
-    <Dialog open={open && card} onOpenChange={(o) => !o && close()}>
-      <DialogContent className="max-w-sm rounded-3xl">
-        <DialogHeader className="text-left">
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-accent" /> {tr("What's new in Blacktop")}
-          </DialogTitle>
-          <DialogDescription>{tr("Version {0} · {1}", [latest.version, releaseDate(latest.id)])}</DialogDescription>
-        </DialogHeader>
-        <ReleaseLines release={latest} onGo={close} />
-        <div className="mt-2 grid grid-cols-[auto_1fr_1fr] gap-2">
-          <Button
-            variant="outline"
-            onClick={() => void speak([tr("What's new in Blacktop"), ...latest.lines.map((l) => l.text)].join('. '))}
-            aria-label={tr("Read it to me")}
-            className="h-11 w-11 p-0 rounded-xl"
-          >
-            <Volume2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              close();
-              navigate('/whats-new');
-            }}
-            className="h-11 rounded-xl text-xs"
-          >
-            {tr("All updates")}
-          </Button>
-          <Button onClick={close} className={cn('h-11 rounded-xl text-xs font-semibold')}>
-            {tr("Got it")}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}

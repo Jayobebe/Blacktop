@@ -2011,3 +2011,7 @@ html.thermal .console-search-mica {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+
+/* Wrapped's story progress (pages/Wrapped): the slide on fills its bar over its time. */
+.wrapped-fill { width: 0; animation: wrapped-fill linear forwards; }
+@keyframes wrapped-fill { from { width: 0; } to { width: 100%; } }

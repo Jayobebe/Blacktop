@@ -2,7 +2,7 @@ import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
 import { Route, Clock, TrendingUp, Hash, Users, Zap, Ruler } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
-import { BadgeWalletPanel } from '@/features/ride';
+import { BadgeWalletPanel, WrappedPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
 import { PageHeader } from '@/components/PageHeader';
 import { PageTips } from '@/features/guide';
@@ -75,10 +75,17 @@ export default function Stats() {
           { target: '[data-tip="stats-badges"]', text: tr("Badges are earned on your own and in convoys. Tap one to see how.") },
         ]}
       />
+      <PageTips
+        page="stats-wrapped"
+        scroll
+        tips={[{ target: '[data-tip="stats-wrapped"]', text: tr("Wrapped plays your week, month, year or all time as slides, with a card to share at the end.") }]}
+      />
 
       {/* The figures first, then the badges. (The rider's own card lives in the vault.) */}
       <div className="flex flex-col landscape:flex-row gap-4 landscape:gap-3 landscape:flex-1 landscape:min-h-0">
         <div className="landscape:flex-1 landscape:min-h-0 pr-1">
+          {/* Wrapped: the week, month, year and all time as story slides; a finished one not seen yet glows. */}
+          <WrappedPanel className="mb-4" />
           <div data-tip="stats-totals" className="flex flex-col gap-2">
             {statCards.map((stat, index) => (
               <div

@@ -21,6 +21,7 @@ test.describe('signed in', () => {
     ['/settings', /settings/i],
     ['/history', /history/i],
     ['/stats', /stat/i],
+    ['/wrapped/week', /wrapped/i],
     ['/garage', /garage/i],
     ['/calendar', /calendar/i],
     ['/world', /world/i],

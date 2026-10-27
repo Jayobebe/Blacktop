@@ -109,6 +109,7 @@ const History = lazyPage(() => import("./pages/History"));
 const RideDetail = lazyPage(() => import("./pages/RideDetail"));
 const Garage = lazyPage(() => import("./pages/Garage"));
 const Stats = lazyPage(() => import("./pages/Stats"));
+const Wrapped = lazyPage(() => import("./pages/Wrapped"));
 const Settings = lazyPage(() => import("./pages/Settings"));
 const RescueLocation = lazyPage(() => import("./pages/RescueLocation"));
 const Speedshop = lazyPage(() => import("./pages/Speedshop"));
@@ -335,6 +336,7 @@ function AppRoutes() {
       <Route path="/arcade/derez-legacy" element={<ArcadeGridlock />} />
       <Route path="/arcade/derez-legacy/:code" element={<ArcadeGridlock />} />
       <Route path="/stats" element={<Stats />} />
+      <Route path="/wrapped/:period" element={<Wrapped />} />
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
