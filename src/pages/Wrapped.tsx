@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
-import { X, Share2, Route as RouteIcon, Timer, Trophy, MapPin, Gauge, CalendarDays, Award, Users, Sparkles } from 'lucide-react';
+import { Lock, X, Share2, Route as RouteIcon, Timer, Trophy, MapPin, Gauge, CalendarDays, Award, Users, Sparkles } from 'lucide-react';
 import { useRideHistory, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
 import { firstRideAt, markWrappedSeen, wrappedRange, wrapUp, WRAPPED_PERIODS, type WrappedData, type WrappedPeriod } from '@/features/ride/lib/wrapped';
 import { BADGE_ICON } from '@/features/ride/lib/badgeIcons';
@@ -11,6 +11,7 @@ import { useExperience } from '@/features/experience';
 import { BADGE_INFO, type BadgeType } from '@/types/convoy';
 import { milesText, speedText } from '@/lib/units';
 import { shareFileNative } from '@/lib/nativeShare';
+import { useDemoMode } from '@/lib/demoMode';
 import { isThermal } from '@/lib/thermal';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
@@ -327,8 +328,10 @@ function TrackSketch({ points }: { points: Array<{ lat: number; lng: number }> |
 function ShareSlide({ d, o }: { d: WrappedData; o: Opts }) {
   const card = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
+  // A demo account's Wrapped is made-up riding: it isn't shared.
+  const { enabled: demo } = useDemoMode();
   const share = async () => {
-    if (!card.current || busy) return;
+    if (!card.current || busy || demo) return;
     setBusy(true);
     try {
       const { toPng } = await import('html-to-image');
@@ -383,9 +386,15 @@ function ShareSlide({ d, o }: { d: WrappedData; o: Opts }) {
         </dl>
         <p className="text-[10px] text-white/40">blacktoplive.com</p>
       </div>
-      <button type="button" onClick={share} disabled={busy} className="w-full h-12 rounded-2xl bg-accent text-accent-foreground font-bold inline-flex items-center justify-center gap-2">
+      <button type="button" onClick={share} disabled={busy || demo} className="w-full h-12 rounded-2xl bg-accent text-accent-foreground font-bold inline-flex items-center justify-center gap-2 disabled:opacity-40">
         <Share2 className="w-5 h-5" /> {tr("Share")}
       </button>
+      {demo && (
+        <p className="flex items-center justify-center gap-1.5 text-[11px] text-white/60">
+          <Lock className="w-3.5 h-3.5 text-accent" aria-hidden />
+          {tr("Sharing is off in demo mode.")}
+        </p>
+      )}
     </div>
   );
 }

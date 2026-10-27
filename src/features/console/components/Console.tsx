@@ -49,9 +49,18 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
   const ids = (chosen ?? defaultQuickActions(actions)).filter((id) => byId.has(id));
   const tiles = ids.map((id) => byId.get(id)!);
   const [query, setQuery] = useState('');
-  // The search bar holds at the top once the title has scrolled past (its backing shows only then).
-  const headerRef = useRef<HTMLElement>(null);
-  const [stuck, setStuck] = useState(false);
+  // The search bar holds at the top once the title has scrolled past; what scrolls up under it fades out
+  // just before reaching it (a mask on the content, moved with the scroll), so there's no strip behind the bar.
+  const barRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const fadeUnderBar = (scroller: HTMLElement) => {
+    const body = bodyRef.current;
+    const bar = barRef.current;
+    if (!body || !bar) return;
+    // Where the scroller's top edge falls inside the content, and the bar's height below it.
+    body.style.setProperty('--cut', `${scroller.scrollTop - body.offsetTop}px`);
+    body.style.setProperty('--bar', `${bar.offsetHeight}px`);
+  };
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const inbox = useInbox();
@@ -128,15 +137,12 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
       {/* One scroller: the title scrolls away and only the search bar holds at the top. It has a few
           pixels of room on every side (here and the sticky row's padding) so its focus glow isn't cut. */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto touch-pan-y -mx-1 px-1 pb-2"
+        className="relative flex-1 min-h-0 overflow-y-auto touch-pan-y -mx-1 px-1 pb-2"
         data-no-pull
-        onScroll={(e) => {
-          const past = e.currentTarget.scrollTop > (headerRef.current?.offsetHeight ?? 0);
-          if (past !== stuck) setStuck(past);
-        }}
+        onScroll={(e) => fadeUnderBar(e.currentTarget)}
       >
         {/* BLACKTOP / CONSOLE, as Blacktop Enterprise's title, with today's date in a square that opens the calendar. */}
-        <header ref={headerRef} className="mb-2 landscape:mb-1">
+        <header className="mb-2 landscape:mb-1">
           <StackedTitle
             second={tr("Console")}
             label={tr("Blacktop Console")}
@@ -144,9 +150,8 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
           />
         </header>
 
-        {/* Held at the top; once the title has scrolled away it sits on a frosted strip (`.console-search-mica`)
-            that fades out below it, so what scrolls underneath blurs away instead of showing through the bar. */}
-        <div className={cn('sticky top-0 z-20 -mx-1 px-1 pt-1 pb-3 landscape:pb-2', stuck && 'console-search-mica')}>
+        {/* Held at the top, with nothing behind it: the content below fades out before it reaches the bar. */}
+        <div ref={barRef} className="sticky top-0 z-20 -mx-1 px-1 pt-1 pb-3 landscape:pb-2">
           {/* 3 px in from each side: the deck's card clips at its edges, and the focus glow reaches 2 px past the bar. */}
           <label className="relative block mx-[3px]">
             <Search className="absolute z-[1] left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />
@@ -167,6 +172,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
           </label>
         </div>
 
+        <div ref={bodyRef} className="console-under-bar">
         {query.trim() ? (
           <SearchResults query={query.trim()} actions={actions} onRun={run} onDone={() => setQuery('')} />
         ) : (
@@ -234,6 +240,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
             </section>
           </>
         )}
+        </div>
       </div>
       {footer}
 

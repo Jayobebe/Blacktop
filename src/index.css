@@ -1997,19 +1997,14 @@ html.thermal .radio-mica {
   backdrop-filter: none;
 }
 
-/* Blacktop Console's search bar once it holds at the top (Console.tsx): a frosted strip, darker and blurred,
-   fading out over its last 12 px so it has no edge. No frost under Thermal mode, just black. */
-.console-search-mica {
-  background: rgb(8 8 11 / 0.5);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
-  mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
-}
-html.thermal .console-search-mica {
-  background: #000;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+/* Blacktop Console's content under its held search bar (Console.tsx): whatever scrolls up fades out over
+   the 20 px before the bar and is hidden behind it, so the bar needs no backing (a strip read as a black box).
+   --cut is where the scroller's top falls inside the content, --bar the bar's height; both set on scroll. */
+.console-under-bar {
+  --cut: -9999px;
+  --bar: 64px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent calc(var(--cut) + var(--bar)), black calc(var(--cut) + var(--bar) + 20px));
+  mask-image: linear-gradient(to bottom, transparent calc(var(--cut) + var(--bar)), black calc(var(--cut) + var(--bar) + 20px));
 }
 
 /* Wrapped's story progress (pages/Wrapped): the slide on fills its bar over its time. */
