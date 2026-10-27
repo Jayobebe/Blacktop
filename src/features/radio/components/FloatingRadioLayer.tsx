@@ -24,10 +24,11 @@ function setDockGlow(on: boolean) {
   const placeholder = document.querySelector('[data-radio-placeholder]');
   if (!placeholder) return;
   if (on) {
-    placeholder.classList.add('ring-2', 'ring-accent/50', 'shadow-glow', 'bg-accent/10', 'border-accent/60');
+    // Drawn inside the slot's edge: Home's card clips anything outside it at the top right.
+    placeholder.classList.add('ring-2', 'ring-inset', 'ring-accent/60', 'bg-accent/15', 'border-accent/60');
     placeholder.classList.remove('opacity-60', 'border-accent/25');
   } else {
-    placeholder.classList.remove('ring-2', 'ring-accent/50', 'shadow-glow', 'bg-accent/10', 'border-accent/60');
+    placeholder.classList.remove('ring-2', 'ring-inset', 'ring-accent/60', 'bg-accent/15', 'border-accent/60');
     placeholder.classList.add('opacity-60', 'border-accent/25');
   }
 }
@@ -40,10 +41,8 @@ const place = (clientX: number, clientY: number) =>
 
 /**
  * The free-floating radio button. Undocked, it stays wherever it was left on
- * every page; docked in Home's header, it still floats on the other pages
- * while a station is loaded, so the radio is never more than a tap away until
- * the ride ends and stops it. The ride screen and the map have radio buttons
- * of their own, so it steps aside there. Dragging it near Home's slot makes the
+ * every page; docked at the end of Home's tuner it's only there. The ride
+ * screen and the map have radio buttons of their own, so it steps aside there. Dragging it near Home's slot makes the
  * slot glow; letting go within snapping distance docks it.
  *
  * Drags follow the finger from where it went down (phones often report no
@@ -96,9 +95,10 @@ export function FloatingRadioLayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carrying]);
 
-  const onHome = location.pathname === '/';
   const ownButtons = mapOpen || location.pathname.startsWith('/ride');
-  const hidden = !settings.radioEnabled || ownButtons || (docked && (onHome || !player.stationId));
+  // Docked, it lives in Home's dock only (floating on other pages at the spot it was dropped by the dock read
+  // as a button left behind); dragged out, it floats everywhere but the ride screen and the map.
+  const hidden = !settings.radioEnabled || ownButtons || docked;
   if (hidden) return null;
 
   const onPointerDown = (e: React.PointerEvent) => {

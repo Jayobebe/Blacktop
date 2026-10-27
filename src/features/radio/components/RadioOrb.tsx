@@ -30,7 +30,7 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
         // The tuner strip's height: the two sit in Home's header together.
         'w-12 h-12',
         dragging && 'scale-110 shadow-glow',
-        nearHome && 'ring-2 ring-accent/60',
+        nearHome && 'ring-2 ring-inset ring-accent/60',
         className,
       )}
       {...rest}
