@@ -19,11 +19,10 @@ export type TunerChannelId =
   | 'saddle'
   | 'next'
   | 'best'
-  | 'fuel'
   | 'near'
   | 'drops';
 
-export const TUNER_CHANNELS: TunerChannelId[] = ['welcome', 'sun', 'daylight', 'lastride', 'riding', 'yearago', 'year', 'total', 'earth', 'saddle', 'next', 'best', 'fuel', 'near', 'drops'];
+export const TUNER_CHANNELS: TunerChannelId[] = ['welcome', 'sun', 'daylight', 'lastride', 'riding', 'yearago', 'year', 'total', 'earth', 'saddle', 'next', 'best', 'near', 'drops'];
 
 export function channelName(id: TunerChannelId): string {
   switch (id) {
@@ -51,8 +50,6 @@ export function channelName(id: TunerChannelId): string {
       return tr("This year");
     case 'best':
       return tr("Personal best");
-    case 'fuel':
-      return tr("Cheapest fuel near you");
     case 'near':
       return tr("Riders near you");
     default:

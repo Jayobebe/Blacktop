@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BatteryCharging,
   CalendarClock,
   CalendarRange,
   Earth,
   Flag,
-  Fuel,
   Globe2,
   Hand,
   History,
@@ -21,43 +19,34 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { useProfile } from '@/features/profile';
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { refuelCategory, useExperience } from '@/features/experience';
+import { useExperience } from '@/features/experience';
 import { useProximityState, setProximityState } from '@/features/proximity';
 import { useCardDrops } from '@/features/cards';
-import { getActiveBikeIdSnapshot } from '@/features/garage/hooks/useGarage';
-import { getLedger, vehicleLedger } from '@/features/garage/lib/ledger';
 import { openBlacktopMap } from '@/features/map';
-import { requestMapSearch } from '@/features/map/lib/mapConsole';
-import { searchNearbyPOIs } from '@/features/map/lib/placeSearch';
 import { travelTime } from '@/features/map/lib/eta';
 import { knownSpot, metresBetween } from '@/features/console/lib/whereRider';
 import { sunTimes } from '@/features/calendar/lib/sun';
-import { perUnitText, rankPrice, useStationPrices } from '@/lib/fuelPrices';
-import { useServerCap } from '@/lib/serverCaps';
 import { channelName, setTunerHidden, TUNER_CHANNELS, useTunerHidden, type TunerChannelId } from '@/lib/homeTuner';
 import { metresText, milesText, speedText } from '@/lib/units';
 import { isThermal } from '@/lib/thermal';
 import { haptics } from '@/lib/haptics';
-import { eventSound } from '@/lib/appSound';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import type { RideSession } from '@/types/blacktop';
 
 /**
  * Home's tuner strip, in the header's place (lib/homeTuner for the rider's
- * channels): one line at a time under a fixed needle (notches on the top and
- * bottom edges, never over the words), like a radio's tuning band. It drifts
- * to the next channel every few seconds while Home is on screen; a touch
- * stops the drift for a while, a drag or flick turns it like a dial (snapping
- * to a channel with a tick), a tap on the channel under the needle acts on it
- * and a tap either side steps one along. Held, it opens the channel list.
+ * channels): every channel in full, one after another round a loop, gliding
+ * along at a reading pace under a fixed needle (notches on the top and bottom
+ * edges, never over the words), the words fading out at either edge. A drag
+ * moves it, a flick sends it and it eases back to the glide; a tap acts on
+ * the channel under the finger. Held, it opens the channel list.
  * Only channels with something to say are on it, and only things the Console
  * doesn't already show. Still under Thermal mode and reduced motion (a swipe
  * still turns it). Anything read from the server is read only while `active`.
@@ -86,13 +75,12 @@ const ICON: Record<TunerChannelId, LucideIcon> = {
   saddle: Timer,
   next: Flag,
   best: Trophy,
-  fuel: Fuel,
   near: Users,
   drops: IdCard,
 };
 
-const DRIFT_MS = 4500;
-const PAUSE_AFTER_TOUCH_MS = 10_000;
+/** The glide, px a millisecond (about 30 px a second: a reading pace). */
+const CRUISE = 0.03;
 const HOLD_MS = 600;
 const DAY_MS = 86_400_000;
 
@@ -147,18 +135,6 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
     },
   });
 
-  // Cheapest fuel (or charging) near by: the stations round the rider once in half an hour, priced from riders' reports.
-  const refuel = refuelCategory(exp.vehicles);
-  const pricesLive = useServerCap('fuelPrices');
-  const fuelWanted = pricesLive && refuel.id !== 'water' && !!spot && active;
-  const fuelCell = spot ? `${spot.lat.toFixed(2)},${spot.lng.toFixed(2)}` : 'none';
-  const { data: stations = [] } = useQuery({
-    queryKey: ['tuner-stations', refuel.query, fuelCell],
-    enabled: fuelWanted,
-    staleTime: 30 * 60_000,
-    queryFn: () => searchNearbyPOIs(refuel.query, spot!, null, { max: 12 }),
-  });
-  const prices = useStationPrices(fuelWanted ? stations.map((s) => s.id) : []);
 
   // Riders near by (only with nearby riders on) and card drops near by (collectors only).
   const proximity = useProximityState();
@@ -171,7 +147,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
 
     // Welcome.
     if (profile.name) {
-      out.push({ id: 'welcome', label: stats.totalRides === 0 ? tr("Welcome") : tr("Welcome back"), value: profile.name, onTap: () => navigate('/stats') });
+      out.push({ id: 'welcome', label: stats.totalRides === 0 ? tr("Welcome") : tr("Welcome back"), value: profile.name });
     }
 
     // The sun: daylight left, or when it's up again.
@@ -182,12 +158,10 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
         if (now < today.rise) {
           out.push({ id: 'sun', icon: Sunrise, label: tr("Sunrise"), value: tr("{0} · in {1}", [clock(today.rise), travelTime((today.rise - now) / 1000, null)]) });
         } else if (now < today.set) {
-          const golden = today.set - 40 * 60_000;
           out.push({
             id: 'sun',
             label: tr("Sunset"),
             value: tr("{0} · in {1}", [clock(today.set), travelTime((today.set - now) / 1000, null)]),
-            onTap: () => toast(tr("Golden hour from {0}", [clock(golden)])),
           });
         } else if (tomorrow.rise !== null) {
           out.push({ id: 'sun', icon: Sunrise, label: tr("Sunrise"), value: clock(tomorrow.rise) });
@@ -309,34 +283,6 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
     if (weeks.size > 1 && bestWeek > 0) bests.push({ id: 'best', label: tr("Best week"), value: milesText(bestWeek, unit), onTap: () => navigate('/stats') });
     if (bests.length) out.push(bests[Math.floor(now / DAY_MS) % bests.length]);
 
-    // The cheapest fuel (or charge) near by, for what the rider's main vehicle takes.
-    if (fuelWanted && spot) {
-      const myFuel = (() => {
-        const id = getActiveBikeIdSnapshot();
-        return id ? vehicleLedger(getLedger(), id).lastFuel : undefined;
-      })();
-      let best: { price: number; text: string; m: number } | null = null;
-      for (const s of stations) {
-        const p = prices.get(s.id);
-        const rank = rankPrice(p, myFuel);
-        if (rank == null || !p) continue;
-        const shownPrice = p.find((x) => x.fuel === myFuel) ?? p.reduce((a, b) => (b.low < a.low ? b : a));
-        const m = metresBetween(spot, s);
-        if (!best || rank < best.price) best = { price: rank, text: perUnitText(shownPrice), m };
-      }
-      if (best) {
-        out.push({
-          id: 'fuel',
-          icon: refuel.id === 'charge' ? BatteryCharging : Fuel,
-          label: refuel.id === 'charge' ? tr("Cheapest charge") : tr("Cheapest fuel"),
-          value: tr("{0} · {1}", [best.text, metresText(best.m, 1, unit === 'km' ? 'km' : 'miles')]),
-          onTap: () => {
-            requestMapSearch({ category: refuel.id });
-            openBlacktopMap();
-          },
-        });
-      }
-    }
 
     // Riders out near by.
     if (settings.proximityEnabled && proximity.riders.length > 0) {
@@ -359,7 +305,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
     }
 
     return out.filter((c) => !hidden.includes(c.id)).sort((a, b) => TUNER_CHANNELS.indexOf(a.id) - TUNER_CHANNELS.indexOf(b.id));
-  }, [rides, stats.totalRides, stats.totalDistance, stats.totalDuration, terms.car, profile.name, spot, now, worldOn, presence, unit, settings.speedFocusEnabled, settings.proximityEnabled, fuelWanted, stations, prices, refuel.id, proximity.riders.length, dropsOn, drops, hidden, navigate]);
+  }, [rides, stats.totalRides, stats.totalDistance, stats.totalDuration, terms.car, profile.name, spot, now, worldOn, presence, unit, settings.speedFocusEnabled, settings.proximityEnabled, proximity.riders.length, dropsOn, drops, hidden, navigate]);
 
   const [editing, setEditing] = useState(false);
   return (
@@ -385,163 +331,127 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
   );
 }
 
-/** The strip itself: the channels round a loop under the needle. */
+/** The strip itself: every channel in full, gliding along a loop under the needle. */
 function TunerStrip({ channels, active, onHold, className }: { channels: Channel[]; active: boolean; onHold: () => void; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const still = isThermal() || (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   const n = channels.length;
-  // Position in channel widths along a loop of three copies (the middle copy is home).
-  const state = useRef({ pos: n, vel: 0, target: null as number | null, pausedUntil: 0, drag: null as null | { x: number; pos: number; moved: number; at: number; hist: Array<[number, number]> }, width: 240 });
+  // Copies of the channel list side by side, enough that the window never runs off the end.
+  const [copies, setCopies] = useState(4);
+  // Position in px along the track; velocity in px/ms (the glide is CRUISE).
+  const s = useRef({ pos: 0, vel: CRUISE, lap: 0, base: 1, drag: null as null | { x: number; pos: number; moved: number; hist: Array<[number, number]>; at: number } });
   const holdTimer = useRef<number | null>(null);
-  const [, redraw] = useState(0);
-  // The latest channels and hold handler for the touch handlers, which stay attached while the words change.
   const channelsRef = useRef(channels);
   channelsRef.current = channels;
   const onHoldRef = useRef(onHold);
   onHoldRef.current = onHold;
-
-  // A different channel list (one appeared or went): keep the same one under the needle if it's still there.
-  const ids = channels.map((c) => c.id).join(',');
-  const prevIds = useRef(ids);
-  useEffect(() => {
-    if (prevIds.current === ids) return;
-    const was = prevIds.current.split(',');
-    const s = state.current;
-    const cur = was[(((Math.round(s.pos) % was.length) + was.length) % was.length)];
-    const at = channels.findIndex((c) => c.id === cur);
-    // One channel isn't looped (it just sits under the needle).
-    s.pos = n > 1 ? n + Math.max(0, at) : 0;
-    s.target = null;
-    s.vel = 0;
-    prevIds.current = ids;
-    redraw((x) => x + 1);
-  }, [ids, channels, n]);
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const ids = channels.map((c) => `${c.id}:${c.value}`).join('|');
 
   useEffect(() => {
     const el = box.current;
-    const tr = track.current;
-    if (!el || !tr || n === 0) return;
-    const s = state.current;
+    const tr0 = track.current;
+    if (!el || !tr0 || n === 0) return;
+    const st = s.current;
+    // One lap is one copy of the channels; wide enough, the loop is seamless.
+    const measure = () => {
+      const kids = Array.from(tr0.children) as HTMLElement[];
+      const one = kids.slice(0, n).reduce((w, k) => w + k.offsetWidth, 0);
+      st.lap = one;
+      // The position stays within one lap, [base, base + 1) laps in, with `base` laps of copies before it and
+      // as many after, so half the strip's width either side of the needle is always covered.
+      st.base = one > 0 ? Math.max(1, Math.ceil(el.clientWidth / 2 / one)) : 1;
+      const need = st.base * 2 + 2;
+      if (need !== copies) setCopies(need);
+      if (!st.pos) st.pos = one * st.base;
+    };
+    measure();
     let raf = 0;
     let last = performance.now();
-    let lastIndex = Math.round(s.pos);
     const place = () => {
-      const cw = el.clientWidth;
-      s.width = Math.min(260, Math.max(180, cw * 0.82));
-      tr.style.transform = `translateX(${cw / 2 - s.width / 2 - s.pos * s.width}px)`;
-      const cur = Math.round(s.pos);
-      Array.from(tr.children).forEach((c, i) => {
-        const d = Math.abs(i - s.pos);
-        (c as HTMLElement).style.opacity = String(Math.max(0, 1 - d * 0.75));
-        (c as HTMLElement).style.width = `${s.width}px`;
-        c.setAttribute('aria-hidden', i === cur ? 'false' : 'true');
-      });
-      if (cur !== lastIndex) {
-        lastIndex = cur;
-        haptics.tick();
-        eventSound('tap');
+      const lap = st.lap;
+      if (lap > 0) {
+        // Round the loop a lap at a time (a drag's start goes with it).
+        const lo = lap * st.base;
+        const shift = st.pos < lo ? lap : st.pos >= lo + lap ? -lap : 0;
+        if (shift) {
+          st.pos += shift;
+          if (st.drag) st.drag.pos += shift;
+        }
       }
+      tr0.style.transform = `translateX(${el.clientWidth / 2 - st.pos}px)`;
     };
-    const wrap = () => {
-      if (n <= 1) {
-        s.pos = 0;
-        return;
-      }
-      // Round the loop a lap at a time, taking the channel it's heading for (and a drag's start) with it:
-      // moving the position alone left it chasing a target a lap away, round and round at full speed.
-      const shift = s.pos < n * 0.5 ? n : s.pos > n * 2.5 ? -n : 0;
-      if (!shift) return;
-      s.pos += shift;
-      if (s.target != null) s.target += shift;
-      if (s.drag) s.drag.pos += shift;
-    };
+    const fits = () => n === 1 && st.lap <= el.clientWidth;
     const frame = (t: number) => {
-      const dt = Math.min(40, t - last);
+      const dt = Math.min(48, t - last);
       last = t;
-      if (!s.drag) {
-        if (Math.abs(s.vel) > 0.00005) {
-          s.pos += s.vel * dt;
-          s.vel *= Math.pow(0.994, dt);
-          if (Math.abs(s.vel) < 0.001) {
-            s.vel = 0;
-            s.target = Math.round(s.pos);
-          }
-        } else if (s.target == null && !still && active && n > 1 && Date.now() > s.pausedUntil) {
-          s.target = Math.round(s.pos) + 1;
-        }
-        if (s.target != null && s.vel === 0) {
-          s.pos += (s.target - s.pos) * Math.min(1, dt / 150);
-          if (Math.abs(s.target - s.pos) < 0.002) {
-            s.pos = s.target;
-            s.target = null;
-            s.pausedUntil = Math.max(s.pausedUntil, Date.now() + DRIFT_MS);
-          }
+      if (!st.drag) {
+        if (fits()) {
+          st.pos = st.lap * st.base + st.lap / 2;
+          st.vel = 0;
+        } else {
+          // Ease back to the glide (forwards, whichever way a flick sent it); still under Thermal mode and less motion.
+          const cruise = still || !activeRef.current ? 0 : CRUISE;
+          st.vel += (cruise - st.vel) * Math.min(1, dt / 900);
+          st.pos += st.vel * dt;
         }
       }
-      wrap();
       place();
-      // Only keeps drawing while something moves or the drift is due.
-      if (s.drag || s.vel !== 0 || s.target != null || (!still && active && n > 1)) raf = requestAnimationFrame(frame);
-      else raf = 0;
+      const moving = st.drag || Math.abs(st.vel) > 0.0005 || (!still && activeRef.current && !fits());
+      raf = moving ? requestAnimationFrame(frame) : 0;
     };
-    s.pausedUntil = Date.now() + DRIFT_MS;
-    place();
-    raf = requestAnimationFrame(frame);
     const kick = () => {
       if (!raf) {
         last = performance.now();
         raf = requestAnimationFrame(frame);
       }
     };
+    place();
+    kick();
     const down = (e: PointerEvent) => {
-      s.drag = { x: e.clientX, pos: s.pos, moved: 0, at: performance.now(), hist: [[e.clientX, performance.now()]] };
-      s.vel = 0;
-      s.target = null;
+      st.drag = { x: e.clientX, pos: st.pos, moved: 0, hist: [[e.clientX, performance.now()]], at: performance.now() };
+      st.vel = 0;
       el.setPointerCapture(e.pointerId);
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
       holdTimer.current = window.setTimeout(() => {
-        if (s.drag && s.drag.moved < 6) {
-          s.drag = null;
+        if (st.drag && st.drag.moved < 6) {
+          st.drag = null;
           haptics.light();
           onHoldRef.current();
+          kick();
         }
       }, HOLD_MS);
       kick();
     };
     const move = (e: PointerEvent) => {
-      const d = s.drag;
+      const d = st.drag;
       if (!d) return;
       const dx = e.clientX - d.x;
       d.moved = Math.max(d.moved, Math.abs(dx));
-      s.pos = d.pos - dx / s.width;
+      st.pos = d.pos - dx;
       d.hist.push([e.clientX, performance.now()]);
       if (d.hist.length > 5) d.hist.shift();
     };
     const up = (e: PointerEvent) => {
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
-      const d = s.drag;
+      const d = st.drag;
       if (!d) return;
-      s.drag = null;
-      s.pausedUntil = Date.now() + PAUSE_AFTER_TOUCH_MS;
+      st.drag = null;
       if (d.moved < 6) {
-        const off = e.clientX - el.getBoundingClientRect().left - el.clientWidth / 2;
-        if (Math.abs(off) < s.width / 2) {
-          const c = channelsRef.current[((Math.round(s.pos) % n) + n) % n];
-          c?.onTap?.();
-        } else {
-          s.target = Math.round(s.pos) + (off > 0 ? 1 : -1);
-        }
-      } else if (!still) {
-        const a = d.hist[0];
-        const b = d.hist[d.hist.length - 1];
-        s.vel = -(b[0] - a[0]) / Math.max(16, b[1] - a[1]) / s.width;
-        if (Math.abs(s.vel) < 0.001) {
-          s.vel = 0;
-          s.target = Math.round(s.pos);
+        // A tap: the channel under the finger.
+        const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-ch]');
+        const i = hit ? Number(hit.getAttribute('data-ch')) : -1;
+        const c = i >= 0 ? channelsRef.current[i % n] : undefined;
+        if (c?.onTap) {
+          haptics.tick();
+          c.onTap();
         }
       } else {
-        s.target = Math.round(s.pos);
+        const a = d.hist[0];
+        const b = d.hist[d.hist.length - 1];
+        st.vel = still ? 0 : -(b[0] - a[0]) / Math.max(16, b[1] - a[1]);
       }
       kick();
     };
@@ -549,7 +459,10 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
-    const onResize = () => place();
+    const onResize = () => {
+      measure();
+      place();
+    };
     window.addEventListener('resize', onResize);
     return () => {
       cancelAnimationFrame(raf);
@@ -560,9 +473,9 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       window.removeEventListener('resize', onResize);
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
     };
-  }, [n, active, still]);
+  }, [n, ids, active, still, copies]);
 
-  const loop = n > 1 ? [...channels, ...channels, ...channels] : channels;
+  const loop = Array.from({ length: n > 0 ? copies : 0 }, () => channels).flat();
   return (
     <div
       ref={box}
@@ -570,19 +483,27 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       data-no-swipe
       role="group"
       aria-roledescription={tr("Tuner")}
-      className={cn('hold-target relative h-12 rounded-2xl border border-accent/35 bg-card/60 overflow-hidden select-none touch-pan-y cursor-grab', className)}
+      className={cn(
+        'hold-target relative h-12 rounded-2xl border border-accent/35 bg-card/60 overflow-hidden select-none touch-pan-y cursor-grab',
+        className,
+      )}
     >
-      <div ref={track} className="absolute inset-y-0 left-0 flex will-change-transform">
-        {loop.map((c, i) => {
-          const Icon = c.icon ?? ICON[c.id];
-          return (
-          <div key={`${c.id}-${i}`} className="h-full shrink-0 flex items-center justify-center gap-2 px-4 min-w-0">
-            <Icon aria-hidden className="w-4 h-4 shrink-0 text-accent-2" />
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">{c.label}</span>
-            <span className="text-[15px] font-semibold truncate">{c.value}</span>
-          </div>
-          );
-        })}
+      {/* The words fade out at either edge. */}
+      <div className="absolute inset-0 [mask-image:linear-gradient(90deg,transparent,black_14%,black_86%,transparent)]">
+        <div ref={track} className="absolute inset-y-0 left-0 flex will-change-transform">
+          {loop.map((c, i) => {
+            const Icon = c.icon ?? ICON[c.id];
+            return (
+              <div key={`${c.id}-${i}`} data-ch={i} className="h-full shrink-0 flex items-center gap-2 pl-5 whitespace-nowrap">
+                <Icon aria-hidden className="w-4 h-4 shrink-0 text-accent-2" />
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</span>
+                <span className="text-[15px] font-semibold">{c.value}</span>
+                {/* A faint mark between channels. */}
+                <span aria-hidden className="ml-5 w-1 h-1 rounded-full bg-muted-foreground/40" />
+              </div>
+            );
+          })}
+        </div>
       </div>
       {/* The needle: notches at the top and bottom edges, clear of the words. */}
       <span aria-hidden className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 border-x-[6px] border-x-transparent border-t-[6px] border-t-accent" />
