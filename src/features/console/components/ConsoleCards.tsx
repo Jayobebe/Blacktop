@@ -989,7 +989,8 @@ function SuggestionCard({ weather, active }: { weather: WeatherRead | null; acti
   } else if (!weather.wetNow && weather.change) {
     faces.push(face('rain', terms.car ? tr("Rain from {0}. Go now, or wait for it to pass.", [clock(weather.change.t)]) : tr("Rain from {0}. Ride now, or wait for it to pass.", [clock(weather.change.t)])));
   } else if (weather.wetNow && weather.change) {
-    faces.push(face('later', tr("Wet now, dry from {0}. Plan for then?", [clock(weather.change.t)]), { label: tr("Plan a route"), run: () => navigate('/solo-lobby') }));
+    // For later: Save a route, so it's there to pick when the ride starts (riding now goes to the lobby above).
+    faces.push(face('later', tr("Wet now, dry from {0}. Plan for then?", [clock(weather.change.t)]), { label: tr("Plan a route"), run: () => navigate('/routes/new') }));
   }
   if (!faces.length) return null;
   return <Card icon={Lightbulb} label={tr("Suggestion")} active={active} faces={faces} />;
