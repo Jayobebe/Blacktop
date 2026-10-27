@@ -2015,3 +2015,9 @@ html.thermal .console-search-mica {
 /* Wrapped's story progress (pages/Wrapped): the slide on fills its bar over its time. */
 .wrapped-fill { width: 0; animation: wrapped-fill linear forwards; }
 @keyframes wrapped-fill { from { width: 0; } to { width: 100%; } }
+
+/* Home's tuner glide (components/HomeTuner): one lap of the channels, run by the compositor. */
+@keyframes tuner-glide {
+  from { transform: translate3d(var(--tx-from), 0, 0); }
+  to { transform: translate3d(var(--tx-to), 0, 0); }
+}

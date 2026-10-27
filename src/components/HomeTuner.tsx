@@ -345,7 +345,7 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
   // Copies of the channel list side by side, enough that the window never runs off the end.
   const [copies, setCopies] = useState(4);
   // Position in px along the track; velocity in px/ms (the glide is CRUISE).
-  const s = useRef({ pos: 0, vel: CRUISE, lap: 0, base: 1, drag: null as null | { x: number; pos: number; moved: number; hist: Array<[number, number]>; at: number } });
+  const s = useRef({ pos: 0, vel: 0, lap: 0, base: 1, drag: null as null | { x: number; pos: number; moved: number; hist: Array<[number, number]>; at: number } });
   const holdTimer = useRef<number | null>(null);
   const channelsRef = useRef(channels);
   channelsRef.current = channels;
@@ -373,51 +373,89 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       if (!st.pos) st.pos = one * st.base;
     };
     measure();
-    let raf = 0;
-    let last = performance.now();
-    const place = () => {
-      const lap = st.lap;
-      if (lap > 0) {
-        // Round the loop a lap at a time (a drag's start goes with it).
-        const lo = lap * st.base;
-        const shift = st.pos < lo ? lap : st.pos >= lo + lap ? -lap : 0;
-        if (shift) {
-          st.pos += shift;
-          if (st.drag) st.drag.pos += shift;
-        }
-      }
-      tr0.style.transform = `translateX(${el.clientWidth / 2 - st.pos}px)`;
-    };
     const fits = () => n === 1 && st.lap <= el.clientWidth;
-    const frame = (t: number) => {
-      const dt = Math.min(48, t - last);
+    const wrapPos = () => {
+      const lap = st.lap;
+      if (lap <= 0) return;
+      const lo = lap * st.base;
+      while (st.pos < lo) {
+        st.pos += lap;
+        if (st.drag) st.drag.pos += lap;
+      }
+      while (st.pos >= lo + lap) {
+        st.pos -= lap;
+        if (st.drag) st.drag.pos -= lap;
+      }
+    };
+    const setX = () => {
+      tr0.style.transform = `translate3d(${el.clientWidth / 2 - st.pos}px, 0, 0)`;
+    };
+
+    // The glide is a CSS animation (`tuner-glide`): the compositor runs it, so it stays smooth whatever the page
+    // is doing (driven from script it stuttered under Home's globe and backdrop). Script only moves the strip
+    // while a finger has it or a flick is running down, then hands back from wherever it got to.
+    let gliding = false;
+    const readGlide = () => {
+      if (!gliding) return;
+      const m = new DOMMatrixReadOnly(getComputedStyle(tr0).transform);
+      st.pos = el.clientWidth / 2 - m.m41;
+    };
+    const stopGlide = () => {
+      readGlide();
+      gliding = false;
+      tr0.style.animation = 'none';
+      wrapPos();
+      setX();
+    };
+    const startGlide = () => {
+      if (fits()) {
+        st.pos = st.lap * st.base + st.lap / 2;
+        tr0.style.animation = 'none';
+        setX();
+        return;
+      }
+      if (still || st.lap <= 0) {
+        tr0.style.animation = 'none';
+        wrapPos();
+        setX();
+        return;
+      }
+      wrapPos();
+      const lo = st.lap * st.base;
+      const cw = el.clientWidth;
+      tr0.style.setProperty('--tx-from', `${cw / 2 - lo}px`);
+      tr0.style.setProperty('--tx-to', `${cw / 2 - lo - st.lap}px`);
+      const ms = st.lap / CRUISE;
+      tr0.style.transform = '';
+      tr0.style.animation = `tuner-glide ${ms}ms linear ${-(st.pos - lo) / CRUISE}ms infinite`;
+      tr0.style.animationPlayState = activeRef.current ? 'running' : 'paused';
+      gliding = true;
+    };
+
+    // A flick: run down by script until it's back near the glide's own pace, then the glide takes over.
+    let raf = 0;
+    let last = 0;
+    const coast = (t: number) => {
+      const dt = Math.min(48, t - (last || t));
       last = t;
-      if (!st.drag) {
-        if (fits()) {
-          st.pos = st.lap * st.base + st.lap / 2;
-          st.vel = 0;
-        } else {
-          // Ease back to the glide (forwards, whichever way a flick sent it); still under Thermal mode and less motion.
-          const cruise = still || !activeRef.current ? 0 : CRUISE;
-          st.vel += (cruise - st.vel) * Math.min(1, dt / 900);
-          st.pos += st.vel * dt;
-        }
+      st.pos += st.vel * dt;
+      st.vel *= Math.pow(0.995, dt);
+      wrapPos();
+      setX();
+      if ((st.vel > 0 && st.vel <= CRUISE * 1.1) || Math.abs(st.vel) < 0.01) {
+        raf = 0;
+        startGlide();
+        return;
       }
-      place();
-      const moving = st.drag || Math.abs(st.vel) > 0.0005 || (!still && activeRef.current && !fits());
-      raf = moving ? requestAnimationFrame(frame) : 0;
+      raf = requestAnimationFrame(coast);
     };
-    const kick = () => {
-      if (!raf) {
-        last = performance.now();
-        raf = requestAnimationFrame(frame);
-      }
-    };
-    place();
-    kick();
+
+    startGlide();
     const down = (e: PointerEvent) => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      stopGlide();
       st.drag = { x: e.clientX, pos: st.pos, moved: 0, hist: [[e.clientX, performance.now()]], at: performance.now() };
-      st.vel = 0;
       el.setPointerCapture(e.pointerId);
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
       holdTimer.current = window.setTimeout(() => {
@@ -425,10 +463,9 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
           st.drag = null;
           haptics.light();
           onHoldRef.current();
-          kick();
+          startGlide();
         }
       }, HOLD_MS);
-      kick();
     };
     const move = (e: PointerEvent) => {
       const d = st.drag;
@@ -436,6 +473,8 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       const dx = e.clientX - d.x;
       d.moved = Math.max(d.moved, Math.abs(dx));
       st.pos = d.pos - dx;
+      wrapPos();
+      setX();
       d.hist.push([e.clientX, performance.now()]);
       if (d.hist.length > 5) d.hist.shift();
     };
@@ -453,24 +492,32 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
           haptics.tick();
           c.onTap();
         }
-      } else {
-        const a = d.hist[0];
-        const b = d.hist[d.hist.length - 1];
-        st.vel = still ? 0 : -(b[0] - a[0]) / Math.max(16, b[1] - a[1]);
+        startGlide();
+        return;
       }
-      kick();
+      const a = d.hist[0];
+      const b = d.hist[d.hist.length - 1];
+      st.vel = still ? 0 : -(b[0] - a[0]) / Math.max(16, b[1] - a[1]);
+      if (Math.abs(st.vel) < 0.01) {
+        startGlide();
+        return;
+      }
+      last = 0;
+      raf = requestAnimationFrame(coast);
     };
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
     const onResize = () => {
+      stopGlide();
       measure();
-      place();
+      startGlide();
     };
     window.addEventListener('resize', onResize);
     return () => {
-      cancelAnimationFrame(raf);
+      stopGlide();
+      if (raf) cancelAnimationFrame(raf);
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
@@ -478,7 +525,12 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       window.removeEventListener('resize', onResize);
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
     };
-  }, [n, ids, active, still, copies]);
+  }, [n, ids, still, copies]);
+
+  // Off screen (another deck card, the map open): the glide waits where it is.
+  useEffect(() => {
+    if (track.current && track.current.style.animationName !== 'none') track.current.style.animationPlayState = active ? 'running' : 'paused';
+  }, [active]);
 
   const loop = Array.from({ length: n > 0 ? copies : 0 }, () => channels).flat();
   return (
