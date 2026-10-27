@@ -108,7 +108,7 @@ export function releases(): Release[] {
       version: '1.19',
       lines: [
         { icon: 'console', text: tr("Blacktop Console, to the left of Home: live cards, quick actions, search and notifications.") },
-        { icon: 'route', text: tr("Save a route with as many stops as you like, and ride it in legs over several days."), to: '/routes/new', link: tr("Save a route") },
+        { icon: 'route', text: tr("Save a route with as many stops as you like, and ride it in legs over several days."), to: '/routes/new', link: tr("Plan a route") },
         { icon: 'search', text: tr("Twisty or Direct: pick how to get anywhere you choose on the map.") },
       ],
     },

@@ -113,7 +113,7 @@ const Settings = lazyPage(() => import("./pages/Settings"));
 const RescueLocation = lazyPage(() => import("./pages/RescueLocation"));
 const Speedshop = lazyPage(() => import("./pages/Speedshop"));
 const Install = lazyPage(() => import("./pages/Install"));
-const SaveRoute = lazyPage(() => import("./pages/SaveRoute"));
+const PlanRoute = lazyPage(() => import("./pages/PlanRoute"));
 const TripDetail = lazyPage(() => import("./pages/TripDetail"));
 const CalendarPage = lazyPage(() => import("./pages/Calendar"));
 const StoragePage = lazyPage(() => import("./pages/Storage"));
@@ -338,7 +338,7 @@ function AppRoutes() {
       <Route path="/garage" element={<Garage />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/install" element={<Install />} />
-      <Route path="/routes/new" element={<SaveRoute />} />
+      <Route path="/routes/new" element={<PlanRoute />} />
       <Route path="/trip/:id" element={<TripDetail />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/storage" element={<StoragePage />} />

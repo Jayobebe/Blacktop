@@ -9,6 +9,7 @@
  *   and its how-to mark, sticker ids (`cw:` → `sb:`), artwork paths
  *   (`/card-wars/` → `/switchback/`) and the page id of its first-time tips.
  * - Gridlock (was Derez Legacy): its wins and the lobby the phone was in.
+ * - Plan a route (was Save a route, 2026-10-27): the page id of its first-time tips.
  */
 
 /** Old storage key → new. */
@@ -23,7 +24,7 @@ const KEYS: Record<string, string> = {
 function renameInside(key: string, value: string): string {
   let v = value.split('/card-wars/').join('/switchback/');
   if (key === 'blacktop_stickers') v = v.split('"cw:').join('"sb:');
-  if (key === 'blacktop_page_tips') v = v.split('"card-wars"').join('"switchback"');
+  if (key === 'blacktop_page_tips') v = v.split('"card-wars"').join('"switchback"').split('"save-route-pick"').join('"plan-route-pick"');
   return v;
 }
 

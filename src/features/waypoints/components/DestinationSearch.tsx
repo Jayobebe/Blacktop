@@ -40,7 +40,7 @@ interface DestinationSearchProps {
   userLocation?: UserLocation | null;
   countryCode?: string | null;
   distanceUnit?: 'miles' | 'km';
-  /** A saved route picked (Blacktop Console → Save a route): the lobby loads its stops and end. */
+  /** A saved route picked (Blacktop Console → Plan a route): the lobby loads its stops and end. */
   onRoute?: (route: SavedRoute) => void;
 }
 

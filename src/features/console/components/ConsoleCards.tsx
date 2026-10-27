@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Sun, Moon, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Wind, Snowflake, Sunset, Sunrise,
   Route as RouteIcon, Play, Wrench, Check, CircleParking, Footprints, Repeat2, TrendingUp, TrendingDown, Flame, Award, Users,
-  Eye, Trophy, TriangleAlert, Map as MapIcon, Sparkles, Swords, Lightbulb, Radar, Target, Siren, CalendarDays, Coins, type LucideIcon,
+  Eye, Trophy, TriangleAlert, Waypoints, Map as MapIcon, Sparkles, Swords, Lightbulb, Radar, Target, Siren, CalendarDays, Coins, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -959,11 +959,12 @@ function SuggestionCard({ weather, active }: { weather: WeatherRead | null; acti
       </div>,
     );
   }
-  const face = (key: string, text: string, go?: { label: string; run: () => void }) => (
+  const face = (key: string, text: string, go?: { label: string; run: () => void; Icon?: LucideIcon }) => (
     <div key={key} className="flex items-center gap-3 min-h-[44px]">
       <p className="flex-1 min-w-0 text-[14px] font-semibold leading-snug">{text}</p>
       {go && (
         <Btn primary onClick={go.run} className="shrink-0">
+          {go.Icon && <go.Icon className="w-4 h-4" />}
           {go.label}
         </Btn>
       )}
@@ -984,13 +985,13 @@ function SuggestionCard({ weather, active }: { weather: WeatherRead | null; acti
       );
     }
     if (!faces.length) {
-      faces.push(face('go', terms.car ? tr("Dry until {0}: a good time for a drive.", [until]) : tr("Dry until {0}: a good time for a ride.", [until]), { label: tr("Plan a route"), run: () => navigate('/solo-lobby') }));
+      faces.push(face('go', terms.car ? tr("Dry until {0}: a good time for a drive.", [until]) : tr("Dry until {0}: a good time for a ride.", [until]), { label: tr("Plan a route"), Icon: Waypoints, run: () => navigate('/solo-lobby') }));
     }
   } else if (!weather.wetNow && weather.change) {
     faces.push(face('rain', terms.car ? tr("Rain from {0}. Go now, or wait for it to pass.", [clock(weather.change.t)]) : tr("Rain from {0}. Ride now, or wait for it to pass.", [clock(weather.change.t)])));
   } else if (weather.wetNow && weather.change) {
-    // For later: Save a route, so it's there to pick when the ride starts (riding now goes to the lobby above).
-    faces.push(face('later', tr("Wet now, dry from {0}. Plan for then?", [clock(weather.change.t)]), { label: tr("Plan a route"), run: () => navigate('/routes/new') }));
+    // For later: Plan a route (Save route there), so it's there to pick when the ride starts (riding now goes to the lobby above).
+    faces.push(face('later', tr("Wet now, dry from {0}. Plan for then?", [clock(weather.change.t)]), { label: tr("Plan a route"), Icon: Waypoints, run: () => navigate('/routes/new') }));
   }
   if (!faces.length) return null;
   return <Card icon={Lightbulb} label={tr("Suggestion")} active={active} faces={faces} />;

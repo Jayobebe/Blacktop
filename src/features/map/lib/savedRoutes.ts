@@ -1,5 +1,5 @@
 /**
- * Routes the rider saved (Blacktop Console → Save a route, pages/SaveRoute):
+ * Routes the rider saved (Blacktop Console → Plan a route, pages/PlanRoute):
  * from one place to another through any stops, the way between them worked out when saved
  * and its map tiles downloaded as an offline pack (so the route draws with no
  * signal). They're listed in the map's search like saved places: picking one

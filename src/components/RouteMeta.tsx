@@ -92,7 +92,7 @@ function metaFor(path: string): Meta {
     [/^\/speedshop$/, 'Speedshop'],
     [/^\/device-check$/, 'Device check'],
     [/^\/install$/, 'Install Blacktop'],
-    [/^\/routes\/new$/, 'Save a route'],
+    [/^\/routes\/new$/, 'Plan a route'],
     [/^\/trip\//, 'Trip'],
     [/^\/calendar$/, 'Blacktop Calendar'],
     [/^\/storage$/, 'Storage'],

@@ -38,7 +38,7 @@ function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 }
 
 /**
- * Save a route (from Blacktop Console's quick action): a plain map with a list
+ * Plan a route (from Blacktop Console's quick action, and its suggestion card's Plan a route for later): a plain map with a list
  * of searches, the start (your position to begin with, or anywhere searched),
  * then where to, then as many stops after it as the rider adds until the route
  * is right (each can be taken off). Picking a stop works as the Blacktop map
@@ -51,7 +51,7 @@ function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: numb
  * and downloads its map tiles along the line as an offline pack, so it draws
  * with no signal. Saved routes are then in the map's search like saved places.
  */
-export default function SaveRoute() {
+export default function PlanRoute() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const accent = useMemo(() => {
@@ -188,12 +188,12 @@ export default function SaveRoute() {
     if (!map) return;
     return whenStyleReady(map, () => {
       const data = route ? { type: 'Feature' as const, geometry: route.geometry, properties: {} } : { type: 'FeatureCollection' as const, features: [] };
-      const src = map.getSource('save-route') as maplibregl.GeoJSONSource | undefined;
+      const src = map.getSource('plan-route') as maplibregl.GeoJSONSource | undefined;
       if (src) src.setData(data);
       else {
-        map.addSource('save-route', { type: 'geojson', data });
-        map.addLayer({ id: 'save-route-casing', type: 'line', source: 'save-route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#000', 'line-width': 8, 'line-opacity': 0.5 } });
-        map.addLayer({ id: 'save-route-line', type: 'line', source: 'save-route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': accent, 'line-width': 4.5 } });
+        map.addSource('plan-route', { type: 'geojson', data });
+        map.addLayer({ id: 'plan-route-casing', type: 'line', source: 'plan-route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#000', 'line-width': 8, 'line-opacity': 0.5 } });
+        map.addLayer({ id: 'plan-route-line', type: 'line', source: 'plan-route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': accent, 'line-width': 4.5 } });
       }
       if (candidateRef.current) return;
       const pts: [number, number][] = route ? (route.geometry.coordinates as [number, number][]) : [start, ...picked].filter(Boolean).map((p) => [p!.lng, p!.lat]);
@@ -325,7 +325,7 @@ export default function SaveRoute() {
 
   return (
     <div className="h-dvh flex flex-col p-4 safe-top safe-bottom md:p-5 gap-3">
-      <PageHeader title={tr("Save a route")} />
+      <PageHeader title={tr("Plan a route")} />
 
       <div className={cn('grid gap-2 overflow-y-auto content-start', searching ? 'flex-1 min-h-0' : 'max-h-[40dvh]')}>
         <PlaceField
@@ -378,7 +378,7 @@ export default function SaveRoute() {
 
         {/* The place being circled: how to get there, Twisty or Direct. */}
         <PageTips
-          page="save-route-pick"
+          page="plan-route-pick"
           when={!!candidate && arrived}
           tips={[{ target: '[data-tip="route-twisty"]', text: tr("Twisty takes the bendy roads to this stop, Direct the quickest way. Either one adds it to your route.") }]}
         />

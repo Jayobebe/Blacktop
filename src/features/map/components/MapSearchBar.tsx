@@ -542,7 +542,7 @@ export function MapSearchBar({ map, userLocation, countryCode, onSelect, nearbyC
           className={cn('suggest-list absolute left-0 right-0 top-full mt-2 short:top-0 short:!mt-0 short:left-[calc(100%+0.5rem)] short:right-auto short:w-[calc(100vw-27.5rem-var(--safe-left)-var(--safe-right))] pointer-events-auto bg-card/95 border border-border rounded-xl shadow-2xl overflow-hidden backdrop-blur max-h-[min(50dvh,16rem)] overflow-y-auto animate-fade-in', nudging && 'suggest-nudge')}>
 
 
-          {/* ── Saved routes (Blacktop Console → Save a route): all of them idle, the ones that match while typing ── */}
+          {/* ── Saved routes (Blacktop Console → Plan a route): all of them idle, the ones that match while typing ── */}
           {onRoute && !activeCategory && !cardsMode && (() => {
             const q = normaliseName(query.trim());
             const list = q ? savedRoutes.filter((r) => normaliseName(r.name).includes(q)) : showIdle ? savedRoutes : [];

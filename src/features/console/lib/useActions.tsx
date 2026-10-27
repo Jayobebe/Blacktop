@@ -168,7 +168,7 @@ export function useActions(): ConsoleAction[] {
 
   // ── Map ──
   out.push({ id: 'map.open', group: 'places', label: tr("Open map"), Icon: MapIcon, run: () => openBlacktopMap() });
-  out.push({ id: 'route.save', group: 'places', label: tr("Save a route"), Icon: RoutePlus, run: () => navigate('/routes/new') });
+  out.push({ id: 'route.save', group: 'places', label: tr("Plan a route"), Icon: RoutePlus, run: () => navigate('/routes/new') });
   for (const c of placeCategories(exp.vehicles)) {
     out.push({
       id: `map.find:${c.id}`,
