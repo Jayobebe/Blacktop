@@ -270,8 +270,13 @@ function StationBand({ stations, activeId, onTune }: { stations: RadioStation[];
     const tr0 = track.current;
     if (!el || !tr0) return;
     const st = s.current;
-    if (st.pos < n * 0.5) st.pos += n;
-    if (st.pos > n * 2.5) st.pos -= n;
+    // A lap at a time, the target and a drag's start going round with it (else it chases a lap away forever).
+    const shift = n > 1 ? (st.pos < n * 0.5 ? n : st.pos > n * 2.5 ? -n : 0) : 0;
+    if (shift) {
+      st.pos += shift;
+      if (st.target != null) st.target += shift;
+      if (st.drag) st.drag.pos += shift;
+    }
     tr0.style.transform = `translateX(${el.clientWidth / 2 - W / 2 - st.pos * W}px)`;
     Array.from(tr0.children).forEach((c, i) => {
       const d = Math.abs(i - st.pos);

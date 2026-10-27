@@ -6,9 +6,24 @@
 import { useSyncExternalStore } from 'react';
 import { tr } from '@/lib/i18n';
 
-export type TunerChannelId = 'welcome' | 'sun' | 'riding' | 'yearago' | 'year' | 'best' | 'fuel' | 'near' | 'drops';
+export type TunerChannelId =
+  | 'welcome'
+  | 'sun'
+  | 'daylight'
+  | 'lastride'
+  | 'riding'
+  | 'yearago'
+  | 'year'
+  | 'total'
+  | 'earth'
+  | 'saddle'
+  | 'next'
+  | 'best'
+  | 'fuel'
+  | 'near'
+  | 'drops';
 
-export const TUNER_CHANNELS: TunerChannelId[] = ['welcome', 'sun', 'riding', 'yearago', 'year', 'best', 'fuel', 'near', 'drops'];
+export const TUNER_CHANNELS: TunerChannelId[] = ['welcome', 'sun', 'daylight', 'lastride', 'riding', 'yearago', 'year', 'total', 'earth', 'saddle', 'next', 'best', 'fuel', 'near', 'drops'];
 
 export function channelName(id: TunerChannelId): string {
   switch (id) {
@@ -16,6 +31,18 @@ export function channelName(id: TunerChannelId): string {
       return tr("Welcome");
     case 'sun':
       return tr("Sunset and sunrise");
+    case 'daylight':
+      return tr("Daylight today");
+    case 'lastride':
+      return tr("Your last ride");
+    case 'total':
+      return tr("All time");
+    case 'earth':
+      return tr("Round the world");
+    case 'saddle':
+      return tr("Time in the saddle");
+    case 'next':
+      return tr("Your next milestone ride");
     case 'riding':
       return tr("Riding now worldwide");
     case 'yearago':

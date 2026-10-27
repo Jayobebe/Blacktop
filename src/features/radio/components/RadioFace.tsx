@@ -6,8 +6,8 @@ import { EqBars } from './EqBars';
 
 /**
  * What every radio button shows (Home's dock, the floating button, the ride
- * screen, the map's toolbar): with nothing loaded, the radio glyph on a dark
- * tile; with a station loaded, equaliser bars in its colour, moving while it
+ * screen, the map's toolbar): with nothing loaded, the radio glyph (in the
+ * second accent, the border in the main one) on a dark tile; with a station loaded, equaliser bars in its colour, moving while it
  * plays and still while paused, and a red dot for a live stream.
  */
 export function RadioFace({ playing, small, className }: { playing: boolean; small?: boolean; className?: string }) {
@@ -16,7 +16,7 @@ export function RadioFace({ playing, small, className }: { playing: boolean; sma
   return (
     <span
       aria-hidden
-      className={cn('flex items-center justify-center rounded-[inherit] border', !hsl && 'border-accent/35 bg-card/60 text-accent', className)}
+      className={cn('flex items-center justify-center rounded-[inherit] border', !hsl && 'border-accent/35 bg-card/60 text-accent-2', className)}
       style={hsl ? { backgroundColor: `hsl(${hsl} / ${playing ? 0.2 : 0.1})`, borderColor: `hsl(${hsl} / ${playing ? 0.9 : 0.45})`, color: `hsl(${hsl})` } : undefined}
     >
       {hsl ? <EqBars playing={playing} className={small ? 'text-[14px]' : 'text-[20px]'} /> : <Radio className={small ? 'w-4 h-4' : 'w-5 h-5'} />}

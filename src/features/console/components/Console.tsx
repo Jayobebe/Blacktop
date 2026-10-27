@@ -144,12 +144,9 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
           />
         </header>
 
-        {/* Held at the top; once the title has scrolled away it sits on a backing in the page's own colour
-            that fades out below it, so what scrolls underneath doesn't show through the bar. */}
-        <div
-          className="sticky top-0 z-20 pt-1 pb-3 landscape:pb-2"
-          style={stuck ? { background: 'linear-gradient(to bottom, hsl(var(--background)) 78%, hsl(var(--background) / 0))' } : undefined}
-        >
+        {/* Held at the top; once the title has scrolled away it sits on a frosted strip (`.console-search-mica`)
+            that fades out below it, so what scrolls underneath blurs away instead of showing through the bar. */}
+        <div className={cn('sticky top-0 z-20 -mx-1 px-1 pt-1 pb-3 landscape:pb-2', stuck && 'console-search-mica')}>
           {/* 3 px in from each side: the deck's card clips at its edges, and the focus glow reaches 2 px past the bar. */}
           <label className="relative block mx-[3px]">
             <Search className="absolute z-[1] left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />

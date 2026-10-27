@@ -1,4 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  BatteryCharging,
+  CalendarClock,
+  CalendarRange,
+  Earth,
+  Flag,
+  Fuel,
+  Globe2,
+  Hand,
+  History,
+  IdCard,
+  Route,
+  Sun,
+  Sunrise,
+  Sunset,
+  Timer,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -47,8 +67,29 @@ interface Channel {
   id: TunerChannelId;
   label: string;
   value: string;
+  /** In place of the channel's usual icon (sunrise, charging). */
+  icon?: LucideIcon;
   onTap?: () => void;
 }
+
+/** Each channel's icon, drawn in the second accent (`.text-accent-2`). */
+const ICON: Record<TunerChannelId, LucideIcon> = {
+  welcome: Hand,
+  sun: Sunset,
+  daylight: Sun,
+  lastride: History,
+  riding: Globe2,
+  yearago: CalendarClock,
+  year: CalendarRange,
+  total: Route,
+  earth: Earth,
+  saddle: Timer,
+  next: Flag,
+  best: Trophy,
+  fuel: Fuel,
+  near: Users,
+  drops: IdCard,
+};
 
 const DRIFT_MS = 4500;
 const PAUSE_AFTER_TOUCH_MS = 10_000;
@@ -77,6 +118,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
   const { rides, stats } = useRideHistory();
   const { settings } = useSettings();
   const exp = useExperience();
+  const terms = exp.terms;
   const hidden = useTunerHidden();
   const unit = settings.distanceUnit === 'km' ? 'km' : 'miles';
 
@@ -138,7 +180,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
       const tomorrow = sunTimes(new Date(now + DAY_MS), spot.lat, spot.lng);
       if (today.rise !== null && today.set !== null) {
         if (now < today.rise) {
-          out.push({ id: 'sun', label: tr("Sunrise"), value: tr("{0} · in {1}", [clock(today.rise), travelTime((today.rise - now) / 1000, null)]) });
+          out.push({ id: 'sun', icon: Sunrise, label: tr("Sunrise"), value: tr("{0} · in {1}", [clock(today.rise), travelTime((today.rise - now) / 1000, null)]) });
         } else if (now < today.set) {
           const golden = today.set - 40 * 60_000;
           out.push({
@@ -148,9 +190,68 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
             onTap: () => toast(tr("Golden hour from {0}", [clock(golden)])),
           });
         } else if (tomorrow.rise !== null) {
-          out.push({ id: 'sun', label: tr("Sunrise"), value: clock(tomorrow.rise) });
+          out.push({ id: 'sun', icon: Sunrise, label: tr("Sunrise"), value: clock(tomorrow.rise) });
         }
       }
+    }
+
+    // Daylight today, and how it's changing.
+    if (spot) {
+      const len = (d: number) => {
+        const t = sunTimes(new Date(d), spot.lat, spot.lng);
+        return t.rise !== null && t.set !== null ? t.set - t.rise : null;
+      };
+      const today = len(now);
+      const yesterday = len(now - DAY_MS);
+      if (today !== null) {
+        const hm = (ms: number) => tr("{0} h {1} min", [Math.floor(ms / 3600_000), Math.round((ms % 3600_000) / 60_000)]);
+        const diff = yesterday !== null ? Math.round((today - yesterday) / 60_000) : 0;
+        out.push({
+          id: 'daylight',
+          label: tr("Daylight"),
+          value:
+            diff > 0
+              ? tr("{0} · {1} min more than yesterday", [hm(today), diff])
+              : diff < 0
+                ? tr("{0} · {1} min less than yesterday", [hm(today), -diff])
+                : hm(today),
+        });
+      }
+    }
+
+    // The last ride: when, and how far.
+    const last = [...finished].sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+    if (last) {
+      const days = Math.floor((new Date(now).setHours(0, 0, 0, 0) - new Date(last.startedAt).setHours(0, 0, 0, 0)) / DAY_MS);
+      const when = days <= 0 ? tr("Today") : days === 1 ? tr("Yesterday") : tr("{0} days ago", [days]);
+      out.push({ id: 'lastride', label: tr("Last ride"), value: tr("{0} · {1}", [when, milesText(last.distance, unit)]), onTap: () => navigate(`/ride/${last.id}`) });
+    }
+
+    // All time (rides burned from history still count), how far round the world that is, and time in the saddle.
+    if (stats.totalDistance > 0) {
+      const shown = unit === 'km' ? stats.totalDistance * 1.609344 : stats.totalDistance;
+      const goal = nextMilestone(shown);
+      const left = unit === 'km' ? (goal - shown) / 1.609344 : goal - shown;
+      const goalMiles = unit === 'km' ? goal / 1.609344 : goal;
+      out.push({ id: 'total', label: tr("All time"), value: tr("{0} · {1} to {2}", [milesText(stats.totalDistance, unit), milesText(left, unit), milesText(goalMiles, unit)]), onTap: () => navigate('/stats') });
+      const laps = stats.totalDistance / 24_901;
+      if (stats.totalDistance >= 25) {
+        out.push({
+          id: 'earth',
+          label: tr("Round the world"),
+          value: laps >= 1 ? tr("{0} times round", [laps.toFixed(1)]) : tr("{0}% of the way", [(laps * 100).toFixed(laps < 0.1 ? 1 : 0)]),
+          onTap: () => navigate('/stats'),
+        });
+      }
+    }
+    if (stats.totalDuration >= 3600) {
+      out.push({ id: 'saddle', label: terms.car ? tr("Behind the wheel") : tr("In the saddle"), value: tr("{0} h all told", [Math.floor(stats.totalDuration / 3600).toLocaleString()]), onTap: () => navigate('/stats') });
+    }
+    if (stats.totalRides > 0) {
+      const marks = [10, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
+      const mark = marks.find((m) => m > stats.totalRides) ?? (Math.floor(stats.totalRides / 500) + 1) * 500;
+      const left = mark - stats.totalRides;
+      out.push({ id: 'next', label: tr("Coming up"), value: left === 1 ? tr("Your next one is number {0}", [mark]) : tr("{0} more to number {1}", [left, mark]) });
     }
 
     // Riding now, worldwide.
@@ -226,6 +327,7 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
       if (best) {
         out.push({
           id: 'fuel',
+          icon: refuel.id === 'charge' ? BatteryCharging : Fuel,
           label: refuel.id === 'charge' ? tr("Cheapest charge") : tr("Cheapest fuel"),
           value: tr("{0} · {1}", [best.text, metresText(best.m, 1, unit === 'km' ? 'km' : 'miles')]),
           onTap: () => {
@@ -256,8 +358,8 @@ export function HomeTuner({ active, className }: { active: boolean; className?: 
       if (near > 0) out.push({ id: 'drops', label: tr("Card drops"), value: near === 1 ? tr("1 within {0}", [metresText(5000, 0, unit)]) : tr("{0} within {1}", [near, metresText(5000, 0, unit)]), onTap: () => openBlacktopMap() });
     }
 
-    return out.filter((c) => !hidden.includes(c.id));
-  }, [rides, stats.totalRides, profile.name, spot, now, worldOn, presence, unit, settings.speedFocusEnabled, settings.proximityEnabled, fuelWanted, stations, prices, refuel.id, proximity.riders.length, dropsOn, drops, hidden, navigate]);
+    return out.filter((c) => !hidden.includes(c.id)).sort((a, b) => TUNER_CHANNELS.indexOf(a.id) - TUNER_CHANNELS.indexOf(b.id));
+  }, [rides, stats.totalRides, stats.totalDistance, stats.totalDuration, terms.car, profile.name, spot, now, worldOn, presence, unit, settings.speedFocusEnabled, settings.proximityEnabled, fuelWanted, stations, prices, refuel.id, proximity.riders.length, dropsOn, drops, hidden, navigate]);
 
   const [editing, setEditing] = useState(false);
   return (
@@ -346,8 +448,13 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
         s.pos = 0;
         return;
       }
-      if (s.pos < n * 0.5) s.pos += n;
-      if (s.pos > n * 2.5) s.pos -= n;
+      // Round the loop a lap at a time, taking the channel it's heading for (and a drag's start) with it:
+      // moving the position alone left it chasing a target a lap away, round and round at full speed.
+      const shift = s.pos < n * 0.5 ? n : s.pos > n * 2.5 ? -n : 0;
+      if (!shift) return;
+      s.pos += shift;
+      if (s.target != null) s.target += shift;
+      if (s.drag) s.drag.pos += shift;
     };
     const frame = (t: number) => {
       const dt = Math.min(40, t - last);
@@ -466,12 +573,16 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       className={cn('hold-target relative h-12 rounded-2xl border border-accent/35 bg-card/60 overflow-hidden select-none touch-pan-y cursor-grab', className)}
     >
       <div ref={track} className="absolute inset-y-0 left-0 flex will-change-transform">
-        {loop.map((c, i) => (
+        {loop.map((c, i) => {
+          const Icon = c.icon ?? ICON[c.id];
+          return (
           <div key={`${c.id}-${i}`} className="h-full shrink-0 flex items-center justify-center gap-2 px-4 min-w-0">
+            <Icon aria-hidden className="w-4 h-4 shrink-0 text-accent-2" />
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground shrink-0">{c.label}</span>
             <span className="text-[15px] font-semibold truncate">{c.value}</span>
           </div>
-        ))}
+          );
+        })}
       </div>
       {/* The needle: notches at the top and bottom edges, clear of the words. */}
       <span aria-hidden className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 border-x-[6px] border-x-transparent border-t-[6px] border-t-accent" />
