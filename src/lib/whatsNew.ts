@@ -43,6 +43,15 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-27b',
+      version: '1.26',
+      lines: [
+        { icon: 'radio', text: tr("Home's header is a tuner now: sunset, a year ago today, this year's distance, your bests, cheap fuel and riders near you. Drag it, tap one, hold it to choose.") },
+        { icon: 'radio', text: tr("Blacktop Radio is a head unit: a band to tune with static between stations, six presets (hold one to save), and what's playing on live stations.") },
+        { icon: 'console', text: tr("Crash check, the alarm and rescue live on the Console now, a swipe from Home.") },
+      ],
+    },
+    {
       id: '2026-10-27',
       version: '1.25',
       lines: [

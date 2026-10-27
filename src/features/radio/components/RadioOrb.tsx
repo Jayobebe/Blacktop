@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
-import { Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { RadioFace } from './RadioFace';
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
@@ -10,8 +10,9 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * The home-screen radio control: a radio glyph sitting on a desaturated
- * BT logo plate. Shared by the docked slot and the free-floating overlay.
+ * The home-screen radio control (docked at the end of Home's tuner, or floating):
+ * the same face as every radio button (RadioFace). Shared by the dock and the
+ * free-floating overlay.
  */
 export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
   { active, dragging, nearHome, className, ...rest },
@@ -25,26 +26,16 @@ export const RadioOrb = forwardRef<HTMLButtonElement, Props>(function RadioOrb(
       title={tr("Blacktop Radio — hold and drag to move")}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        'relative flex items-center justify-center rounded-2xl border touch-none select-none transition-all',
-        // The lock button's size and corners (AlarmButton, home): the two sit in Home's header together.
+        'relative rounded-2xl touch-none select-none transition-transform',
+        // The tuner strip's height: the two sit in Home's header together.
         'w-12 h-12',
-        active ? 'border-accent/70 bg-accent/15' : 'border-accent/30 bg-background',
         dragging && 'scale-110 shadow-glow',
+        nearHome && 'ring-2 ring-accent/60',
         className,
       )}
       {...rest}
     >
-      <span
-        aria-hidden
-        className={cn(
-          'absolute inset-0 flex items-center justify-center font-display font-black tracking-tighter text-sm saturate-50 transition-all',
-          nearHome ? 'text-accent/70 drop-shadow-[0_0_6px_hsl(var(--accent)/0.65)]' : 'text-accent/25',
-        )}
-      >
-        <span className="-mr-[0.1em]">{tr("B")}</span>
-        <span className="-ml-[0.1em]">{tr("T")}</span>
-      </span>
-      <Radio className={cn('relative w-5 h-5 text-accent', active && 'animate-pulse')} />
+      <RadioFace playing={!!active} className="absolute inset-0" />
     </button>
   );
 });

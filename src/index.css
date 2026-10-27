@@ -1955,3 +1955,44 @@ html.thermal .news-glow { outline: 2px solid #fff; outline-offset: -2px; }
 }
 @media (prefers-reduced-motion: reduce) { .pixel-loader rect { animation: none; opacity: 0.6; } }
 html.thermal .pixel-loader rect { animation: none; opacity: 0.6; }
+
+/* Blacktop Radio's equaliser bars (radio/components/EqBars): four bars in the current colour, moving while
+   it plays and held while paused. Only transforms move; still under Thermal mode and reduced motion. */
+.eq-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 1em;
+}
+.eq-bars i {
+  display: block;
+  width: 0.2em;
+  height: 100%;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: bottom;
+  transform: scaleY(0.45);
+}
+.eq-bars i:nth-child(2) { transform: scaleY(0.75); }
+.eq-bars i:nth-child(3) { transform: scaleY(0.35); }
+.eq-bars i:nth-child(4) { transform: scaleY(0.6); }
+.eq-bars-on i { animation: eq-bar 0.9s ease-in-out infinite alternate; }
+.eq-bars-on i:nth-child(2) { animation-delay: -0.3s; animation-duration: 0.7s; }
+.eq-bars-on i:nth-child(3) { animation-delay: -0.6s; animation-duration: 1.05s; }
+.eq-bars-on i:nth-child(4) { animation-delay: -0.15s; animation-duration: 0.8s; }
+@keyframes eq-bar { from { transform: scaleY(0.2); } to { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .eq-bars-on i { animation: none; } }
+html.thermal .eq-bars-on i { animation: none; }
+
+/* Blacktop Radio's backdrop: mica, the page behind showing through blurred and darkened
+   (the demo tour's `.tour-mica` look, over the whole screen). Plain black under Thermal mode. */
+.radio-mica {
+  background: rgb(8 8 11 / 0.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  backdrop-filter: blur(24px) saturate(1.3);
+}
+html.thermal .radio-mica {
+  background: #000;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

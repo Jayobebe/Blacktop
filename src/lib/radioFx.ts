@@ -159,6 +159,33 @@ export function squelchClose() {
   release(550);
 }
 
+/**
+ * Tuning static (Blacktop Radio's band): a soft burst of hiss with a wobble in
+ * its pitch, as between stations on an old receiver. Short and quiet; the
+ * caller follows the App sounds switch.
+ */
+export function tuningStatic(seconds = 0.22) {
+  const c = acquire();
+  if (!c || !chain) return;
+  const t = c.currentTime;
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c, seconds + 0.05);
+  const band = c.createBiquadFilter();
+  band.type = 'bandpass';
+  band.Q.value = 0.9;
+  band.frequency.setValueAtTime(900 + Math.random() * 600, t);
+  band.frequency.linearRampToValueAtTime(2400 + Math.random() * 1200, t + seconds);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+  g.gain.setValueAtTime(0.12, t + seconds * 0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + seconds);
+  src.connect(band).connect(g).connect(chain);
+  src.start(t);
+  src.stop(t + seconds + 0.05);
+  release(Math.round(seconds * 1000) + 80);
+}
+
 /** A faint static hiss under a spoken prompt. Call the returned stop() when it ends. */
 export function staticBed(): () => void {
   const c = acquire();

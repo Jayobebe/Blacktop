@@ -1,13 +1,13 @@
 import { useRef } from 'react';
-import { Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/features/settings';
 import { useRadioPlayer, toggle } from '../hooks/useRadioPlayer';
 import { openRadioOverlay } from '../hooks/useRadioOverlay';
 import { tr } from '@/lib/i18n';
+import { RadioFace } from './RadioFace';
 
 interface Props {
-  /** Ride = large circular control; map = slim toolbar square. */
+  /** Ride = the large control; map = the slim toolbar square. */
   variant?: 'ride' | 'map';
   className?: string;
 }
@@ -62,18 +62,15 @@ export function RadioButton({ variant = 'ride', className }: Props) {
       aria-label={active ? tr("Pause radio (hold for stations)") : tr("Blacktop Radio (hold for stations)")}
       title={tr("Blacktop Radio — hold for stations")}
       className={cn(
+        'relative',
         variant === 'ride'
-          ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl flex items-center justify-center transition-all touch-target'
-          : 'w-9 h-9 flex items-center justify-center transition-colors',
-        active
-          ? 'bg-accent text-accent-foreground'
-          : variant === 'ride'
-            ? 'bg-secondary hover:bg-muted'
-            : 'text-foreground/80 hover:bg-secondary',
+          ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl touch-target'
+          : 'w-9 h-9 rounded-none',
         className,
       )}
     >
-      <Radio className={cn(variant === 'ride' ? 'w-7 h-7 landscape:w-8 landscape:h-8' : 'w-4 h-4', active && 'animate-pulse')} />
+      {/* The same face as every radio button: bars in the station's colour once one is loaded. */}
+      <RadioFace playing={active} small={variant === 'map'} className={cn('absolute inset-0', variant === 'map' && 'border-0')} />
     </button>
   );
 }

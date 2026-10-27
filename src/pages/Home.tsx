@@ -13,12 +13,12 @@ import { HomeRadioDock } from '@/features/radio';
 const HomeGlobe = lazy(() => import('@/components/HomeGlobe').then((m) => ({ default: m.HomeGlobe })));
 const EnterpriseWorkspaceCard = lazy(() => import('@/features/enterprise/components/EnterpriseWorkspaceCard').then((m) => ({ default: m.EnterpriseWorkspaceCard })));
 // Blacktop Console, the card left of Home: loaded when first needed, so it adds nothing to Home's first load.
+// The tuner strip in the header's place: loaded on its own so what it reads (card drops, fuel prices) stays out of Home's first load.
+const HomeTuner = lazy(() => import('@/components/HomeTuner'));
 const BlacktopConsole = lazy(() => import('@/features/console/components/Console').then((m) => ({ default: m.BlacktopConsole })));
 const EnterpriseDoorway = lazy(() => import('@/features/enterprise/components/EnterpriseDoorway').then((m) => ({ default: m.EnterpriseDoorway })));
 import { formatSpeed, getDistanceLabel, getSpeedLabel, formatCompactCount, formatCompactDistance, formatCompactDuration } from '@/lib/format';
 import { openBlacktopMap, clearMapDestination, useGuidanceActive, useMapOverlay } from '@/features/map';
-import { SafetyStatusCard } from '@/features/rescue';
-import { AlarmButton } from '@/features/alarm';
 import { useExperience } from '@/features/experience';
 import { haptics } from '@/lib/haptics';
 import { sceneCue, uiCue } from '@/lib/radioFx';
@@ -704,7 +704,7 @@ export default function Home() {
               ? tr("The globe is one button with two jobs. Tap it to open the map. Hold it to switch to Blacktop World, then tap to go in.")
               : tr("Tap the globe to open the map."),
           },
-          { target: '[data-tip="alarm"]', text: tr("Parking up? This arms the anti-theft alarm. The first tap sets your unlock pattern.") },
+          { target: '[data-tip="home-tuner"]', text: tr("The tuner: things worth knowing today. Drag it to turn it, tap to open one, hold it to choose what's on it.") },
           { target: '[role="tablist"]', text: tr("Swipe sideways, or tap these dots, for Blacktop Enterprise: a workspace from your school, dealer, workshop or team.") },
         ]}
       />
@@ -745,25 +745,13 @@ export default function Home() {
             key: 'home',
             node: (
               <>
-                {/* Header */}
-                {/* Header: name · crash rescue status (fills the gap; full span without radio) · radio */}
-                <header className="flex items-center gap-3 mb-4 landscape:mb-2 animate-fade-in">
-                  <div className="min-w-0 max-w-[45%] shrink-0">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5 landscape:hidden">
-                      {stats.totalRides === 0 ? tr("Welcome") : tr("Welcome back")}
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-semibold tracking-tight truncate">{profile.name}</h1>
-                  </div>
-                  {/* The anti-theft alarm, then crash rescue filling the rest of the row (in landscape, only as wide as it reads).
-                      Riders who said no to crash rescue in setup aren't nagged about it. */}
-                  <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <AlarmButton variant="home" />
-                    {(settings.autoRescueEnabled || !exp.configured) && (
-                      <div className="flex-1 min-w-0 landscape:flex-none landscape:max-w-[17rem]">
-                        <SafetyStatusCard compact className="landscape:w-auto landscape:max-w-full" />
-                      </div>
-                    )}
-                  </div>
+                {/* Header: the tuner strip (components/HomeTuner), the radio docked at its end (the strip takes the
+                    whole row without Blacktop Radio). The name, crash check and the alarm live on the Console now. */}
+                <header className="flex items-center gap-2 mb-4 landscape:mb-2 animate-fade-in">
+                  <h1 className="sr-only">{profile.name}</h1>
+                  <Suspense fallback={<div className="flex-1 min-w-0 h-12 rounded-2xl border border-accent/35 bg-card/60" />}>
+                    <HomeTuner active={deckKey === 'home' && !mapOpen} className="flex-1 min-w-0" />
+                  </Suspense>
                   <HomeRadioDock />
                 </header>
                   <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">

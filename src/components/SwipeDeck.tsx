@@ -155,6 +155,8 @@ export function SwipeDeck({ slides, index, onIndexChange, locked = false, classN
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (locked || count < 2 || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    // Something that turns sideways itself (Home's tuner strip) keeps the drag.
+    if ((e.target as Element | null)?.closest?.('[data-no-swipe]')) return;
     drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), axis: null, dx: 0 };
   };
 

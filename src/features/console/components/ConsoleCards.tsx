@@ -18,6 +18,7 @@ import { demoBlocked } from '@/lib/demoGuard';
 import { useParkedSpot, parkedLevelText, walkBackUrl } from '@/lib/parkedSpot';
 import { useSettings } from '@/features/settings';
 import { useExperience } from '@/features/experience';
+import { SafetyStatusCard } from '@/features/rescue';
 import { useRideHistory, useActiveRide, setSoloRoute, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
 import { useTrips, legCount, tripFinished, chooseTrip, chooseRouteTrip, type Trip } from '@/features/ride/lib/trips';
 import { useSavedRoutes, type SavedRoute } from '@/features/map/lib/savedRoutes';
@@ -997,6 +998,20 @@ function SuggestionCard({ weather, active }: { weather: WeatherRead | null; acti
   return <Card icon={Lightbulb} label={tr("Suggestion")} active={active} faces={faces} />;
 }
 
+// ── Safety ───────────────────────────────────────────────────────────────────
+
+/**
+ * Crash check's live state (it was on Home's header): the same card, its sheet
+ * with Request rescue and the drill. Riders who said no to crash check in
+ * setup aren't nagged about it.
+ */
+function SafetyCard() {
+  const { settings } = useSettings();
+  const exp = useExperience();
+  if (!settings.autoRescueEnabled && exp.configured) return null;
+  return <SafetyStatusCard />;
+}
+
 // ── The stack ────────────────────────────────────────────────────────────────
 
 /**
@@ -1020,6 +1035,8 @@ export function ConsoleCards({ order, active }: { order: ConsoleCardId[]; active
     switch (id) {
       case 'suggest':
         return <SuggestionCard key={id} weather={weather} active={active} />;
+      case 'safety':
+        return <SafetyCard key={id} />;
       case 'upnext':
         return <UpNextCard key={id} spot={spot} active={active} />;
       case 'weather':
