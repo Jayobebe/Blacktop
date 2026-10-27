@@ -20,6 +20,9 @@ import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
 import { roadGapsForRide, withRoadGaps, type RoadGap } from '../lib/roadGaps';
 import { tr } from '@/lib/i18n';
 import { PixelLoader } from '@/components/PixelLoader';
+import { PageTips } from '@/features/guide';
+import { SensorLook, SENSOR_LOOKS, type SensorLookId } from '@/lib/sensorLook';
+import { isThermal } from '@/lib/thermal';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 // Free, key-less global DEM (Terrarium encoding) hosted by AWS Open Data.
@@ -36,6 +39,23 @@ const VIDEO_SPEEDS = [100, 125, 150, 175, 200] as const;
 /** The chase camera: what a download always uses, and where the on-screen camera starts. */
 const CHASE = { zoom: 15.6, pitch: 62 };
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+/** The look last picked for flyovers (lib/sensorLook); until one is, the live map's look (Settings → Map look). */
+const LOOK_KEY = 'blacktop_flyover_look';
+function savedLook(): SensorLookId | null {
+  try {
+    const v = localStorage.getItem(LOOK_KEY) as SensorLookId | null;
+    return v && SENSOR_LOOKS.includes(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+const LOOK_LABEL: Record<SensorLookId, () => string> = {
+  normal: () => tr("Normal"),
+  infrared: () => tr("Infrared"),
+  nightvision: () => tr("Night vision"),
+  crt: () => tr("CRT"),
+  noir: () => tr("Noir"),
+};
 /** Longest the flyover waits for the map's tiles in one go. */
 const HOLD_S = 1.5;
 /** The basemap's own tiles in view are in (terrain can keep filling in behind). */
@@ -91,6 +111,26 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const recordingResolveRef = useRef<((b: Blob | null) => void) | null>(null);
 
   const [duration, setDuration] = useState<number>(10);
+  // Sensor looks: the map's picture through one WebGL pass (never under Thermal mode).
+  const thermal = isThermal();
+  const [look, setLookState] = useState<SensorLookId>(() => (thermal ? 'normal' : (savedLook() ?? settings.mapLook)));
+  const lookRef = useRef(look);
+  lookRef.current = look;
+  const sensorRef = useRef<SensorLook | null>(null);
+  useEffect(() => () => {
+    sensorRef.current?.dispose();
+    sensorRef.current = null;
+  }, []);
+  const setLook = (v: SensorLookId) => {
+    setLookState(v);
+    lookRef.current = v;
+    try {
+      localStorage.setItem(LOOK_KEY, v);
+    } catch {
+      /* kept for this time only */
+    }
+    if (!rafRef.current) redrawRef.current?.();
+  };
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [pos, setPos] = useState(0);
@@ -351,7 +391,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-      ctx.drawImage(map.getCanvas(), 0, 0, CANVAS_W, CANVAS_H);
+      let picture: CanvasImageSource = map.getCanvas();
+      if (lookRef.current !== 'normal') {
+        if (!sensorRef.current) sensorRef.current = new SensorLook(CANVAS_W, CANVAS_H);
+        picture = sensorRef.current.render(map.getCanvas(), lookRef.current, performance.now() / 1000) ?? picture;
+      }
+      ctx.drawImage(picture, 0, 0, CANVAS_W, CANVAS_H);
 
       // Header — ride name, and the town the rider is in at this moment of the ride.
       const place = placeAt(placesRef.current, frame.elapsed);
@@ -853,6 +898,36 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
         <p className="text-[11px] text-muted-foreground text-center">
           {locked ? tr("Drag to look round the rider, pinch to zoom.") : tr("Drag to move the map, pinch to zoom and turn. Lock on to follow the rider again.")}
         </p>
+
+        {!thermal && (
+          <PageTips
+            page="flyover-look"
+            when={ready && !recording}
+            tips={[{ target: '[data-tip="flyover-look"]', text: tr("Pick a look for the flyover: infrared, night vision, CRT or noir. The video you download gets it too.") }]}
+          />
+        )}
+        {/* Sensor looks: on screen and in the video. */}
+        {!thermal && (
+          <div className="flex items-center justify-center gap-1.5 flex-wrap" data-tip="flyover-look">
+            <span className="text-[11px] text-muted-foreground">{tr("Look")}</span>
+            {SENSOR_LOOKS.map(v => (
+              <button
+                key={v}
+                disabled={recording}
+                onClick={() => setLook(v)}
+                aria-pressed={look === v}
+                className={cn(
+                  'px-2.5 py-1.5 rounded-lg text-xs border transition-colors',
+                  look === v
+                    ? 'bg-accent/20 border-accent text-accent'
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {LOOK_LABEL[v]()}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="text-[11px] text-muted-foreground">{tr("Length")}</span>

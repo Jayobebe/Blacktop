@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useConsoleNavigate } from '../lib/consoleNavigate';
 import {
   Search, X, Pencil, Bell, LifeBuoy, Users, Trophy, Wrench, CloudRain, TriangleAlert, Sparkles, Timer, Plus, Check,
@@ -49,6 +49,9 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
   const ids = (chosen ?? defaultQuickActions(actions)).filter((id) => byId.has(id));
   const tiles = ids.map((id) => byId.get(id)!);
   const [query, setQuery] = useState('');
+  // The search bar holds at the top once the title has scrolled past (its backing shows only then).
+  const headerRef = useRef<HTMLElement>(null);
+  const [stuck, setStuck] = useState(false);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const inbox = useInbox();
@@ -122,34 +125,51 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
           { target: '[data-tip="console-add"]', text: tr("Add your own quick actions: up to nine things one tap away.") },
         ]}
       />
-      {/* BLACKTOP / CONSOLE, as Blacktop Enterprise's title, with today's date in a square that opens the calendar. */}
-      <header className="mb-3 landscape:mb-2">
-        <StackedTitle
-          second={tr("Console")}
-          label={tr("Blacktop Console")}
-          square={{ ...todaySquare(), label: tr("Open the calendar"), dot: somethingToday, onPress: () => navigate('/calendar') }}
-        />
-      </header>
+      {/* One scroller: the title scrolls away and only the search bar holds at the top. It has a few
+          pixels of room on every side (here and the sticky row's padding) so its focus glow isn't cut. */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto touch-pan-y -mx-1 px-1 pb-2"
+        data-no-pull
+        onScroll={(e) => {
+          const past = e.currentTarget.scrollTop > (headerRef.current?.offsetHeight ?? 0);
+          if (past !== stuck) setStuck(past);
+        }}
+      >
+        {/* BLACKTOP / CONSOLE, as Blacktop Enterprise's title, with today's date in a square that opens the calendar. */}
+        <header ref={headerRef} className="mb-2 landscape:mb-1">
+          <StackedTitle
+            second={tr("Console")}
+            label={tr("Blacktop Console")}
+            square={{ ...todaySquare(), label: tr("Open the calendar"), dot: somethingToday, onPress: () => navigate('/calendar') }}
+          />
+        </header>
 
-      <label className="relative block mb-3 landscape:mb-2">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />
-        <input
-          data-tip="console-search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr("Search Blacktop")}
-          aria-label={tr("Search Blacktop")}
-          enterKeyHint="search"
-          className="w-full h-12 rounded-2xl frost-accent bg-card/80 pl-10 pr-11 text-[15px] outline-none focus:ring-2 focus:ring-accent/50"
-        />
-        {query && (
-          <button type="button" onClick={() => setQuery('')} aria-label={tr("Clear")} className="glove-hit absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </label>
+        {/* Held at the top; once the title has scrolled away it sits on a backing in the page's own colour
+            that fades out below it, so what scrolls underneath doesn't show through the bar. */}
+        <div
+          className="sticky top-0 z-20 pt-1 pb-3 landscape:pb-2"
+          style={stuck ? { background: 'linear-gradient(to bottom, hsl(var(--background)) 78%, hsl(var(--background) / 0))' } : undefined}
+        >
+          {/* 3 px in from each side: the deck's card clips at its edges, and the focus glow reaches 2 px past the bar. */}
+          <label className="relative block mx-[3px]">
+            <Search className="absolute z-[1] left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />
+            <input
+              data-tip="console-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={tr("Search Blacktop")}
+              aria-label={tr("Search Blacktop")}
+              enterKeyHint="search"
+              className="w-full h-12 rounded-2xl frost-accent bg-card/80 pl-10 pr-11 text-[15px] outline-none focus:ring-2 focus:ring-accent/50"
+            />
+            {query && (
+              <button type="button" onClick={() => setQuery('')} aria-label={tr("Clear")} className="glove-hit absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </label>
+        </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto touch-pan-y -mx-1 px-1 pb-2" data-no-pull>
         {query.trim() ? (
           <SearchResults query={query.trim()} actions={actions} onRun={run} onDone={() => setQuery('')} />
         ) : (

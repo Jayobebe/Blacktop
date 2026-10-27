@@ -28,6 +28,7 @@ import { LoopPlannerPanel } from "./LoopPlannerPanel";
 import { OfflinePacksPanel } from "./OfflinePacksPanel";
 import { TurnBanner } from "./TurnBanner";
 import { whenStyleReady } from "../lib/whenStyleReady";
+import { useMapLook } from "../hooks/useMapLook";
 import { useTurnByTurn } from "../hooks/useTurnByTurn";
 import { remainingLine, shortDistance } from "../lib/navigation";
 import { navAppLabel, openInNavApp } from "../lib/navHandoff";
@@ -399,6 +400,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [basemap, setBasemap] = useState<"dark" | "satellite">("dark");
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
+  // Map look and night map (Settings → Navigation): the basemap's colours; at night the map's own cards dim with it.
+  const mapLook = useMapLook(map, isVisible !== false);
   const { user, profile } = useProfile();
   const { terms } = useExperience();
   const { rideState } = useActiveRide();
@@ -2882,8 +2885,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className={cn("absolute inset-0 overflow-hidden", mapLook.night && "night-map")}>
       <div ref={containerRef} className="blacktop-maplibre absolute inset-0 w-full h-full" />
+      {mapLook.day === "crt" && <div aria-hidden className="map-scanlines" />}
       <div ref={switchHazeRef} aria-hidden className="map-switch-haze" />
       {settings.parkedSpotEnabled && <ParkedSpotPin map={map} hidden={rideState.isActive} rider={userLocation} />}
 

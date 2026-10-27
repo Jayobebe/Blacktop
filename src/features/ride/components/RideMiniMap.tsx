@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
 import { loadDarkMapStyle, OPENFREEMAP_DARK_STYLE_URL } from '@/features/map/lib/darkStyle';
 import { whenStyleReady } from '@/features/map/lib/whenStyleReady';
+import { useMapLook } from '@/features/map/hooks/useMapLook';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { addHazardLayer, setHazardData, useHazards } from '@/features/hazards';
 import { isThermal } from '@/lib/thermal';
@@ -43,6 +44,7 @@ const ROUTE = 'mini-route';
 export default function RideMiniMap({ position, heading, zoom, route, members, accent, active }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<maplibregl.Map | null>(null);
+  const mapLook = useMapLook(map);
   // lng / lat is where a rider is; from* and t0 let the pin glide there from where it was (GLIDE_MS).
   const pins = useRef(new Map<string, { marker: maplibregl.Marker; el: HTMLDivElement; lng: number; lat: number; fromLng: number; fromLat: number; t0: number }>());
   const glideRaf = useRef(0);
@@ -219,6 +221,7 @@ export default function RideMiniMap({ position, heading, zoom, route, members, a
   return (
     <div className="absolute inset-0">
       <div ref={box} className="h-full w-full" />
+      {mapLook.day === 'crt' && <div aria-hidden className="map-scanlines" />}
     </div>
   );
 }

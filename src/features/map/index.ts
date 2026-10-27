@@ -17,3 +17,4 @@ export { speak, stopSpeaking, speechSupported, setVoiceStyle, playSquelch } from
 export type { VoiceStyle } from './lib/speech';
 export { loadDarkMapStyle } from './lib/darkStyle';
 export { useGuidanceActive, isGuidanceActive } from './lib/guidanceState';
+export { useMapLook } from './hooks/useMapLook';

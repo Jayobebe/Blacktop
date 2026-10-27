@@ -43,6 +43,15 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-27',
+      version: '1.25',
+      lines: [
+        { icon: 'map', text: tr("Night map: after sunset the map dims, so a bright screen doesn't spoil your night vision. Pick burn orange instead, or turn it off, in Settings."), to: '/settings?section=navigation', link: tr("Open Settings") },
+        { icon: 'map', text: tr("Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick."), to: '/settings?section=navigation', link: tr("Open Settings") },
+        { icon: 'video', text: tr("The 3D flyover has the same looks, in the video you download too. It starts on your map's look.") },
+      ],
+    },
+    {
       id: '2026-10-26',
       version: '1.24',
       lines: [

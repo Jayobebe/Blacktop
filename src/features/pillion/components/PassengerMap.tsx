@@ -9,6 +9,7 @@ import { getLastView, saveLastView } from '@/features/map/lib/lastView';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { isThermal } from '@/lib/thermal';
 import { whenStyleReady } from '@/features/map/lib/whenStyleReady';
+import { useMapLook } from '@/features/map/hooks/useMapLook';
 import { addPinLayers, setMyPins } from '@/features/map/lib/mapPins';
 import { applyWaterWordmark } from '@/features/map/lib/waterWordmark';
 import { getSavedPOIs } from '@/features/map/lib/poiStore';
@@ -70,6 +71,7 @@ function accentColour() {
 export default function PassengerMap({ onClose }: { onClose: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<maplibregl.Map | null>(null);
+  const mapLook = useMapLook(map);
   const members = useConvoyMembers();
   const { convoy } = useConvoyState();
   const { user } = useProfile();
@@ -313,6 +315,7 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
       {/* MapLibre makes its container position: relative, so the map sits in a box that fills this one. */}
       <div className="absolute inset-0">
         <div ref={box} className="h-full w-full" />
+        {mapLook.day === 'crt' && <div aria-hidden className="map-scanlines" />}
       </div>
 
       {/* Edge shade so the corners read over any map, as on the spectator screen. */}

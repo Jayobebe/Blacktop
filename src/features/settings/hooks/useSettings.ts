@@ -108,6 +108,14 @@ export interface AppSettings {
   alwaysUnlockRides: boolean;
   /** Keep where the ride ended as a parked pin on the map (lib/parkedSpot). */
   parkedSpotEnabled: boolean;
+  /** The map's look (map/lib/mapLook): normal, or infrared, night vision, CRT or noir; the night map goes on top. */
+  mapLook: 'normal' | 'infrared' | 'nightvision' | 'crt' | 'noir';
+  /** Night map (map/lib/mapLook): the map dims after sunset (or always), on by default (after sunset, dimmed). */
+  nightMapEnabled: boolean;
+  /** Dimmed: the day colours at about half brightness; ember: everything in shades of burn orange. */
+  nightMapStyle: 'dim' | 'ember';
+  /** Sunset to sunrise where the map is, or all the time. */
+  nightMapWhen: 'auto' | 'always';
   // 3D flyover overview button on ride history details.
   flyoverEnabled: boolean;
   // Downloadable recorded ride overlay on ride history details.
@@ -201,6 +209,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   rideUpdatesEnabled: false,
   rideUpdatesEvery: 30,
   parkedSpotEnabled: true,
+  mapLook: 'normal',
+  nightMapEnabled: true,
+  nightMapStyle: 'dim',
+  nightMapWhen: 'auto',
   alwaysUnlockRides: false,
   flyoverEnabled: false,
   rideOverlayEnabled: false,

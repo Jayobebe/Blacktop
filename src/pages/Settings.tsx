@@ -48,6 +48,7 @@ import { getBlocked, clearBlocked } from '@/features/proximity';
 import { clearParkedSpot } from '@/lib/parkedSpot';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { BackupPanel } from '@/features/settings/components/BackupPanel';
+import { MapLookCard } from '@/features/settings/components/MapLookCard';
 import { useWhatsNew } from '@/lib/whatsNew';
 import { RecoveryPanel } from '@/features/settings/components/RecoveryPanel';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
@@ -137,6 +138,10 @@ export default function Settings() {
     // Opened at Safety (What's new's Medical ID link): bring its Medical ID into view once the section has opened.
     if (searchParams.get('section') === 'safety') {
       window.setTimeout(() => document.querySelector('[data-tip="settings-medical"]')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 450);
+    }
+    // Opened at Navigation (What's new's night map link): bring the night map into view.
+    if (searchParams.get('section') === 'navigation') {
+      window.setTimeout(() => document.querySelector('[data-tip="settings-night-map"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 450);
     }
     const tipStatus = searchParams.get('tip');
     if (tipStatus === 'success') {
@@ -1075,7 +1080,7 @@ export default function Settings() {
 
 
         {/* Navigation App Section */}
-        <CollapsibleSection icon={Navigation} label={tr("Navigation")} index={4} delayClass="delay-200">
+        <CollapsibleSection icon={Navigation} label={tr("Navigation")} index={4} delayClass="delay-200" defaultOpen={searchParams.get('section') === 'navigation'}>
           <div className="space-y-2">
             {navApps.map((app) => {
               const isSelected = preferredNavApp === app.id;
@@ -1342,6 +1347,8 @@ export default function Settings() {
             )}
           </div>
 
+          <MapLookCard />
+
           <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-border/30">
             <div className="pr-2">
               <p className="text-sm font-medium">{tr("Remember where I parked")}</p>
@@ -1543,6 +1550,13 @@ export default function Settings() {
         when={!languageOpen}
         scroll
         tips={[{ target: '[data-tip="settings-medical"]', text: tr("Your Medical ID shows on the crash screens for whoever helps you. Fill in only what you'd want a stranger to read.") }]}
+      />
+      {/* The map look's day / night preview. */}
+      <PageTips
+        page="settings-night-map"
+        when={!languageOpen}
+        scroll
+        tips={[{ target: '[data-tip="night-map-preview"]', text: tr("Drag across the picture to compare your map look by day and at night.") }]}
       />
       {/* Newer rows, a set of their own so riders past the first tips still learn them. */}
       <PageTips
