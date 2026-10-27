@@ -70,7 +70,11 @@ export function HandshakeButton({
   const progress = left !== null ? left / INVITE_TTL_S : 0;
   const receiving = !!st.incoming;
 
+  // A rider pointed out near by (useProximity): the button glows until it's pressed.
+  const nudged = !receiving && st.nudge !== null;
+
   const onButton = () => {
+    if (st.nudge) setProximityState({ nudge: null });
     if (st.incoming) setProximityState({ panel: st.panel === 'request' ? null : 'request' });
     else setProximityState({ panel: st.panel === 'list' ? null : 'list' });
   };
@@ -83,7 +87,9 @@ export function HandshakeButton({
         'relative w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] rounded-xl flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
         receiving
           ? 'bg-accent/25 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)]'
-          : st.outgoing
+          : nudged
+            ? 'bg-accent/20 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)] motion-reduce:animate-none'
+            : st.outgoing
             ? 'bg-card/95 border-accent/60 text-accent'
             : 'bg-card/95 border-border text-foreground hover:bg-secondary',
       )}
@@ -267,6 +273,52 @@ export function HandshakeButton({
     <div data-tip="handshake" className={cn('flex flex-col items-end gap-2', className)}>
       {panel}
       {button}
+    </div>
+  );
+}
+
+/** How long a rider pointed out near by stays as a banner on the map. */
+const NUDGE_BANNER_MS = 8_000;
+
+/**
+ * Nearby riders over the map's top slot, as every map alert is (BlacktopMap lays
+ * them over the turn card): a rider riding near by for a few seconds, or a
+ * request waiting on an answer. View opens the list or the request.
+ */
+export function ProximityBanner({ className }: { className?: string }) {
+  const st = useProximityState();
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!st.nudge) return;
+    const t = window.setTimeout(() => tick((n) => n + 1), Math.max(0, st.nudge.at + NUDGE_BANNER_MS - Date.now()) + 50);
+    return () => window.clearTimeout(t);
+  }, [st.nudge]);
+  const inv = st.incoming;
+  const line = inv
+    ? inv.kind === 'merge'
+      ? tr("{0} wants to merge convoys", [inv.fromName])
+      : inv.kind === 'pair'
+        ? tr("{0} wants to ride together", [inv.fromName])
+        : tr("{0} sent a convoy request", [inv.fromName])
+    : st.nudge && Date.now() - st.nudge.at < NUDGE_BANNER_MS
+      ? st.nudge.line
+      : null;
+  if (!line || st.panel) return null;
+  return (
+    <div role="alert" className={cn('animate-slide-up', className)}>
+      <div className="flex items-center gap-3 rounded-2xl border-2 border-sky-400 bg-card/95 backdrop-blur px-3 py-2.5 shadow-2xl">
+        <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-sky-400">
+          <Handshake className="w-5 h-5 text-white" strokeWidth={2.4} />
+        </span>
+        <span className="min-w-0 flex-1 font-bold leading-tight line-clamp-2">{line}</span>
+        <button
+          type="button"
+          onClick={() => setProximityState({ panel: inv ? 'request' : 'list', nudge: null })}
+          className="shrink-0 h-10 px-3 rounded-xl bg-accent text-accent-foreground text-sm font-bold"
+        >
+          {tr("View")}
+        </button>
+      </div>
     </div>
   );
 }

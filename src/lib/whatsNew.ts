@@ -49,6 +49,7 @@ export function releases(): Release[] {
         { icon: 'map', text: tr("Night map: after sunset the map dims, so a bright screen doesn't spoil your night vision. Pick burn orange instead, or turn it off, in Settings."), to: '/settings?section=navigation', link: tr("Open Settings") },
         { icon: 'map', text: tr("Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick."), to: '/settings?section=navigation', link: tr("Open Settings") },
         { icon: 'video', text: tr("The 3D flyover has the same looks, in the video you download too. It starts on your map's look.") },
+        { icon: 'route', text: tr("Wind warnings: strong side gusts on your route show on the map, on a place's card and as you ride up to them. The wind can go on the map as arrows too."), to: '/settings?section=navigation', link: tr("Open Settings") },
       ],
     },
     {

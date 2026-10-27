@@ -1,11 +1,13 @@
 import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { Camera, Minus, Plus, ScanEye, Users } from 'lucide-react';
+import { Camera, Minus, Plus, ScanEye, Users, Wind } from 'lucide-react';
 import { useHazardWarning, HAZARD_BY_KIND, hazardColor } from '@/features/hazards';
 import { useProximityState } from '@/features/proximity';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
 import { metresText } from '@/lib/units';
 import { useNavShare } from '@/features/map/lib/navShare';
+import { useWindWarning, windColour } from '@/features/map/lib/windWarning';
+import { windText } from '@/lib/units';
 import { ManeuverIcon } from '@/features/map/components/ManeuverIcon';
 import type { MiniMapMember } from './RideMiniMap';
 
@@ -143,6 +145,7 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
   };
 
   const hazard = useHazardWarning();
+  const wind = useWindWarning();
   const proximity = useProximityState();
 
   // A camera counts until it's been passed: the closest it got, and it's gone once the rider is 40 m past that.
@@ -159,7 +162,7 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
 
   /**
    * The pill, most important first: someone in the convoy calling for rescue,
-   * a hazard reported ahead, a camera ahead, the next turn, then the nearest
+   * a hazard reported ahead, side gusts ahead, a camera ahead, the next turn, then the nearest
    * rider outside the convoy. Solo and convoy alike; each in its own colour.
    */
   const pill: Pill | null = (() => {
@@ -176,6 +179,9 @@ export function RideDial({ gauge, position, members, accent, distanceUnit, rescu
       const type = HAZARD_BY_KIND[hazard.hazard.kind];
       const Icon = type?.icon;
       return { key: `hazard-${hazard.hazard.id}`, colour: hazardColor(hazard.hazard.kind), icon: Icon ? <Icon className="h-3.5 w-3.5" /> : null, text: dist(hazard.distance) };
+    }
+    if (wind) {
+      return { key: `wind-${wind.id}`, colour: windColour(wind.level), icon: <Wind className="h-3.5 w-3.5" />, text: `${windText(wind.crossKmh)} · ${dist(wind.distance)}` };
     }
     if (cameraDistance != null && nav.camera) {
       const Icon = nav.camera.type === 'speed' ? Camera : ScanEye;

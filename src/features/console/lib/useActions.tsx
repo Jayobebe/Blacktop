@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import { useConsoleNavigate } from './consoleNavigate';
 import {
   Play, Pause, Users, UserPlus, Navigation, MapPin, Map as MapIcon, SquareParking, Siren, LifeBuoy, ShieldCheck, Gauge,
-  CloudRain, CloudSun, Camera, Volume2, Radio, TriangleAlert, Ban, Coins, Ship, Mountain, Thermometer, Video, Megaphone,
+  CloudRain, CloudSun, Wind, Camera, Volume2, Radio, TriangleAlert, Ban, Coins, Ship, Mountain, Thermometer, Video, Megaphone,
   Bike, Handshake, Music, Timer, Wrench, History, BarChart3, Globe2, Swords, Gamepad2, Settings as SettingsIcon,
   Route as RouteIcon, Waypoints as RoutePlus, HardDrive,
 } from 'lucide-react';
@@ -269,6 +269,7 @@ export function useActions(): ConsoleAction[] {
   };
   toggle('weatherOverlayEnabled', tr("Rain radar"), CloudRain);
   toggle('weatherRoutingEnabled', tr("Weather routing"), CloudSun);
+  toggle('windOverlayEnabled', tr("Wind on the map"), Wind);
   toggle('trafficCamerasEnabled', tr("Speed cameras"), Camera, exp.motorised);
   toggle('navVoiceEnabled', tr("Spoken Directions"), Volume2);
   const styles = ['standard', 'cockpit', 'rally'] as const;

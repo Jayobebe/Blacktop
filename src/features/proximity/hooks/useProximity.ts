@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { haptics } from '@/lib/haptics';
-import { openBlacktopMap } from '@/features/map';
+import { isBlacktopMapOpen, openBlacktopMap, speak } from '@/features/map';
 import type { ConvoyState } from '@/types/convoy';
 import { ALERT_RADIUS_M, DWELL_MS, VISIBLE_RADIUS_M, cellKey, cellOf, distanceM, neighbourhood } from '../lib/geo';
 import { getProximityState, isBlocked, isSnoozed, setProximityState, snoozeParty } from '../lib/proximityStore';
@@ -182,10 +182,17 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       if (ready) {
         snoozeParty(ready.key);
         haptics.light();
-        toast(ready.kind === 'convoy' ? tr("{0}'s convoy is riding near you", [ready.contactName]) : tr("{0} is riding near you", [ready.contactName]), {
-          description: tr("Tap the handshake to invite them."),
-          action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'list' }); } },
-        });
+        const line = ready.kind === 'convoy' ? tr("{0}'s convoy is riding near you", [ready.contactName]) : tr("{0} is riding near you", [ready.contactName]);
+        // On the map: a banner over the top slot like every map alert (ProximityBanner) and the button glowing until
+        // pressed; elsewhere a toast. Said on the radio either way.
+        speak(line);
+        setProximityState({ nudge: { at: Date.now(), line } });
+        if (!isBlacktopMapOpen()) {
+          toast(line, {
+            description: tr("Tap the handshake to invite them."),
+            action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'list' }); } },
+          });
+        }
       }
     }
 
@@ -302,12 +309,21 @@ export function useProximity({ enabled, userId, name, position, speedMph, convoy
       haptics.heavy();
       // Time the request on this device's clock (sender clocks drift).
       setProximityState({ incoming: { ...inv, sentAt: Date.now() }, panel: st.panel === 'list' ? 'request' : st.panel });
-      const what = inv.kind === 'merge' ? 'wants to merge convoys' : inv.kind === 'pair' ? 'wants to ride together' : 'sent a convoy request';
-      toast(`${inv.fromName} ${what}`, {
-        id: `prox-invite-${inv.id}`,
-        duration: INVITE_TTL_MS,
-        action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'request' }); } },
-      });
+      const line =
+        inv.kind === 'merge'
+          ? tr("{0} wants to merge convoys", [inv.fromName])
+          : inv.kind === 'pair'
+            ? tr("{0} wants to ride together", [inv.fromName])
+            : tr("{0} sent a convoy request", [inv.fromName]);
+      // On the map the request shows as a banner over the top slot (ProximityBanner) and the button pulses; elsewhere a toast.
+      speak(line);
+      if (!isBlacktopMapOpen()) {
+        toast(line, {
+          id: `prox-invite-${inv.id}`,
+          duration: INVITE_TTL_MS,
+          action: { label: tr("View"), onClick: () => { openBlacktopMap(); setProximityState({ panel: 'request' }); } },
+        });
+      }
       setTimer('incoming', INVITE_TTL_MS, () => {
         if (getProximityState().incoming?.id === inv.id) {
           toast.dismiss(`prox-invite-${inv.id}`);

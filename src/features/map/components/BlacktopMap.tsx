@@ -7,6 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./blacktopMap.css";
 import { closeBlacktopMap, clearMapDestination, setBlacktopMapReady } from "../hooks/useMapOverlay";
 import { useRadarOverlay } from "../hooks/useRadarOverlay";
+import { useWindOverlay } from "../hooks/useWindOverlay";
 import { registerTileCacheProtocol, toCachedTileUrl } from "../lib/tileCache";
 import { calculateDistance, getCountryCode, getRecentLocations, placeDetails, saveRecentLocation, type MapSearchResult } from "../lib/placeSearch";
 import {
@@ -21,6 +22,10 @@ import { fetchRouteThroughStops, metersToMiles, RouteResult } from "../lib/routi
 import { routeStyleVias, twistyLegs, isTwistyLeg, type RouteStyle } from "../lib/routeStyle";
 import { isRoutingOffline, useRoutingOffline } from "../lib/routingStatus";
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
+import { checkRouteWind, riderWindClass, windWarningsOn, type RouteWind } from "../lib/windRoute";
+import { setWindWarning, useWindWarning, windColour } from "../lib/windWarning";
+import { addWindRouteLayer, setWindRouteData } from "../lib/windLayers";
+import { WindBanner } from "./WindBanner";
 import { RadioButton } from "@/features/radio";
 import { useNextWaypoint } from "@/features/waypoints";
 import { MapSearchBar, type FitPadding } from "./MapSearchBar";
@@ -34,7 +39,7 @@ import { remainingLine, shortDistance } from "../lib/navigation";
 import { navAppLabel, openInNavApp } from "../lib/navHandoff";
 import { shareText } from "../lib/shareText";
 import { useExperience, type PlaceCategory } from "@/features/experience";
-import { stopSpeaking } from "../lib/speech";
+import { speak, stopSpeaking } from "../lib/speech";
 import { MapDestination } from "../types";
 import { deletePOI, getSavedPOIs, savePOI } from "../lib/poiStore";
 import { loadDarkMapStyle } from "../lib/darkStyle";
@@ -70,12 +75,14 @@ import {
   removeSoloStopAt,
   clearSoloRoute,
   setSoloRoute,
+  placeName,
 } from "@/features/ride";
 import { useConvoyMembers, useConvoyState, ConvoyStatusBar } from "@/features/convoy";
-import { useProximityState, MergeBadge, HandshakeButton, getMergeControls, ALERT_RADIUS_M } from "@/features/proximity";
+import { useProximityState, MergeBadge, HandshakeButton, ProximityBanner, getMergeControls, ALERT_RADIUS_M } from "@/features/proximity";
 import { useSpeakingUsers } from "@/features/voice";
 import { getMemberColorStyles } from "@/lib/memberColors";
 import { formatDistance, formatDuration, formatSpeed, getDistanceLabel, getSpeedLabel } from "@/lib/format";
+import { windText } from "@/lib/units";
 import { cn } from "@/lib/utils";
 import { isThermal } from "@/lib/thermal";
 import { chooseRouteTrip } from "@/features/ride/lib/trips";
@@ -99,6 +106,7 @@ import {
   Download,
   IdCard,
   Check,
+  Camera as CameraIcon,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -400,6 +408,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [basemap, setBasemap] = useState<"dark" | "satellite">("dark");
   const [threeD, setThreeD] = useState(false);
   const { settings } = useSettings();
+  const isVisibleRef = useRef(isVisible !== false);
+  isVisibleRef.current = isVisible !== false;
   // Map look and night map (Settings → Navigation): the basemap's colours; at night the map's own cards dim with it.
   const mapLook = useMapLook(map, isVisible !== false);
   const { user, profile } = useProfile();
@@ -820,6 +830,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [guiding, setGuiding] = useState(false);
   // Rain radar: lighter while guiding.
   useRadarOverlay(map, displaySpeed, settings.weatherOverlayEnabled, guiding);
+  // The wind as arrows over the view, like the radar (Settings → Navigation).
+  useWindOverlay(map, settings.windOverlayEnabled, isVisible !== false, guiding);
   // Shared with other screens (Home locks its swipe deck while guiding).
   useEffect(() => {
     setGuidanceActive(guiding);
@@ -1350,15 +1362,24 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       setNavShare({ camera: { type: cam.type, lat: cam.lat, lng: cam.lng, maxspeed: cam.maxspeed ?? undefined, at: Date.now() } });
       if (cam.type === "speed") pingSpeedCamera();
       else pingAnprCamera();
-      toast.warning(
+      const title =
         cam.type === "speed"
           ? tr("Speed camera ahead{0}", [cam.maxspeed ? ` · ${cam.maxspeed}` : ""])
           : cam.type === "alpr"
             ? tr("ANPR camera ahead")
-            : tr("Surveillance camera ahead"),
-      );
+            : tr("Surveillance camera ahead");
+      // On screen: a banner laid over the top slot like every map alert; behind a ride (map hidden) a toast.
+      if (isVisibleRef.current) setCameraAlert({ title, at: Date.now() });
+      else toast.warning(title);
     }
   }, [userLocation, routeCameras, cameras, settings.trafficCamerasEnabled]);
+  // A camera's banner stays up eight seconds.
+  const [cameraAlert, setCameraAlert] = useState<{ title: string; at: number } | null>(null);
+  useEffect(() => {
+    if (!cameraAlert) return;
+    const t = window.setTimeout(() => setCameraAlert(null), 8000);
+    return () => window.clearTimeout(t);
+  }, [cameraAlert]);
 
   // ── Card drops (Blacktop World trading cards planted on the map) ─────────
   const cardsEnabled = settings.blacktopWorldEnabled;
@@ -1822,6 +1843,28 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       live = false;
     };
   }, [pinKey]);
+  // The wind on the way there (map/lib/windRoute): the place's card says the side gusts, or for pedals a head / tailwind.
+  const [pinWind, setPinWind] = useState<{ key: string; wind: RouteWind } | null>(null);
+  /** When a place's card last told the wind: the route set from it doesn't say it again in a toast over the turn banner. */
+  const windOnCardAtRef = useRef(0);
+  const pinWindOn = windWarningsOn(settings.windWarnings);
+  useEffect(() => {
+    const r = pinRoute?.route;
+    if (!r || !pinRoute || !pinWindOn) {
+      setPinWind(null);
+      return;
+    }
+    const key = pinRoute.key;
+    let live = true;
+    void checkRouteWind(r.geometry, r.durationSeconds, riderWindClass()).then((wind) => {
+      if (!live || !wind) return;
+      setPinWind({ key, wind });
+      if (wind.worst || wind.headTail) windOnCardAtRef.current = Date.now();
+    });
+    return () => {
+      live = false;
+    };
+  }, [pinRoute, pinWindOn]);
   // A place tapped on the basemap: its tiles carry no hours or price, so they're looked up once it's opened.
   useEffect(() => {
     const target = pinRef.current;
@@ -2463,6 +2506,98 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     setWeatherVia(null);
   }, [destination?.lat, destination?.lng]);
 
+  // ── Wind along the route (map/lib/windRoute) ─────────────────────────────
+  // When a route is set: the side gusts the rider will meet, at the time they'll be at each stretch.
+  // Said once in a toast, drawn as arrows on the route, and warned about ahead while guiding;
+  // asked again every 30 minutes while guiding (from where the rider has got to).
+  const windOn = windWarningsOn(settings.windWarnings);
+  const [routeWind, setRouteWind] = useState<RouteWind | null>(null);
+  const windToldForRef = useRef<string | null>(null);
+  const navProgressRef = useRef(turnByTurn.progress);
+  navProgressRef.current = turnByTurn.progress;
+  useEffect(() => {
+    setRouteWind(null);
+    if (!route || !windOn) return;
+    let cancelled = false;
+    const run = async () => {
+      // Guiding part way along, the forecast hours follow where the rider has got to.
+      const p = navProgressRef.current;
+      const doneS = p ? Math.max(0, route.durationSeconds - p.remainingSeconds) : 0;
+      const wind = await checkRouteWind(route.geometry, route.durationSeconds, riderWindClass(), Date.now() - doneS * 1000);
+      if (cancelled || !wind) return;
+      setRouteWind(wind);
+      const key = `${route.distanceMeters}:${route.durationSeconds}`;
+      if (windToldForRef.current === key) return;
+      windToldForRef.current = key;
+      // Just read on the place's card it was set from: no toast over the turn banner.
+      if (Date.now() - windOnCardAtRef.current < 2 * 60_000) return;
+      const worst = wind.worst;
+      if (worst) {
+        const town = await placeName(worst.lat, worst.lng);
+        if (cancelled) return;
+        const at = new Date(worst.etaMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const gust = windText(worst.crossKmh);
+        toast.warning(worst.level === "strong" ? tr("Strong side gusts on your route") : tr("Side gusts on your route"), {
+          description: town ? tr("Up to {0} side-on near {1} around {2}.", [gust, town, at]) : tr("Up to {0} side-on around {1}.", [gust, at]),
+          duration: 10000,
+        });
+      } else if (wind.headTail === "head") {
+        toast(tr("Headwind most of the way"), { description: tr("Leave a little more time and battery.") });
+      } else if (wind.headTail === "tail") {
+        toast(tr("Tailwind most of the way"));
+      }
+    };
+    void run();
+    const timer = guiding ? window.setInterval(() => void run(), 30 * 60_000) : 0;
+    return () => {
+      cancelled = true;
+      if (timer) window.clearInterval(timer);
+    };
+  }, [route, windOn, guiding]);
+
+  // The arrows on the route: where the side gusts are, pointing the way the wind blows.
+  useEffect(() => {
+    if (!map) return;
+    return whenStyleReady(map, () => {
+      addWindRouteLayer(map);
+      setWindRouteData(map, routeWind?.stretches ?? []);
+    });
+  }, [map, routeWind]);
+
+  // Ahead while guiding: about 20 s out (400 m at least), a banner, the mini map's pill and, with the
+  // hazard voice on, the radio voice. Each stretch once; it clears once passed.
+  const windToldRef = useRef(new Set<number>());
+  useEffect(() => {
+    windToldRef.current = new Set();
+    setWindWarning(null);
+  }, [routeWind?.stretches]);
+  useEffect(() => {
+    const p = turnByTurn.progress;
+    if (!guiding || !routeWind || !p) {
+      setWindWarning(null);
+      return;
+    }
+    const lead = Math.max(400, (displaySpeed || 0) * 0.447 * 20);
+    const next = routeWind.stretches.find((s) => s.along - p.along > -150 && s.along - p.along <= lead);
+    if (!next) {
+      setWindWarning(null);
+      return;
+    }
+    const id = Math.round(next.along);
+    setWindWarning({ id, side: next.side, crossKmh: next.crossKmh, level: next.level, distance: Math.max(0, next.along - p.along) });
+    if (!windToldRef.current.has(id)) {
+      windToldRef.current.add(id);
+      if (settings.hazardVoiceEnabled) {
+        speak(
+          next.side === "left" ? tr("Side gusts ahead, from the left.") : tr("Side gusts ahead, from the right."),
+          { kind: "callout" },
+        );
+      }
+    }
+  }, [guiding, routeWind, turnByTurn.progress, displaySpeed, settings.hazardVoiceEnabled]);
+  useEffect(() => () => setWindWarning(null), []);
+  const windWarning = useWindWarning();
+
   // ── Route line drawing ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!map) return;
@@ -2827,7 +2962,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // time/distance left when the router returned no manoeuvres), so the search
   // bar and the bottom destination card always make way for it.
   const showTurnBanner = guiding && !addingWaypoint;
-  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner && !hazardWarning));
+  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner));
   const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
   // "Finish" replaces "Skip" once we're heading to the very last stop (the
@@ -2953,12 +3088,29 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           flowing underneath, so when the search bar steps aside while moving
           the toolbar slides up into its place. */}
       <div className="absolute top-[calc(0.75rem+var(--safe-top))] left-[calc(0.75rem+var(--safe-left))] right-[calc(4.25rem+var(--safe-right))] short:right-auto short:w-[22rem] short:gap-1.5 z-30 flex flex-col items-start gap-2 pointer-events-none">
-        {/* A hazard warning takes the search bar's slot too, above the turn banner. */}
-        {hazardWarning && (
-          <div className="w-full pointer-events-auto">
-            <HazardBanner warning={hazardWarning} />
+        {/* Map alerts (a hazard, side gusts, a camera, nearby riders) are laid over the top slot (the turn
+            banner, or the search bar) while they're up, never pushing it and the controls below down. */}
+        {/* Always there (nearby riders decide for themselves when to show); empty, it's nothing to press. */}
+        <div className="absolute inset-x-0 top-0 z-10 flex flex-col gap-2">
+          {hazardWarning && (
+            <div className="w-full pointer-events-auto">
+              <HazardBanner warning={hazardWarning} />
+            </div>
+          )}
+          {windWarning && (
+            <div className="w-full pointer-events-auto">
+              <WindBanner warning={windWarning} />
+            </div>
+          )}
+          {cameraAlert && (
+            <div className="w-full pointer-events-auto">
+              <CameraBanner title={cameraAlert.title} onClose={() => setCameraAlert(null)} />
+            </div>
+          )}
+          <div className="w-full pointer-events-auto empty:hidden">
+            <ProximityBanner />
           </div>
-        )}
+        </div>
 
         {showTurnBanner && (
           <div className="w-full pointer-events-auto">
@@ -3615,6 +3767,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                   </p>
                 );
               })()}
+              {(() => {
+                const wind = pinWind?.key === pinKey ? pinWind.wind : null;
+                if (!wind) return null;
+                if (wind.worst) {
+                  return (
+                    <p className="text-xs font-medium mt-0.5 truncate" style={{ color: windColour(wind.worst.level) }}>
+                      {tr("Side gusts up to {0} on the way", [windText(wind.worst.crossKmh)])}
+                    </p>
+                  );
+                }
+                if (wind.headTail === "head") return <p className="text-xs text-muted-foreground mt-0.5 truncate">{tr("Headwind most of the way")}</p>;
+                if (wind.headTail === "tail") return <p className="text-xs text-muted-foreground mt-0.5 truncate">{tr("Tailwind most of the way")}</p>;
+                return null;
+              })()}
               {/* The place's what3words (when Blacktop has what3words). */}
               <W3WAddress lat={pin.lat} lng={pin.lng} className="mt-0.5 text-xs items-start text-left" />
             </div>
@@ -3858,6 +4024,23 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 }
 
 /** Basemap credits (MapLibre's own attribution control is hidden; see blacktopMap.css). */
+/** A camera ahead, in the hazard banner's look (laid over the map's top slot for eight seconds). */
+function CameraBanner({ title, onClose }: { title: string; onClose: () => void }) {
+  return (
+    <div role="alert" className="animate-slide-up">
+      <div className="flex items-center gap-3 rounded-2xl border-2 border-red-500 bg-card/95 backdrop-blur px-3 py-2.5 shadow-2xl">
+        <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-red-500">
+          <CameraIcon className="w-5 h-5 text-white" strokeWidth={2.4} />
+        </span>
+        <span className="min-w-0 flex-1 font-bold leading-tight truncate">{title}</span>
+        <button onClick={onClose} className="glove-hit p-1.5 text-muted-foreground" aria-label={tr("Dismiss")}>
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** The map's credits; `weather` adds the rain radar's and forecasts'. */
 function MapCredits({ weather = false }: { weather?: boolean }) {
   return (

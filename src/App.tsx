@@ -29,6 +29,7 @@ import { MapLoading } from "@/components/MapLoading";
 import { RouteMeta } from "@/components/RouteMeta";
 import { installInbox } from "@/lib/inbox";
 import { HazardAlerts } from "@/features/hazards";
+import { WindAlertHost } from "@/features/map/components/WindBanner";
 import { AlarmOverlay, PatternGateDialog } from "@/features/alarm";
 import { UiSounds } from "@/components/UiSounds";
 import { AutoRescueConsentDialog, RescueDrillHost, RescueAskHost } from "@/features/rescue";
@@ -393,6 +394,7 @@ const App = () => {
                 <StorageWatch />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}
                 <HazardAlerts />
+                <WindAlertHost />
                 {/* The road's speed limit, for the live speed card and its colours. */}
                 <SpeedLimitFeed />
                 {/* Finishes the burn flames after the post-burn reload. */}

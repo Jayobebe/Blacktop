@@ -19,6 +19,8 @@ export interface ProximityState {
   merge: MergeRecord | null;
   /** Handshake panel on the map: the nearby list, or an incoming request. */
   panel: 'list' | 'request' | null;
+  /** A rider riding near by, pointed out: a banner over the map's top slot for a few seconds, and the nearby-riders button glows until it's pressed. */
+  nudge: { at: number; line: string } | null;
 }
 
 const SNOOZE_KEY = 'blacktop_prox_snoozed';
@@ -54,6 +56,7 @@ let state: ProximityState = {
   busy: null,
   merge: read<MergeRecord | null>(MERGE_KEY, null),
   panel: null,
+  nudge: null,
 };
 
 const listeners = new Set<() => void>();

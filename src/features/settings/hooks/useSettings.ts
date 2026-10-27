@@ -48,6 +48,10 @@ export interface AppSettings {
   weatherOverlayEnabled: boolean;
   /** Warn about heavy rain on the planned route and offer a drier line. */
   weatherRoutingEnabled: boolean;
+  /** Side-wind warnings along the route (map/lib/windRoute). Null (untouched): on for two-wheelers, off for a car (`windWarningsOn`). */
+  windWarnings: boolean | null;
+  /** The wind on the Blacktop map as arrows, like the rain radar (map/hooks/useWindOverlay). */
+  windOverlayEnabled: boolean;
   /** Route preferences: steer routes off these where there's another way. */
   navAvoidMotorways: boolean;
   navAvoidTolls: boolean;
@@ -182,6 +186,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   trafficCamerasEnabled: false,
   weatherOverlayEnabled: false,
   weatherRoutingEnabled: false,
+  windWarnings: null,
+  windOverlayEnabled: false,
   navAvoidMotorways: false,
   navAvoidTolls: false,
   navAvoidFerries: false,

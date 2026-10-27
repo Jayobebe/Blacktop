@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { BTLogo } from '@/components/BTLogo';
-import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock,
+import { ArrowLeft, Flame, Navigation, Shield, ExternalLink, Eye, Gauge, Pencil, Heart, Palette, AlertTriangle, Video, CloudRain, Wind, MessageSquare, ChevronDown, Globe2, Play, MonitorSmartphone, Radio, Sparkles, User, Users, Repeat, Bell, Volume2, Megaphone, Route, Lock,
   Maximize,
   HardDrive, ChevronRight,
 } from 'lucide-react';
@@ -49,6 +49,7 @@ import { clearParkedSpot } from '@/lib/parkedSpot';
 import { CollapsibleSection } from '@/features/settings/components/CollapsibleSection';
 import { BackupPanel } from '@/features/settings/components/BackupPanel';
 import { MapLookCard } from '@/features/settings/components/MapLookCard';
+import { windWarningsOn } from '@/features/map/lib/windRoute';
 import { useWhatsNew } from '@/lib/whatsNew';
 import { RecoveryPanel } from '@/features/settings/components/RecoveryPanel';
 import { NotificationSettings, usePush, disablePush } from '@/features/notifications';
@@ -1224,6 +1225,38 @@ export default function Settings() {
                 />
               </div>
 
+              <div className="flex items-center justify-between gap-3" data-tip="settings-wind">
+                <div className="pr-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Wind className="w-4 h-4 text-accent" />
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Wind Warnings")}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {tr("Warns about strong side gusts on your route, before you set off and as you ride up to them.")}
+                  </p>
+                </div>
+                <Switch
+                  checked={windWarningsOn(settings.windWarnings)}
+                  onCheckedChange={(v) => updateSetting('windWarnings', v)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="pr-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Wind className="w-4 h-4 text-accent" />
+                    <p className="text-[10px] text-accent uppercase tracking-widest font-semibold">{tr("Wind on the Map")}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {tr("Arrows across the Blacktop map showing which way the wind blows and how hard, from Open-Meteo.")}
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.windOverlayEnabled}
+                  onCheckedChange={(v) => updateSetting('windOverlayEnabled', v)}
+                />
+              </div>
+
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Route className="w-4 h-4 text-accent" />
@@ -1550,6 +1583,13 @@ export default function Settings() {
         when={!languageOpen}
         scroll
         tips={[{ target: '[data-tip="settings-medical"]', text: tr("Your Medical ID shows on the crash screens for whoever helps you. Fill in only what you'd want a stranger to read.") }]}
+      />
+      {/* Wind warnings and the wind layer. */}
+      <PageTips
+        page="settings-wind"
+        when={!languageOpen}
+        scroll
+        tips={[{ target: '[data-tip="settings-wind"]', text: tr("Wind warnings check the gusts along your route at the time you'll get there. Wind on the map draws them as arrows.") }]}
       />
       {/* The map look's day / night preview. */}
       <PageTips
