@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
-import { markTipsSeen, skipAllTips, useTipsDue } from '../lib/guideStore';
+import { markTipsSeen, skipAllTips, tipsHeld, useTipsDue } from '../lib/guideStore';
 
 export interface PageTip {
   /** What it points at: a CSS selector, usually `[data-tip="name"]`. A tip whose target isn't on screen is passed over. */
@@ -46,6 +46,9 @@ function locate(selector: string): Spot | null {
   return { x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12, radius: radius + 6 };
 }
 
+/** A dialog or sheet that isn't a set of tips. */
+const otherDialog = () => document.querySelector('[role="dialog"]:not([data-page-tips]), [role="alertdialog"]');
+
 /** The page whose tips are up. A page can mount two sets (History, the Garage, Track Day); they take turns. */
 let busy: string | null = null;
 
@@ -54,7 +57,9 @@ let busy: string | null = null;
  * first time the page is open (and `when` holds) it dims the screen, lights
  * the control each tip is about and says one sentence, with Next and Skip all.
  * Nothing shows again once they've been through or skipped. It waits for the
- * page to settle, and for any dialog to be out of the way, before starting.
+ * page to settle, and for any dialog to be out of the way, before starting;
+ * one that opens over them puts them away unread, and they start again from
+ * the first once it's gone (or the next time the page is opened).
  */
 export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowing, scroll = false }: { page: string; tips: PageTip[]; /** Hold the tips back (and hide them at once) while this is false. */ when?: boolean; /** More than the usual three, for a page that walks through a toolbar. */ max?: number; /** Told when the tips come up and when they're put away (the ride screen pauses its clock meanwhile). */ onShowing?: (showing: boolean) => void; /** On a page that scrolls: a tip about something further down brings it into view first. Not for Home, which must never scroll. */ scroll?: boolean }) {
   const due = useTipsDue(page);
@@ -77,7 +82,7 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
     if (!due || !when || step !== null) return;
     let tries = 0;
     const timer = window.setInterval(() => {
-      if (busy !== null || document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      if (busy !== null || tipsHeld() || otherDialog()) return;
       const first = next(0);
       if (first !== null) {
         window.clearInterval(timer);
@@ -97,6 +102,15 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
   useEffect(() => {
     if ((!when || !due) && step !== null) setStep(null);
   }, [when, due, step]);
+
+  // A question that opens over them (the tour offer, any dialog): they step aside, unread, and come back after it.
+  useEffect(() => {
+    if (step === null) return;
+    const watch = window.setInterval(() => {
+      if (tipsHeld() || otherDialog()) setStep(null);
+    }, 250);
+    return () => window.clearInterval(watch);
+  }, [step]);
 
   useLayoutEffect(() => {
     if (step === null) return;
@@ -162,7 +176,7 @@ export function PageTips({ page, tips, when = true, max = TIPS_PER_PAGE, onShowi
   const top = below + cardH <= vh - 12 ? below : spot.y - GAP - cardH >= 12 ? spot.y - GAP - cardH : Math.max(12, vh - cardH - 12);
 
   return createPortal(
-    <div className="fixed inset-0 z-[8000]" role="dialog" aria-modal="true" aria-label={tr("Tip")} data-no-pull onClick={advance}>
+    <div className="fixed inset-0 z-[8000]" role="dialog" data-page-tips aria-modal="true" aria-label={tr("Tip")} data-no-pull onClick={advance}>
       {/* The lit control: everything else is dimmed by its shadow. */}
       <div
         aria-hidden

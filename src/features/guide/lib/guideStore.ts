@@ -48,6 +48,23 @@ export function resetTips() {
   set({ pages: [], off: false });
 }
 
+/**
+ * Something about to ask the rider a question (the tour offer on a first
+ * Home) holds every page's tips back until it's answered, so the question
+ * comes first and the tips follow. Returns the release.
+ */
+let holds = 0;
+export function holdTips(): () => void {
+  holds += 1;
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    holds -= 1;
+  };
+}
+export const tipsHeld = () => holds > 0;
+
 export function useTipsDue(page: string): boolean {
   return useSyncExternalStore(
     (l) => {

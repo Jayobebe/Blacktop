@@ -1,27 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clapperboard } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useProfile } from '@/features/profile';
+import { holdTips } from '@/features/guide';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { tr } from '@/lib/i18n';
 
 const KEY = 'blacktop_tour_offered';
 /** Only for someone who has just set up: a rider restoring an old profile has seen the app. */
 const NEW_FOR_MS = 3 * 24 * 60 * 60 * 1000;
+const asked = () => {
+  try {
+    return !!localStorage.getItem(KEY);
+  } catch {
+    return true;
+  }
+};
 
 /**
  * Once, on Home, for a rider who has just set up: watch the two-minute tour
  * (`/demo`) or not. Asked a moment after Home has settled, never again either
  * way (`blacktop_tour_offered`, left out of backups), not in demo mode and
- * not during a ride. Home's first-time tips wait for it, as they wait for
- * any dialog.
+ * not during a ride. Home's first-time tips are held back from the moment
+ * it knows it will ask until it's answered, so the question always comes
+ * first (they used to win the race and sit over it); a rider who goes to the
+ * tour finds them waiting on Home when they come back.
  */
 export function TourOffer({ blocked }: { blocked: boolean }) {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const [open, setOpen] = useState(false);
+  const release = useRef<(() => void) | null>(null);
+  const letGo = () => {
+    release.current?.();
+    release.current = null;
+  };
+  useEffect(() => letGo, []);
 
   useEffect(() => {
     if (blocked || isDemoModeActive()) return;
@@ -32,6 +48,7 @@ export function TourOffer({ blocked }: { blocked: boolean }) {
     } catch {
       return;
     }
+    if (!release.current) release.current = holdTips();
     const t = window.setTimeout(() => {
       try {
         localStorage.setItem(KEY, '1');
@@ -40,8 +57,17 @@ export function TourOffer({ blocked }: { blocked: boolean }) {
       }
       setOpen(true);
     }, 1200);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      // Not asked after all (Home left before the moment came): the tips needn't wait.
+      if (!asked()) letGo();
+    };
   }, [blocked, profile.createdAt]);
+
+  // Answered either way: the tips may come now (Radix's dialog is gone from the page by their next look).
+  useEffect(() => {
+    if (!open && release.current && asked()) letGo();
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
