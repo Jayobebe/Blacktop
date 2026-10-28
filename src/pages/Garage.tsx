@@ -1,6 +1,7 @@
 import { PageTips } from '@/features/guide';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { markGarageSeen, useGarageNews } from '@/features/garage/lib/garageNews';
 import { Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X, BookDown } from 'lucide-react';
 import { LogbookCover, LogbookView, LogbookReceiver } from '@/features/logbook';
 import { DEFAULT_BIKE_PLACEMENT, BikePlacement } from '@/features/garage/types';
@@ -41,6 +42,11 @@ import { kmText } from '@/lib/units';
 
 export default function Garage() {
   const navigate = useNavigate();
+  // Opened: what's due now has been seen (Home's Garage button stops glowing).
+  const garageNews = useGarageNews();
+  useEffect(() => {
+    markGarageSeen();
+  }, [garageNews]);
   const {
     bikes,
     activeBike,

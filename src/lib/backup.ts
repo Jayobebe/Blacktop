@@ -30,6 +30,8 @@ const LEFT_OUT = new Set([
   'blacktop_storage_warned',
   'blacktop_whats_new',
   'blacktop_wrapped_seen',
+  'blacktop_history_seen',
+  'blacktop_garage_seen',
   // Medical ID: only when the rider includes it (its own `inBackup`, see `medicalInBackup`).
   'blacktop_medical_id',
   'blacktop_calendar_crew',

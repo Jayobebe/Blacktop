@@ -8,6 +8,8 @@ import { useBikeStats } from '../hooks/useBikeStats';
 import type { Bike } from '../types';
 import { partName, partWear, updateVehicleLedger, useLedger, vehicleLedger } from '../lib/ledger';
 import { tr } from '@/lib/i18n';
+import { dueItems } from '../lib/serviceReminders';
+import { clearGarageDue, setGarageDue } from '../lib/garageNews';
 
 /**
  * Maintenance notifications ("due soon" / "overdue"), mounted once:
@@ -153,6 +155,16 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
     }
     if (changed) writeNotified(notified);
   }, [bike, odometerKm, miles, unit, push.enabled]);
+
+  // Home's Garage button glows while a service is due or due soon (lib/garageNews): this
+  // vehicle's, keyed by how due and since which service, so a change glows again.
+  useEffect(() => {
+    const keys = dueItems(bike.maintenance, odometerKm).map(
+      ({ item, status }) => `${bike.id}:${item.id}:${status.tone}:${Math.round(item.lastServiceKm)}:${item.lastServiceAt ?? 0}`,
+    );
+    setGarageDue(bike.id, keys);
+  }, [bike, odometerKm]);
+  useEffect(() => () => clearGarageDue(bike.id), [bike.id]);
 
   // Parts in the logbook's ledger: told once each when it's 90 % worn by distance.
   const ledger = useLedger();

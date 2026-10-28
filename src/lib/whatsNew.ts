@@ -43,6 +43,14 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-28b',
+      version: '1.28',
+      lines: [
+        { icon: 'tips', text: tr("After a ride, its receipt prints out of a till printer, then whizzes into History. Tap it any time to stop and read it.") },
+        { icon: 'tips', text: tr("History glows while a ride hasn't been opened, and the Garage while a service is due. Clear all on the Console clears every glow.") },
+      ],
+    },
+    {
       id: '2026-10-28',
       version: '1.27',
       lines: [

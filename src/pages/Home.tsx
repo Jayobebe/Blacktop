@@ -2,6 +2,9 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 're
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide, clearSoloRoute, SetOffPrompt } from '@/features/ride';
+import { isRideNew, useHistorySeen } from '@/features/ride/lib/historySeen';
+import { useGarageNews } from '@/features/garage/lib/garageNews';
+import { useDemoMode } from '@/lib/demoMode';
 import { useConvoyState } from '@/features/convoy';
 import { clearRideRole } from '@/features/pillion';
 import { isRacerRunning } from '@/features/track/lib/racerPhase';
@@ -57,6 +60,11 @@ export default function Home() {
   // A finished week, month or year of riding not opened yet: Stats glows (its Wrapped is waiting).
   useWrappedSeen();
   const wrappedNew = finishedWraps(rides).some((w) => w.isNew);
+  // A ride not opened yet: History glows. A service due or coming up the Garage hasn't been opened on since: Garage glows.
+  useHistorySeen();
+  const { enabled: demoOn } = useDemoMode();
+  const historyNew = !demoOn && rides.some(isRideNew);
+  const garageNew = useGarageNews();
   const { rideState, startRide } = useActiveRide();
   const { convoy } = useConvoyState();
   const { settings } = useSettings();
@@ -374,8 +382,8 @@ export default function Home() {
   ];
 
   const navItems = [
-    ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage') }] : []),
-    { icon: History, label: tr("History"), onClick: () => navigate('/history'), nav: 'history' },
+    ...(settings.garageEnabled ? [{ icon: Wrench, label: tr("Garage"), onClick: () => navigate('/garage'), glow: garageNew }] : []),
+    { icon: History, label: tr("History"), onClick: () => navigate('/history'), nav: 'history', glow: historyNew },
     { icon: BarChart3, label: tr("Stats"), onClick: () => navigate('/stats'), glow: wrappedNew },
     { icon: Settings, label: tr("Settings"), onClick: () => navigate('/settings'), glow: whatsNew.unread },
   ];

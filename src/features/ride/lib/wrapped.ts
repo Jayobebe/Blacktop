@@ -181,6 +181,11 @@ export function markWrappedSeen(range: WrappedRange) {
   listeners.forEach((l) => l());
 }
 
+/** Every finished week, month and year counts as opened (the Console's Clear all). */
+export function markAllWrappedSeen(rides: RideSession[]) {
+  for (const { range } of finishedWraps(rides)) markWrappedSeen(range);
+}
+
 /** Bumps whenever a Wrapped is marked seen (Home's Stats glow, the Stats row). */
 export function useWrappedSeen(): Seen {
   return useSyncExternalStore(

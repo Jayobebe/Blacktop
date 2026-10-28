@@ -9,7 +9,8 @@ import { formatDate, formatTime, formatDuration } from '@/lib/format';
 import { deleteRideOverlayBlob, getRideOverlayBlob } from '@/lib/overlayStore';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import { isTransparentOverlay } from '@/lib/overlayFrame';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { markRidesSeen } from '@/features/ride/lib/historySeen';
 import { RideFlyover } from '@/features/ride/components/RideFlyover';
 import { toast } from 'sonner';
 import { useSettings } from '@/features/settings';
@@ -29,6 +30,10 @@ export default function RideDetail() {
   const peaksHidden = usePeaksHidden();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // Opened: not new any more (Home's History button glows while a ride hasn't been).
+  useEffect(() => {
+    if (id) markRidesSeen([id]);
+  }, [id]);
   const { rides, deleteRide, addRidePhoto, removeRidePhoto, markRecordingSaved, removeRideRecording, clearRideOverlay } = useRideHistory();
   const { bikes } = useGarage();
   const { settings } = useSettings();

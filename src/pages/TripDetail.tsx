@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { markRidesSeen } from '@/features/ride/lib/historySeen';
 import { Check, ChevronRight, Play, Trash2, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
@@ -76,6 +78,10 @@ export default function TripDetail() {
   const trips = useTrips();
   const trip = trips.find((t) => t.id === id) ?? null;
   const { rides } = useRideHistory();
+  // Opened: the trip's rides aren't new any more.
+  useEffect(() => {
+    if (id) markRidesSeen(rides.filter((r) => r.trip?.tripId === id).map((r) => r.id));
+  }, [id, rides]);
   const { settings } = useSettings();
   const { terms, canLean } = useExperience();
   const { startRide, rideState } = useActiveRide();

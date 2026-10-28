@@ -21,6 +21,10 @@ import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
 import { requestMapSearch } from '@/features/map/lib/mapConsole';
 import { getRecentLocations } from '@/features/map/lib/placeSearch';
 import { useRideHistory } from '@/features/ride';
+import { isRideNew, markAllRidesSeen, useHistorySeen } from '@/features/ride/lib/historySeen';
+import { finishedWraps, markAllWrappedSeen, useWrappedSeen } from '@/features/ride/lib/wrapped';
+import { markGarageSeen, useGarageNews } from '@/features/garage/lib/garageNews';
+import { markWhatsNewOpened, useWhatsNew } from '@/lib/whatsNew';
 import { useActions, defaultQuickActions, groupLabel, GROUP_ORDER, type ConsoleAction, type ActionGroup } from '../lib/useActions';
 import { useChosenQuickActions, setQuickActions, rowSizes, MAX_QUICK_ACTIONS } from '../lib/quickActions';
 import { ConsoleCards } from './ConsoleCards';
@@ -74,6 +78,20 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
   }, [calendar, active]); // eslint-disable-line react-hooks/exhaustive-deps
   const prefs = useConsoleCardPrefs();
   const { rides } = useRideHistory();
+  // Clear all clears the nav bar's glows too (Stats' Wrapped, Settings' What's new, History's new
+  // rides, the Garage's services due) and the rows they lead to: everything waiting counts as seen.
+  useHistorySeen();
+  useWrappedSeen();
+  const whatsNewState = useWhatsNew();
+  const garageNews = useGarageNews();
+  const glowing = whatsNewState.unread || garageNews || rides.some(isRideNew) || finishedWraps(rides).some((w) => w.isNew);
+  const clearEverything = () => {
+    clearInbox();
+    markWhatsNewOpened();
+    markAllRidesSeen();
+    markGarageSeen();
+    markAllWrappedSeen(rides);
+  };
   const lastEnded = useMemo(() => {
     const t = rides.map((r) => (r.endedAt ? Date.parse(r.endedAt) : 0)).reduce((a, b) => Math.max(a, b), 0);
     return t || null;
@@ -222,8 +240,8 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
             <section aria-labelledby="nc-heading">
               <div className="flex items-center justify-between mb-2">
                 <h2 id="nc-heading" className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{tr("Notifications")}</h2>
-                {inbox.items.length > 0 && (
-                  <button type="button" onClick={clearInbox} className="glove-hit text-xs font-medium text-muted-foreground hover:text-foreground">
+                {(inbox.items.length > 0 || glowing) && (
+                  <button type="button" onClick={clearEverything} className="glove-hit text-xs font-medium text-muted-foreground hover:text-foreground">
                     {tr("Clear all")}
                   </button>
                 )}

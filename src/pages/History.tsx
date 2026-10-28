@@ -25,6 +25,8 @@ import { PageTips } from '@/features/guide';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { useTrips, legCount, tripFinished, type Trip } from '@/features/ride/lib/trips';
 import type { RideSession } from '@/types/blacktop';
+import { isRideNew, useHistorySeen } from '@/features/ride/lib/historySeen';
+import { isDemoModeActive } from '@/lib/demoMode';
 
 const BURN_LABELS: Record<BurnTripsInterval, string> = {
   off: 'Off',
@@ -33,6 +35,8 @@ const BURN_LABELS: Record<BurnTripsInterval, string> = {
 };
 
 export default function History() {
+  useHistorySeen();
+  const demoOn = isDemoModeActive();
   const peaksHidden = usePeaksHidden();
   const navigate = useNavigate();
   const { rides, updateRideName, updateRideBike, toggleRideStarred } = useRideHistory();
@@ -186,7 +190,9 @@ export default function History() {
                 }}
                 className={cn(
                   "pressable w-full bg-card border rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer",
-                  isLatest ? "border-accent/35" : "border-white/[0.06]"
+                  isLatest ? "border-accent/35" : "border-white/[0.06]",
+                  // Not opened yet: it glows, as History's button on Home does while it's there.
+                  !demoOn && isRideNew(ride) && "news-glow",
                 )}
                 style={{ animationDelay: `${index * 60}ms` }}
               >
@@ -332,7 +338,10 @@ function TripCard({ trip, rides, index }: { trip: Trip; rides: RideSession[]; in
         }
       }}
       data-tip="history-trip"
-      className="pressable w-full bg-card border border-[hsl(150_55%_50%)]/35 rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer"
+      className={cn(
+        "pressable w-full bg-card border border-[hsl(150_55%_50%)]/35 rounded-[20px] p-4 landscape:p-3 text-left hover:bg-secondary/60 transition-colors animate-slide-up touch-target cursor-pointer",
+        !isDemoModeActive() && mine.some(isRideNew) && "news-glow",
+      )}
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <p className="font-semibold text-sm truncate">{trip.name}</p>
