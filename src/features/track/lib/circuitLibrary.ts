@@ -39,11 +39,20 @@ const base = () => `${import.meta.env.BASE_URL ?? '/'}circuits/`;
 
 let indexPromise: Promise<LibraryCircuit[]> | null = null;
 
+/**
+ * The circuits and the kart tracks together (`karts.json`, the build's kart
+ * pass: tracks mapped as karting race-track lines, `sport: 'karting'`). The
+ * kart file is optional: without it, the circuits alone.
+ */
 export function loadCircuitIndex(): Promise<LibraryCircuit[]> {
   if (!indexPromise) {
-    indexPromise = fetch(`${base()}index.json`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((d) => (Array.isArray(d?.circuits) ? (d.circuits as LibraryCircuit[]) : []))
+    const list = (file: string, required: boolean) =>
+      fetch(`${base()}${file}`)
+        .then((r) => (r.ok ? r.json() : required ? Promise.reject(new Error(`HTTP ${r.status}`)) : null))
+        .then((d) => (Array.isArray(d?.circuits) ? (d.circuits as LibraryCircuit[]) : []))
+        .catch((e) => (required ? Promise.reject(e) : []));
+    indexPromise = Promise.all([list('index.json', true), list('karts.json', false)])
+      .then(([circuits, karts]) => [...circuits, ...karts])
       .catch((e) => {
         indexPromise = null; // try again next time
         throw e;
@@ -140,7 +149,7 @@ function commonWords(names: string[]): string {
 
 let venueCache: { from: LibraryCircuit[]; venues: LibraryVenue[] } | null = null;
 
-/** Groups the library's layouts by venue (nearby centres). */
+/** Groups the library's layouts by venue (nearby centres; a kart track only with other kart tracks). */
 export function venuesOf(all: LibraryCircuit[]): LibraryVenue[] {
   if (venueCache?.from === all) return venueCache.venues;
   const parent = all.map((_, i) => i);
@@ -148,7 +157,10 @@ export function venuesOf(all: LibraryCircuit[]): LibraryVenue[] {
   for (let i = 0; i < all.length; i++) {
     for (let j = i + 1; j < all.length; j++) {
       if (Math.abs(all[i].lat - all[j].lat) > 0.05) continue;
-      if (metres(all[i], all[j]) <= VENUE_RADIUS_M) parent[find(i)] = find(j);
+      if ((all[i].sport === 'karting') !== (all[j].sport === 'karting')) continue;
+      // Kart tracks at one venue sit within a few hundred metres; further apart they're two places.
+      const radius = all[i].sport === 'karting' ? 600 : VENUE_RADIUS_M;
+      if (metres(all[i], all[j]) <= radius) parent[find(i)] = find(j);
     }
   }
   const groups = new Map<number, LibraryCircuit[]>();

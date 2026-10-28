@@ -11,6 +11,8 @@ import { kmText, metresText } from '@/lib/units';
 import { PixelLoader } from '@/components/PixelLoader';
 
 const km = (m: number | null | undefined) => (m == null ? '' : metresText(m, 2));
+/** A kart track says so in its row (the library has them beside the circuits). */
+const kart = (c: LibraryCircuit) => (c.sport === 'karting' ? tr("Kart track") : null);
 
 /**
  * Track Pack's search bar: the rider's own tracks first, then the circuit
@@ -130,7 +132,7 @@ export function TrackSearch({
                     <Row
                       key={c.id}
                       name={c.name}
-                      detail={[km(c.length), away, saved(c)].filter(Boolean).join(' · ')}
+                      detail={[kart(c), km(c.length), away, saved(c)].filter(Boolean).join(' · ')}
                       busy={loadingId === c.id}
                       onClick={() => pickCircuit(c)}
                     />
@@ -141,7 +143,7 @@ export function TrackSearch({
                   <div key={`${v.name}:${v.layouts[0].id}`}>
                     <Row
                       name={v.name}
-                      detail={[tr("{0} layouts", [v.layouts.length]), away].filter(Boolean).join(' · ')}
+                      detail={[kart(v.layouts[0]), tr("{0} layouts", [v.layouts.length]), away].filter(Boolean).join(' · ')}
                       expanded={shown}
                       onClick={() => setOpenVenue(shown ? null : v.name)}
                     />

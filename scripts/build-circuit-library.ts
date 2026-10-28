@@ -4,6 +4,20 @@
  *
  *   npm run tracks:build            (resumes from cached Overpass answers)
  *   npm run tracks:build -- --fresh (re-download everything)
+ *   npm run tracks:build -- --karts=uk   (kart tracks only, one region; --karts=all for the world)
+ *
+ * Kart tracks have no circuit relations (almost none): they're mapped as
+ * race-track lines (`highway=raceway` + `sport=karting`), often in pieces
+ * named by corner, with the venue (`sport=karting`, usually a sports centre)
+ * around them. The kart pass groups the lines into tracks by the nodes they
+ * share, builds each one's longest lap with the same road → lap code (pit
+ * lanes kept out of the lap and kept for pit lane timing), names it from the
+ * venue it sits in, and writes public/circuits/karts.json beside index.json
+ * (`sport: 'karting'`; the app loads both). Ids are KART_ID_BASE plus the
+ * lowest way id in the track, so they stay put between builds and never meet
+ * a relation's id (track records are kept by id). Indoor tracks (no GPS) and
+ * laps under 300 m or over 3 km are left out, and so is a lap that misses
+ * most of its own mapped track.
  *
  * Writes public/circuits/index.json (names + positions, for instant offline
  * search) and public/circuits/<relation id>.json (the lap, running order,
@@ -79,6 +93,22 @@ async function overpass(query: string): Promise<any> {
 const EXTRAS: { id: number; name: string; aka?: string; box: [south: number, west: number, north: number, east: number]; lat: number; lng: number }[] = [
   { id: 900000001, name: 'Cadwell Park', aka: 'Cadwell Park Full Circuit', box: [53.298, -0.092, 53.322, -0.042], lat: 53.3095, lng: -0.0655 },
 ];
+
+/** Kart track ids: this plus the lowest way id in the track. */
+const KART_ID_BASE = 1_000_000_000_000;
+const KART_MIN_M = 300;
+const KART_MAX_M = 3000;
+/** Regions for the kart pass, south / west / north / east. `all` is the world in tiles. */
+const KART_REGIONS: Record<string, [number, number, number, number][]> = {
+  uk: [[49.8, -8.7, 61.0, 2.1]],
+  all: (() => {
+    const lats = [-56, -20, 10, 35, 47, 56, 72];
+    const lngs = [-180, -120, -60, -20, 10, 40, 80, 120, 180];
+    const out: [number, number, number, number][] = [];
+    for (let i = 0; i + 1 < lats.length; i++) for (let j = 0; j + 1 < lngs.length; j++) out.push([lats[i], lngs[j], lats[i + 1], lngs[j + 1]]);
+    return out;
+  })(),
+};
 
 interface Layout {
   id: number;
@@ -301,6 +331,211 @@ function toLayout(rel: any, ways: Map<number, any>, nodes: Map<number, any>, ven
   };
 }
 
+/** A kart track's name: the venue it sits in, else a track-like name on its lines, else "Kart track". */
+const TRACK_WORDS = /kart|karting|circuit|raceway|track|park|arena|speedway|autodrome|kartbahn|kartbaan|piste/i;
+const PART_WORDS = /^(turn|corner|bend|hairpin|chicane|pit|start|finish|straight|esses|kink)\b|\b(straight|hairpin|corner|bend|chicane)$/i;
+
+interface KartVenue {
+  name: string;
+  minlat: number;
+  minlon: number;
+  maxlat: number;
+  maxlon: number;
+}
+
+function kartVenues(data: any): KartVenue[] {
+  const out: KartVenue[] = [];
+  for (const e of data.elements ?? []) {
+    const name = String(e.tags?.['name:en'] ?? e.tags?.name ?? '').trim();
+    if (!name || e.tags?.highway) continue;
+    const b = e.bounds ?? (typeof e.lat === 'number' ? { minlat: e.lat - 0.002, minlon: e.lon - 0.003, maxlat: e.lat + 0.002, maxlon: e.lon + 0.003 } : null);
+    if (!b) continue;
+    out.push({ name: name.slice(0, 80), ...b });
+  }
+  return out;
+}
+
+function venueFor(at: LatLng, venues: KartVenue[]): string | null {
+  const m = 0.0004; // about 40 m of slack round the venue's outline
+  const inside = venues.filter((v) => at.lat >= v.minlat - m && at.lat <= v.maxlat + m && at.lng >= v.minlon - m && at.lng <= v.maxlon + m);
+  inside.sort((a, b) => (a.maxlat - a.minlat) * (a.maxlon - a.minlon) - (b.maxlat - b.minlat) * (b.maxlon - b.minlon));
+  return inside[0]?.name ?? null;
+}
+
+/** The kart tracks in one region's lines: grouped by shared nodes, a lap each. */
+/** Towns and cities, to name a track with no name of its own after ("Kart track, Lewes"). */
+function townsOf(data: any): { name: string; lat: number; lng: number }[] {
+  return (data.elements ?? [])
+    .filter((e: any) => e.type === 'node' && (e.tags?.['name:en'] || e.tags?.name))
+    .map((e: any) => ({ name: String(e.tags['name:en'] ?? e.tags.name).slice(0, 50), lat: e.lat, lng: e.lon }));
+}
+
+function nearestTown(at: LatLng, towns: { name: string; lat: number; lng: number }[]): string | null {
+  let best: { name: string; d: number } | null = null;
+  const k = Math.cos((at.lat * Math.PI) / 180);
+  for (const t of towns) {
+    const d = Math.hypot(t.lat - at.lat, (t.lng - at.lng) * k);
+    if (!best || d < best.d) best = { name: t.name, d };
+  }
+  return best && best.d < 0.25 ? best.name : null; // within about 25 km
+}
+
+function kartLayouts(lines: any, venues: KartVenue[], skipped: Record<string, number>, taken: { lat: number; lng: number }[], towns: { name: string; lat: number; lng: number }[] = []): Layout[] {
+  const ways = (lines.elements ?? []).filter((w: any) => w.type === 'way' && w.geometry && w.nodes && w.geometry.length === w.nodes.length);
+  // Tracks: ways that share a node.
+  const parent = ways.map((_: any, i: number) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const byNode = new Map<number, number>();
+  ways.forEach((w: any, i: number) => {
+    for (const n of w.nodes) {
+      const j = byNode.get(n);
+      if (j === undefined) byNode.set(n, i);
+      else parent[find(i)] = find(j);
+    }
+  });
+  const groups = new Map<number, any[]>();
+  ways.forEach((w: any, i: number) => groups.set(find(i), [...(groups.get(find(i)) ?? []), w]));
+
+  const round = (p: LatLng) => ({ lat: Math.round(p.lat * 1e6) / 1e6, lng: Math.round(p.lng * 1e6) / 1e6 });
+  const out: Layout[] = [];
+  for (const group of groups.values()) {
+    const why = (k: string) => (skipped[`kart: ${k}`] = (skipped[`kart: ${k}`] ?? 0) + 1);
+    if (group.some((w: any) => w.tags?.indoor === 'yes' || w.tags?.covered === 'yes' || w.tags?.indoor === 'room')) {
+      why('indoor');
+      continue;
+    }
+    const pieces: RoadPiece[] = group.map((w: any) => ({
+      id: `${w.id}:0`,
+      hw: 'raceway',
+      name: w.tags?.name,
+      raceway: w.tags?.raceway,
+      pts: w.geometry.map((g: any, i: number) => [g.lat, g.lon, w.nodes[i]]),
+    }));
+    const edges = buildEdges(pieces);
+    const lap = lapFrom(pieces, new Set(), initialRemovals(edges));
+    if (typeof lap === 'string') {
+      why(lap);
+      continue;
+    }
+    if (lap.length < KART_MIN_M) {
+      why(`under ${KART_MIN_M} m`);
+      continue;
+    }
+    if (lap.length > KART_MAX_M) {
+      why(`over ${KART_MAX_M} m`);
+      continue;
+    }
+    if (ownCoverage(lap.loop, pieces, edges) < 0.5) {
+      why('lap misses most of the track');
+      continue;
+    }
+    const lat = lap.loop.reduce((s, p) => s + p.lat, 0) / lap.loop.length;
+    const lng = lap.loop.reduce((s, p) => s + p.lng, 0) / lap.loop.length;
+    // Already in the library as a circuit relation (a few kart tracks are): not twice.
+    if (taken.some((t) => Math.abs(t.lat - lat) < 0.003 && Math.abs(t.lng - lng) < 0.005)) {
+      why('already a circuit');
+      continue;
+    }
+    const own = group
+      .map((w: any) => String(w.tags?.name ?? '').trim())
+      .find((n: string) => n && TRACK_WORDS.test(n) && !PART_WORDS.test(n));
+    const town = nearestTown({ lat, lng }, towns);
+    const name = venueFor({ lat, lng }, venues) ?? own ?? (town ? `Kart track, ${town}` : 'Kart track');
+    const pits = pieces.filter((p) => looksLikePit(p.name, p.raceway)).map((p) => simplifyLine(p.pts.map(([a, b]) => ({ lat: a, lng: b })), 0.8).map(round));
+    out.push({
+      id: KART_ID_BASE + Math.min(...group.map((w: any) => w.id)),
+      name,
+      // A named layout of its own ("National Circuit") is found by too.
+      aka: own && own !== name ? own.slice(0, 80) : undefined,
+      lat,
+      lng,
+      length: lap.length,
+      sport: 'karting',
+      loop: simplifyLine(lap.loop, 0.4).map(round),
+      direction: lap.direction,
+      pits: pits.length ? pits : undefined,
+    });
+  }
+  // Two tracks at one venue: the longest has the venue's name, the others their length after it.
+  const byName = new Map<string, Layout[]>();
+  for (const l of out) byName.set(`${l.name}@${l.lat.toFixed(2)},${l.lng.toFixed(2)}`, [...(byName.get(`${l.name}@${l.lat.toFixed(2)},${l.lng.toFixed(2)}`) ?? []), l]);
+  for (const same of byName.values()) {
+    if (same.length < 2) continue;
+    same.sort((a, b) => b.length - a.length);
+    for (const l of same.slice(1)) l.name = `${l.name} ${l.length} m`;
+  }
+  return out;
+}
+
+function writeLayoutFile(l: Layout) {
+  const { id, name, length, loop, start, direction, pits } = l;
+  writeFileSync(
+    join(OUT, `${id}.json`),
+    JSON.stringify({
+      attribution: ATTRIBUTION,
+      id,
+      name,
+      length,
+      direction,
+      start,
+      loop: loop.map((p) => [p.lat, p.lng]),
+      pits: pits?.map((line) => line.map((p) => [p.lat, p.lng])),
+    }),
+  );
+}
+
+/** The kart pass on its own (`--karts=<region>`): the circuit files are left as they are. */
+async function buildKarts(region: string, cached: (key: string, query: string) => Promise<any>) {
+  const boxes = KART_REGIONS[region];
+  if (!boxes) throw new Error(`No kart region "${region}" (${Object.keys(KART_REGIONS).join(', ')})`);
+  mkdirSync(OUT, { recursive: true });
+  const existing = JSON.parse(readFileSync(join(OUT, 'index.json'), 'utf8')).circuits as { lat: number; lng: number }[];
+  const skipped: Record<string, number> = {};
+  const layouts: Layout[] = [];
+  let failed = 0;
+  for (const [south, west, north, east] of boxes) {
+    const box = `${south},${west},${north},${east}`;
+    const key = `karts-${box.replace(/[^0-9-]+/g, '_')}`;
+    console.log(`Kart tracks in ${box}…`);
+    const fresh = !existsSync(join(CACHE, `${key}-lines.json`));
+    try {
+      const lines = await cached(`${key}-lines`, `[out:json][timeout:240];way["highway"="raceway"]["sport"="karting"](${box});out geom;`);
+      const places = await cached(`${key}-venues`, `[out:json][timeout:180];nwr["sport"="karting"]["name"](${box});out tags bb;`);
+      const towns = await cached(`${key}-towns`, `[out:json][timeout:180];node["place"~"^(city|town)$"](${box});out;`);
+      const found = kartLayouts(lines, kartVenues(places), skipped, existing, townsOf(towns));
+      console.log(`  ${found.length} tracks`);
+      layouts.push(...found);
+      if (fresh) await sleep(5000); // be kind to shared Overpass servers
+    } catch (e) {
+      failed++;
+      console.warn(`  failed (${String((e as Error).message ?? e).slice(0, 80)}); re-run to fill it in`);
+    }
+  }
+  // Tiles overlap at their edges: one track once.
+  const seen = new Set<number>();
+  const unique = layouts.filter((l) => (seen.has(l.id) ? false : (seen.add(l.id), true))).sort((a, b) => a.name.localeCompare(b.name));
+  // A failed tile keeps the last run's tracks: only a full run replaces the set.
+  if (failed) {
+    console.warn(`\n${failed} region tile(s) failed: nothing written. Re-run (answers so far are cached).`);
+    return;
+  }
+  for (const f of readdirSync(OUT)) {
+    const id = Number(f.replace(/\.json$/, ''));
+    if (Number.isFinite(id) && id >= KART_ID_BASE) rmSync(join(OUT, f));
+  }
+  for (const l of unique) writeLayoutFile(l);
+  writeFileSync(
+    join(OUT, 'karts.json'),
+    JSON.stringify({
+      attribution: ATTRIBUTION,
+      generatedAt: new Date().toISOString(),
+      region,
+      circuits: unique.map(({ id, name, aka, lat, lng, length }) => ({ id, name, aka, lat: +lat.toFixed(5), lng: +lng.toFixed(5), length, sport: 'karting' })),
+    }),
+  );
+  console.log(`\nWrote ${unique.length} kart tracks (${region}). Skipped:`, skipped);
+}
+
 async function main() {
   mkdirSync(CACHE, { recursive: true });
   const cached = async (key: string, query: string) => {
@@ -311,6 +546,12 @@ async function main() {
     return data;
   };
   if (process.argv.includes('--fresh')) for (const f of readdirSync(CACHE)) rmSync(join(CACHE, f));
+
+  const karts = process.argv.find((a) => a.startsWith('--karts='))?.slice('--karts='.length);
+  if (karts) {
+    await buildKarts(karts, cached);
+    return;
+  }
 
   console.log('Fetching the circuit index…');
   const index = await cached('index', '[out:json][timeout:120];relation["type"="circuit"];out tags center;');
@@ -407,8 +648,9 @@ async function main() {
   layouts.sort((a, b) => a.name.localeCompare(b.name));
   // Only now, with the new set built, drop layouts that are no longer in it
   // (a stalled or failed run never leaves the library empty).
-  const keep = new Set([...layouts.map((l) => `${l.id}.json`), ...[...unfetched].map((id) => `${id}.json`), 'index.json']);
-  for (const f of readdirSync(OUT)) if (f.endsWith('.json') && !keep.has(f)) rmSync(join(OUT, f));
+  const keep = new Set([...layouts.map((l) => `${l.id}.json`), ...[...unfetched].map((id) => `${id}.json`), 'index.json', 'karts.json']);
+  // (Kart tracks are the kart pass's own: never touched here.)
+  for (const f of readdirSync(OUT)) if (f.endsWith('.json') && !keep.has(f) && !(Number(f.replace(/\.json$/, '')) >= KART_ID_BASE)) rmSync(join(OUT, f));
   for (const l of layouts) {
     const { id, name, length, loop, start, direction, pits } = l;
     writeFileSync(
