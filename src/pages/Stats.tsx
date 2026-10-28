@@ -1,6 +1,6 @@
 import { useRideHistory } from '@/features/ride';
 import { useSettings } from '@/features/settings';
-import { Route, Clock, TrendingUp, Hash, Users, Zap, Ruler } from 'lucide-react';
+import { Route, Clock, TrendingUp, Hash, Users, Zap, Ruler, Bike } from 'lucide-react';
 import { formatDuration, formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { BadgeWalletPanel, WrappedPanel } from '@/features/ride';
 import { useExperience } from '@/features/experience';
@@ -13,7 +13,7 @@ export default function Stats() {
   const peaksHidden = usePeaksHidden();
   const { stats } = useRideHistory();
   const { settings } = useSettings();
-  const { terms, showGroup } = useExperience();
+  const { terms, showGroup, canLean } = useExperience();
 
   // Only the numbers this rider said they care about.
   const statCards = [
@@ -52,6 +52,12 @@ export default function Stats() {
       label: tr("Convoy {0}", [terms.Rides]),
       value: stats.convoyRides.toString(),
       unit: tr("convoys"),
+    },
+    canLean && settings.leanAngleEnabled && {
+      icon: Bike,
+      label: tr("Max Lean"),
+      value: peaksHidden ? PEAK_HIDDEN : stats.personalMaxLean > 0 ? Math.round(stats.personalMaxLean).toString() : '—',
+      unit: !peaksHidden && stats.personalMaxLean > 0 ? '°' : '',
     },
     settings.gForceEnabled && {
       icon: Zap,

@@ -5,6 +5,7 @@ import landTopo from 'world-atlas/land-110m.json';
 import { cn } from '@/lib/utils';
 import { isThermal } from '@/lib/thermal';
 import { FrameCadence } from '@/lib/frameCadence';
+import { motionHeld, motionScale, subscribeMotionHold } from '@/lib/homeHold';
 
 // Pre-extract the world land outline once at module load. Stroking these
 // polygons (no fill) draws thin coastlines; the 110m resolution keeps the
@@ -17,7 +18,7 @@ const land = feature(
 const SPHERE: GeoPermissibleObjects = { type: 'Sphere' };
 
 // Visual tuning.
-const ROTATION_DEG_PER_SEC = 6; // slow, ambient spin
+const ROTATION_DEG_PER_SEC = 5; // slow, ambient spin (a touch slower so ~20 frames a second still reads smooth)
 const AXIS_TILT_DEG = 18; // slight tilt so it reads as a globe, not a clock face
 const COASTLINE_WIDTH = 0.7;
 const RIM_WIDTH = 1.0;
@@ -90,6 +91,9 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [burst]);
 
+  // A receipt printing over Home: the spin brakes to a halt and picks up again after (lib/homeHold).
+  useEffect(() => subscribeMotionHold(() => paint.current.kick()), []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -126,7 +130,7 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
     let last = performance.now();
     let lastFrame = last;
     const cadence = new FrameCadence();
-    // Only while on screen (Home's deck can be on an Enterprise card), at ~30 fps:
+    // Only while on screen (Home's deck can be on an Enterprise card), at ~20 fps:
     // at 6°/s the spin is under a pixel a frame, and each frame re-projects every coastline.
     let visible = true;
     const io = new IntersectionObserver(([e]) => {
@@ -146,18 +150,20 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
       const p = paint.current;
       const sinceBurst = now - p.burstAt;
       const bursting = sinceBurst >= 0 && sinceBurst < BURST_MS && !isThermal();
-      // Every frame during a burst (it's moving fast); ~30 a second the rest of the time, on whole
+      // Every frame during a burst (it's moving fast); ~20 a second the rest of the time, on whole
       // frames (lib/frameCadence: a 32 ms timer judders). The spin is worked out from the time itself.
       const gap = now - lastFrame;
       lastFrame = now;
-      if (!cadence.tick(gap, bursting ? 0 : 33)) {
+      // ~20 a second at rest (each frame re-projects every coastline: on a phone it was a third of Home's time).
+      if (!cadence.tick(gap, bursting ? 0 : 50)) {
         raf = requestAnimationFrame(draw);
         return;
       }
       const dt = Math.min((now - last) / 1000, 0.1); // clamp after tab throttling
       last = now;
       const boost = bursting ? BURST_PEAK * Math.pow(1 - sinceBurst / BURST_MS, 2) : 0;
-      rotation = (rotation + (ROTATION_DEG_PER_SEC + boost) * dt) % 360;
+      const brake = motionScale(now);
+      rotation = (rotation + (ROTATION_DEG_PER_SEC + boost) * dt * brake) % 360;
       const blend = p.from && p.to ? Math.min(1, (now - p.since) / COLOR_MS) : 1;
       const color = p.from && p.to && blend < 1 ? mixHsl(p.from, p.to, blend * blend * (3 - 2 * blend)) : p.plain;
       shown.current = color;
@@ -166,7 +172,8 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
       if (size > 0) {
         // Frosted land. Every other frame (~15 a second) is plenty at this spin speed (the
         // clip moves well under a pixel between updates, under the coastline).
-        if (frost && (bursting || frame++ % 2 === 0)) {
+        // Every third frame (~7 a second): each new clip re-blurs what's behind the land, the dearest thing on Home.
+        if (frost && (bursting || frame++ % 3 === 0)) {
           const d = outline(land);
           const clip = d ? `path('${d}')` : 'inset(50%)';
           frost.style.clipPath = clip;
@@ -198,8 +205,8 @@ export function HomeGlobe({ accentColor, burst, className }: HomeGlobeProps) {
         ctx.stroke();
       }
 
-      // Thermal / High-Speed Mode: this one frame, then no more.
-      raf = isThermal() ? 0 : requestAnimationFrame(draw);
+      // Thermal / High-Speed Mode: this one frame, then no more; held by a receipt: stopped until it lets go.
+      raf = isThermal() || (brake === 0 && motionHeld()) ? 0 : requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
     // Thermal mode draws one frame and stops: a new colour asks for one more.

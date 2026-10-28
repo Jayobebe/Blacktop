@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { isThermal } from '@/lib/thermal';
 import { FrameCadence } from '@/lib/frameCadence';
+import { motionHeld, motionScale, subscribeMotionHold } from '@/lib/homeHold';
 
 /**
  * The band that orbits Home's globe and names what a tap on it opens (the map,
@@ -17,7 +18,7 @@ import { FrameCadence } from '@/lib/frameCadence';
  * fades to the new one over the same time as the globe's, and the lettering
  * whips round (`burst`) and coasts back to its usual pace while its word
  * changes. The lettering is moved from one small loop here (not SMIL, whose
- * speed can't be changed mid-run), ~30 times a second on whole frames
+ * speed can't be changed mid-run), ~15 times a second on whole frames
  * (lib/frameCadence), every frame during a burst, and not at all while the band
  * is off screen or the page hidden. Its glyphs are placed exactly
  * (`geometricPrecision`): snapped to whole pixels, text sliding half a pixel a
@@ -35,7 +36,7 @@ const ORBIT = `M0,${-RY} A${RX},${RY} 0 0 0 ${-RX},0 A${RX},${RY} 0 0 0 0,${RY} 
 const CIRCUMFERENCE = 2 * Math.PI * Math.sqrt((RX * RX + RY * RY) / 2);
 
 /** The lettering's usual pace and the burst on top of it (ring units a second), and how long the burst takes to ease away. */
-const PACE = 9;
+const PACE = 6.5;
 const BURST_PEAK = 150;
 const BURST_MS = 1500;
 /** The same as the globe's own colour blend (HomeGlobe COLOR_MS). */
@@ -68,13 +69,15 @@ export function GlobeBanner({ layer, word, color, dim, burst }: { layer: 'back' 
     if (layer !== 'front' || still) return;
     let raf = 0;
     let last = performance.now();
-    // Every Nth frame for ~30 a second, evenly (a 33 ms timer judders).
+    // Every Nth frame for ~15 a second, evenly (a 33 ms timer judders).
     const cadence = new FrameCadence();
     let seen = true;
     const io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(([e]) => (seen = e.isIntersecting)) : null;
     if (svg.current) io?.observe(svg.current);
     const tick = (now: number) => {
-      raf = requestAnimationFrame(tick);
+      const brake = motionScale(now);
+      // A receipt printing over Home: the lettering brakes to a halt, then waits for the hold to let go (lib/homeHold).
+      raf = brake === 0 && motionHeld() ? 0 : requestAnimationFrame(tick);
       const gap = now - last;
       const dt = Math.min(0.1, gap / 1000);
       last = now;
@@ -85,13 +88,21 @@ export function GlobeBanner({ layer, word, color, dim, burst }: { layer: 'back' 
       // Eases away like the globe's own burst: fast off the release, coasting back to the usual pace.
       const speed = PACE + (bursting ? BURST_PEAK * (1 - since / BURST_MS) ** 2 : 0);
       // Against the globe's spin: the lettering runs right to left across the front.
-      m.offset = (m.offset - speed * dt) % m.unit;
-      if (!cadence.tick(gap, bursting ? 0 : 33)) return;
+      m.offset = (m.offset - speed * dt * brake) % m.unit;
+      // ~15 a second at rest: each move lays the lettering out along the ring again, Home's dearest job on a phone.
+      if (!cadence.tick(gap, bursting ? 0 : 66)) return;
       run.current?.setAttribute('startOffset', m.offset.toFixed(2));
     };
     raf = requestAnimationFrame(tick);
+    const unhold = subscribeMotionHold(() => {
+      if (!raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(tick);
+      }
+    });
     return () => {
       cancelAnimationFrame(raf);
+      unhold();
       io?.disconnect();
     };
   }, [layer, still]);

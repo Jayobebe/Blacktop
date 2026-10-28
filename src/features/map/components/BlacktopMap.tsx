@@ -121,7 +121,7 @@ import { useWaypoints } from "@/features/waypoints";
 import { useRescueBridge, MapRescueButton } from "@/features/rescue";
 import { useCardDrops, dropToPayload, COLLECT_RADIUS_M, type CardDrop } from "@/features/cards/hooks/useCardDrops";
 import { useCollectedCards, useVehicleCards } from "@/features/cards";
-import { copyLedger } from "@/features/cards/lib/dropEconomy";
+import { copyLedger, useCopyBankVersion } from "@/features/cards/lib/dropEconomy";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { metresText } from '@/lib/units';
@@ -1546,6 +1546,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   // Copy 0 is the one locked in the vault; planted copies number upward from 1.
   const placedCount = myDrops.length;
+  useCopyBankVersion();
   const ledger = copyLedger(
     cards.map((c) => c.stats.totalRides),
     placedCount,
@@ -2132,10 +2133,21 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     };
     const events = ["dragstart", "zoomstart", "rotatestart", "pitchstart"] as const;
     events.forEach((ev) => map.on(ev, stopSpin));
+    // Dragging the place well off the middle lets go of it, as Back does from a pin tapped after panning away:
+    // the card goes and the map stays under the finger (Back still works as it did).
+    const dragOff = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent || !orbitingRef.current) return;
+      const c = map.getContainer();
+      const p = map.project(spot);
+      const reach = Math.max(80, 0.22 * Math.min(c.clientWidth, c.clientHeight));
+      if (Math.hypot(p.x - c.clientWidth / 2, p.y - c.clientHeight / 2) > reach) releaseOrbitRef.current();
+    };
+    map.on("drag", dragOff);
     return () => {
       cancelAnimationFrame(raf);
       stopLegs?.();
       events.forEach((ev) => map.off(ev, stopSpin));
+      map.off("drag", dragOff);
     };
   }, [map, pinKey, isVisible]);
 
@@ -2308,6 +2320,24 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
    * - a pin tapped after panning away: it just lets go where it is, the tilt
    *   easing back, so the rider can carry on panning.
    */
+  /** A drag that takes the place off the middle: the card goes, the map stays where the finger has it, and the tilt eases back once the finger lifts. */
+  const releaseOrbitRef = useRef<() => void>(() => {});
+  releaseOrbitRef.current = () => {
+    const saved = preOrbitCameraRef.current;
+    preOrbitCameraRef.current = null;
+    orbitingRef.current = false;
+    returnStopRef.current?.();
+    setPin(null);
+    setPinArrived(false);
+    lastInteractionAtRef.current = Date.now();
+    if (!destinationRef.current) freePanRef.current = true;
+    if (!map) return;
+    const pitch = saved?.pitch ?? (threeDRef.current ? THREE_D_PITCH : 0);
+    map.once("dragend", () => {
+      if (!orbitingRef.current) map.easeTo({ pitch, duration: 500, essential: true });
+    });
+  };
+
   const exitOrbit = (restore: boolean) => {
     const saved = preOrbitCameraRef.current;
     const fromList = !!pin?.fromList;
@@ -3259,6 +3289,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           tips={[{ target: '[data-tip="orbit-twisty"]', text: tr("Twisty takes the bendy roads there, Direct the quickest way. Both start guiding straight away.") }]}
         />
       )}
+      {/* Its own set, so riders who've seen the card's first tip still learn it. */}
+      {isVisible && (
+        <PageTips
+          page="map-orbit-drag"
+          when={!!pin && pinArrived}
+          tips={[{ target: '[data-tip="orbit-back"]', text: tr("Drag the map away from the place to let go of it, or press Back.") }]}
+        />
+      )}
       {/* Its own set, the first time the hazards near the rider are listed (from Blacktop Console). */}
       {isVisible && (
         <PageTips
@@ -4091,7 +4129,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             );
           })()}
           <div className="mt-2.5 flex gap-2">
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => exitOrbit(true)}>
+            <Button size="sm" variant="outline" className="gap-1" data-tip="orbit-back" onClick={() => exitOrbit(true)}>
               <ArrowLeft className="w-3.5 h-3.5" />{" "}{tr("Back")}
             </Button>
             {/* In someone else's convoy: ask the leader to go there (they pick Twisty or Direct). */}
@@ -4187,8 +4225,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               <Button
                 size="sm"
                 variant="outline"
+                disabled={pickUpDrop.isPending}
                 onClick={async () => {
-                  await pickUpDrop.mutateAsync(selectedDrop.id);
+                  try {
+                    await pickUpDrop.mutateAsync(selectedDrop.id);
+                  } catch {
+                    toast.error(tr("Couldn't pick that up. Try again in a moment."));
+                    return;
+                  }
                   setSelectedStack(null);
                   toast.success(tr("Card picked back up"));
                 }}
@@ -4245,8 +4289,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                     {done && <Check className="w-3 h-3 text-[hsl(142_71%_45%)] shrink-0" />}
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate">
-                    {d.ownerName} · {d.tier}
+                    {d.isOwn ? tr("Yours") : d.ownerName} · {d.tier}
                   </p>
+                  {/* The rider's own copy in a hot-spot: picked back up from here, as from a lone pin. */}
+                  {d.isOwn && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-1.5 h-8"
+                      disabled={pickUpDrop.isPending}
+                      onClick={async () => {
+                        try {
+                          await pickUpDrop.mutateAsync(d.id);
+                        } catch {
+                          toast.error(tr("Couldn't pick that up. Try again in a moment."));
+                          return;
+                        }
+                        const rest = selectedStack.filter((x) => x.id !== d.id);
+                        setSelectedStack(rest.length ? rest : null);
+                        toast.success(tr("Card picked back up"));
+                      }}
+                    >
+                      {tr("Pick up")}
+                    </Button>
+                  )}
                 </div>
               );
             })}

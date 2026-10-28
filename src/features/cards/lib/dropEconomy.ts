@@ -15,6 +15,7 @@
  * collection and streak triggers). Earning the 9th grants a 10th bonus copy.
  * Tier-milestone copies are derived from ride history and are not capped.
  */
+import { useSyncExternalStore } from 'react';
 import { TIER_LADDER } from '../types';
 import { isDemoModeActive } from '@/lib/demoMode';
 
@@ -52,8 +53,24 @@ function writeList(key: string, list: string[]) {
   }
 }
 
+let copiesVersion = 0;
+const copyListeners = new Set<() => void>();
+
 function notify() {
+  copiesVersion += 1;
+  copyListeners.forEach((l) => l());
   window.dispatchEvent(new CustomEvent('blacktop-card-copies'));
+}
+
+/** Redraws whatever reads the copy bank when a copy is granted (the ledger itself is read from storage). */
+export function useCopyBankVersion(): number {
+  return useSyncExternalStore(
+    (l) => {
+      copyListeners.add(l);
+      return () => copyListeners.delete(l);
+    },
+    () => copiesVersion,
+  );
 }
 
 // ── monthly budget ──────────────────────────────────────────────────────────

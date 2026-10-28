@@ -218,6 +218,7 @@ export function useRideHistory() {
     const totalDuration = completedRides.reduce((sum, r) => sum + r.duration, burned.duration);
     const personalTopSpeed = Math.max(burned.maxSpeed, ...completedRides.map(r => r.maxSpeed));
     const personalMaxGForce = Math.max(burned.maxGForce, ...completedRides.map(r => r.maxGForce || 0));
+    const personalMaxLean = Math.max(burned.maxLeanLeft || 0, burned.maxLeanRight || 0, ...completedRides.map(r => Math.max(r.maxLeanLeft || 0, r.maxLeanRight || 0)));
     const convoyRides = completedRides.filter(r => r.isConvoyRide).length + burned.convoyRides;
     
     // Count badges (only from convoy rides)
@@ -241,6 +242,7 @@ export function useRideHistory() {
       totalDuration,
       personalTopSpeed,
       personalMaxGForce,
+      personalMaxLean,
       averageRideLength: totalRides > 0 ? totalDistance / totalRides : 0,
       convoyRides,
       badges,

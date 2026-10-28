@@ -247,11 +247,25 @@ export default function PlanRoute() {
     };
     const events = ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'] as const;
     events.forEach((ev) => map.on(ev, stopSpin));
+    // Dragging the stop well off the middle lets go of it (Back still works): the card goes, the map stays
+    // under the finger, and the tilt eases back once it lifts.
+    const dragOff = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent || !alive) return;
+      const el = map.getContainer();
+      const p = map.project(spot);
+      const reach = Math.max(80, 0.22 * Math.min(el.clientWidth, el.clientHeight));
+      if (Math.hypot(p.x - el.clientWidth / 2, p.y - el.clientHeight / 2) <= reach) return;
+      alive = false;
+      map.once('dragend', () => map.easeTo({ pitch: 0, duration: 500 }));
+      setCandidate(null);
+    };
+    map.on('drag', dragOff);
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       stopLegs?.();
       events.forEach((ev) => map.off(ev, stopSpin));
+      map.off('drag', dragOff);
     };
   }, [candidate]);
 

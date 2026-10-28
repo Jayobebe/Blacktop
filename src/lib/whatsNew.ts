@@ -43,6 +43,16 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-28c',
+      version: '1.29',
+      lines: [
+        { icon: 'battery', text: tr("Home runs smoother and easier on the battery, and holds still while a ride's receipt prints, then picks back up.") },
+        { icon: 'map', text: tr("Looking round a place on the map, drag it away to let go, or press Back as before.") },
+        { icon: 'cards', text: tr("Your own card can be picked back up from a hot-spot, and your spare copies count up straight away.") },
+        { icon: 'lean', text: tr("Stats shows your max lean when lean is switched on.") },
+      ],
+    },
+    {
       id: '2026-10-28b',
       version: '1.28',
       lines: [

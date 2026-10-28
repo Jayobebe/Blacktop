@@ -92,6 +92,7 @@ export interface RideStats {
   totalDuration: number; // in seconds
   personalTopSpeed: number; // in mph
   personalMaxGForce: number; // peak total G magnitude across all rides; 0 if none recorded
+  personalMaxLean: number; // deepest lean either side across all rides, in degrees; 0 if none recorded
   averageRideLength: number; // in miles
   convoyRides: number;
   badges: BadgeCounts;

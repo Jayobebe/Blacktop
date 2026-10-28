@@ -7,7 +7,7 @@ import { useRideHistory, usePeaksHidden, PEAK_HIDDEN } from '@/features/ride';
 import { firstRideAt, markWrappedSeen, wrappedRange, wrapUp, WRAPPED_PERIODS, type WrappedData, type WrappedPeriod } from '@/features/ride/lib/wrapped';
 import { BADGE_ICON } from '@/features/ride/lib/badgeIcons';
 import { useSettings } from '@/features/settings';
-import { useExperience } from '@/features/experience';
+import { useExperience, badgeVisible } from '@/features/experience';
 import { BADGE_INFO, type BadgeType } from '@/types/convoy';
 import { milesText, speedText } from '@/lib/units';
 import { shareFileNative } from '@/lib/nativeShare';
@@ -62,7 +62,10 @@ export default function Wrapped() {
 
   const title = periodTitle(data, lang);
   const kicker = periodKicker(period, ongoing, exp.terms.car);
-  const slides = buildSlides(data, { title, kicker, period, ongoing, lang, unit: settings.distanceUnit === 'km' ? 'km' : 'miles', speed: settings.speedFocusEnabled, lean: exp.canLean && settings.leanAngleEnabled, badges: settings.collectiblesEnabled, peaksHidden, car: exp.terms.car });
+  // Only badges built on what the rider has switched on, as the Stats wallet shows them.
+  const vis = { speed: settings.speedFocusEnabled, lean: exp.canLean && settings.leanAngleEnabled, g: settings.gForceEnabled };
+  const shown = { ...data, badges: data.badges.filter((b) => badgeVisible(b.badge as BadgeType, vis)) };
+  const slides = buildSlides(shown, { title, kicker, period, ongoing, lang, unit: settings.distanceUnit === 'km' ? 'km' : 'miles', speed: settings.speedFocusEnabled, lean: exp.canLean && settings.leanAngleEnabled, badges: settings.collectiblesEnabled, peaksHidden, car: exp.terms.car });
 
   // The story: one slide at a time, moving on by itself; a hold waits.
   const [index, setIndex] = useState(0);

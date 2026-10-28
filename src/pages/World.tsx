@@ -11,7 +11,7 @@ import countriesTopo from 'world-atlas/countries-110m.json';
 import { supabase } from '@/integrations/supabase/client';
 import { ACCENT_COLORS, useSettings } from '@/features/settings';
 import { WorldGlobe, type WorldLandmark } from '@/components/WorldGlobe';
-import { CollectedCardsFolder, useCardDrops, useCardKickbacks, copyLedger, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
+import { CollectedCardsFolder, useCardDrops, useCardKickbacks, copyLedger, useCopyBankVersion, useVehicleCards, MONTHLY_COPY_CAP } from '@/features/cards';
 
 import { useDemoMode, DEMO_COUNTRY_LIGHTS } from '@/lib/demoMode';
 import { QRCodeSVG } from 'qrcode.react';
@@ -78,6 +78,7 @@ export default function World() {
   const { cards } = useVehicleCards();
   const { myDrops } = useCardDrops(null);
   useCardKickbacks();
+  useCopyBankVersion();
   const cardLedger = copyLedger(cards.map((c) => c.stats.totalRides), myDrops.length);
 
   // Local prestige: whose dropped cards get collected the most around here.

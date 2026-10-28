@@ -50,6 +50,7 @@ export const DEMO_STATS: RideStats = {
   totalDuration: 89 * 3600 + 12 * 60, // ~89h 12m
   personalTopSpeed: 142,
   personalMaxGForce: 1.6,
+  personalMaxLean: 47,
   averageRideLength: 1234 / 47,
   convoyRides: 18,
   badges: { speedDemon: 12, journeyman: 9, fallback: 4 },

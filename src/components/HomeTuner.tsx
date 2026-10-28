@@ -38,6 +38,7 @@ import { isThermal } from '@/lib/thermal';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { motionHeld, motionScale, subscribeMotionHold } from '@/lib/homeHold';
 import type { RideSession } from '@/types/blacktop';
 
 /**
@@ -526,6 +527,26 @@ function TunerStrip({ channels, active, onHold, className }: { channels: Channel
       if (holdTimer.current) window.clearTimeout(holdTimer.current);
     };
   }, [n, ids, still, copies]);
+
+  // A receipt printing over Home: the glide brakes to a halt with the rest of Home and picks up again after
+  // (lib/homeHold), by the CSS animation's own playback rate, so it carries on from where it stopped.
+  useEffect(() => {
+    let raf = 0;
+    const steer = () => {
+      const s = motionScale();
+      const anims = track.current?.getAnimations?.() ?? [];
+      for (const a of anims) a.playbackRate = s;
+      raf = (s === 0 && motionHeld()) || s === 1 ? 0 : requestAnimationFrame(steer);
+    };
+    const unhold = subscribeMotionHold(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(steer);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      unhold();
+    };
+  }, []);
 
   // Off screen (another deck card, the map open): the glide waits where it is.
   useEffect(() => {

@@ -9,9 +9,10 @@ import { useRideHistory } from '../hooks/useRideHistory';
 import { landReceipt, useReceiptFlight } from '../lib/receiptFlight';
 import { markRidesSeen } from '../lib/historySeen';
 import { Button } from '@/components/ui/button';
+import { setMotionHeld } from '@/lib/homeHold';
 
-/** After the page warp into Home has let go. */
-const ARRIVE_MS = 550;
+/** After the page warp into Home has let go, and Home's moving things have braked to a halt (lib/homeHold). */
+const ARRIVE_MS = 850;
 /** The printer jumps down into view from the top of the screen. */
 const PRINTER_IN_MS = 520;
 /** The paper feeds out of the slot in steps, in time with the print sound (14 squawks). */
@@ -127,13 +128,15 @@ export function ReceiptFlight() {
       const h = el?.offsetHeight || 600;
       const scale = Math.max(0.02, Math.min(r.width / (el?.offsetWidth || 360), r.height / h) * 1.2);
       eventSound('whoosh');
-      // Whizzes: slow to leave, then fast into the button (scaled from its top, so its top lands just above the middle).
+      // Whizzes: slow to leave, then fast into the button (scaled from its top, so its top lands just above the
+      // middle). Only the transform moves: animating left / top laid the whole receipt out again every frame.
+      const dx = r.left + r.width / 2 - window.innerWidth / 2;
+      const dy = r.top + r.height / 2 - (h * scale) / 2 - slotY();
       setStyle({
         opacity: 0.2,
-        left: r.left + r.width / 2,
-        top: r.top + r.height / 2 - (h * scale) / 2,
-        transform: `translate(-50%, 0) scale(${scale}) rotate(-8deg)`,
-        transition: `left ${FLY_MS}ms cubic-bezier(0.6, 0, 0.9, 0.4), top ${FLY_MS}ms cubic-bezier(0.55, 0, 0.85, 0.3), transform ${FLY_MS}ms cubic-bezier(0.6, 0, 0.9, 0.3), opacity ${FLY_MS}ms ease-in`,
+        top: slotY(),
+        transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(${scale}) rotate(-8deg)`,
+        transition: `transform ${FLY_MS}ms cubic-bezier(0.6, 0, 0.9, 0.3), opacity ${FLY_MS}ms ease-in`,
       });
       at(FLY_MS - 60, () => {
         target!.classList.add('nav-catch');
@@ -171,6 +174,14 @@ export function ReceiptFlight() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [opened]);
+
+  // Home's backdrop, globe and tuner brake to a halt while the receipt is up and spin back up once it has
+  // landed (or been closed): on a phone they and the receipt fought for frames.
+  useEffect(() => {
+    if (!flight || !onHome) return;
+    setMotionHeld(true);
+    return () => setMotionHeld(false);
+  }, [flight, onHome]);
 
   // Anywhere but Home (the rider went straight on): it isn't needed, the ride is in History.
   useEffect(() => {
@@ -215,17 +226,27 @@ export function ReceiptFlight() {
         aria-label={opened ? tr("Ride receipt") : tr("Show the receipt")}
         onClick={open}
         data-no-ui-sound
-        className="fixed z-[61] w-[360px] text-left"
+        className="fixed z-[61] w-[360px] text-left will-change-transform"
         style={{ left: '50%', transformOrigin: '50% 0', ...style }}
       >
         {/* The paper, out of the slot top first: it stays put and is shown from the top down, in steps, lying
-            over the printer's front below the slot, so it comes out of the slot itself. */}
+            over the printer's front below the slot, so it comes out of the slot itself. A window slides down
+            over it while the paper inside slides back by as much, both by transform, so nothing is painted
+            again as it prints (a clip-path over a drop-shadow filter re-drew the whole receipt every step).
+            The window is wider and taller than the paper by the shadow's reach. */}
+        <div
+          className="-mx-6 px-6 pb-8 overflow-hidden will-change-transform"
+          style={{
+            transform: fed ? 'translateY(0)' : 'translateY(-100%)',
+            transition: still || opened ? undefined : `transform ${PRINT_MS}ms steps(${PRINT_STEPS}, end)`,
+          }}
+        >
         <div
           ref={boxRef}
-          className="drop-shadow-2xl"
+          className="will-change-transform shadow-[0_18px_40px_rgba(0,0,0,0.55)]"
           style={{
-            clipPath: fed ? 'inset(0 0 0 0)' : 'inset(0 0 100% 0)',
-            transition: still || opened ? undefined : `clip-path ${PRINT_MS}ms steps(${PRINT_STEPS}, end)`,
+            transform: fed ? 'translateY(0)' : 'translateY(calc(100% + 2rem))',
+            transition: still || opened ? undefined : `transform ${PRINT_MS}ms steps(${PRINT_STEPS}, end)`,
           }}
         >
           <RideSummary
@@ -241,6 +262,7 @@ export function ReceiptFlight() {
             leg={flight.leg}
             onBadgesEarned={onBadgesEarned}
           />
+        </div>
         </div>
       </div>
       {opened && (

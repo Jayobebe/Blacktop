@@ -1,5 +1,6 @@
 import type { BackdropFrame, BackdropRenderer } from './backdropGL';
 import { FrameCadence } from './frameCadence';
+import { motionHeld, motionScale, subscribeMotionHold } from './homeHold';
 
 /**
  * Motion for the app backdrop's wordmark (see components/AppBackdrop).
@@ -13,7 +14,7 @@ import { FrameCadence } from './frameCadence';
  *     your amber / red speed thresholds). Changes ease in and out.
  *
  * Normally a WebGL renderer (lib/backdropGL) draws the wordmark: this loop
- * feeds it belt time, row offset and lens strength, at ~30 fps while the belts
+ * feeds it belt time, row offset and lens strength, at ~20 fps while the belts
  * just drift (at ~20 px/s nobody sees the difference) and every frame while
  * something is surging, scrolling or pulling; ~20 fps on the ride screens.
  * It stops while frozen (map open) or the page is hidden.
@@ -36,7 +37,7 @@ const ENERGY_HALF_LIFE_MS = 380;
 const RATE_EASE = 0.12; // per-frame lerp towards the target rate (the spin-up feel)
 const SPRING_EASE = 0.2; // pull shift / lens stretch returning to rest
 /** Frame spacing while only drifting: normal screens, and the ride screens. */
-const DRIFT_FRAME_MS = 33;
+const DRIFT_FRAME_MS = 50;
 const RIDE_FRAME_MS = 50;
 
 interface Belts {
@@ -63,7 +64,7 @@ let stretchTarget = 0;
 let stretch = 0;
 let raf = 0;
 let lastFrame = 0;
-/** Whole-frame spacing while drifting (lib/frameCadence: a 33 ms timer judders). */
+/** Whole-frame spacing while drifting (lib/frameCadence: a 50 ms timer judders). */
 const cadence = new FrameCadence();
 let layoutDirty = true;
 
@@ -117,7 +118,10 @@ function step(now: number) {
   pullShift += (pullTarget - pullShift) * k(SPRING_EASE);
   stretch += (stretchTarget - stretch) * k(SPRING_EASE);
 
+  // A receipt printing over Home: the belts brake to a halt and spin back up after (lib/homeHold).
+  const brake = motionScale(now);
   const settled =
+    brake === 1 &&
     energy < 0.01 &&
     Math.abs(rate - targetRate) < 0.01 &&
     Math.abs(pullShift - pullTarget) < 0.1 &&
@@ -129,7 +133,13 @@ function step(now: number) {
   }
 
   if (renderer) {
-    beltTime += (dt / 1000) * rate;
+    beltTime += (dt / 1000) * rate * brake;
+    if (brake === 0 && motionHeld()) {
+      // Stopped: one last frame where it came to rest, then nothing until the hold lets go.
+      renderer.draw(frame());
+      lastFrame = 0;
+      return;
+    }
     // Drifting only: fewer frames. Moving: every frame.
     const spacing = settled && !layoutDirty ? (flat ? RIDE_FRAME_MS : DRIFT_FRAME_MS) : 0;
     if (cadence.tick(gap, spacing)) {
@@ -141,7 +151,7 @@ function step(now: number) {
   }
 
   // Fallback rows: CSS animations drift on their own; only steer them while something changes.
-  for (const a of beltAnimations()) a.playbackRate = rate;
+  for (const a of beltAnimations()) a.playbackRate = rate * brake;
   if (layoutDirty || pullShift !== prevShift) layoutRows();
   layoutDirty = false;
   if (settled) {
@@ -159,6 +169,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (!hidden()) wake();
   });
+  subscribeMotionHold(wake);
 }
 
 /**

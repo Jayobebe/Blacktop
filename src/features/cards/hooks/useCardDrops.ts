@@ -151,6 +151,8 @@ export function useCardDrops(center: { lat: number; lng: number } | null) {
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['card-drops'] });
+    // The rider's own planted copies set how many are left to drop: without this the count only caught up on a reload.
+    void queryClient.invalidateQueries({ queryKey: ['my-card-drops'] });
     // Pickups notify the card's owner.
     nudgePush();
   }, [queryClient]);
