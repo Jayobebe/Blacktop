@@ -15,6 +15,7 @@ import {
   type ScenicSpot,
   type Vibe,
   valhallaRoadLimit,
+  valhallaMatch,
 } from "./routing.ts";
 
 const ALLOWED_ORIGINS = new Set([
@@ -594,6 +595,39 @@ serve(async (req) => {
         });
       } catch (e) {
         console.warn("[PLACE-SEARCH] Road limit unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "valhalla_unavailable" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+    }
+
+    // A ride's fixes snapped onto the roads it was on, for its 3D flyover (see valhallaMatch): the phone
+    // sends them 500 at a time, once a ride, and keeps the answer with the ride.
+    if (body.kind === "match") {
+      const raw = Array.isArray(body.points) ? body.points : [];
+      const fixes = raw.filter((p): p is [number, number] =>
+        Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === "number" && Number.isFinite(n)) &&
+        Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90);
+      // Every fix sent, in a line of a ride: none more than 2 km on from the last (the phone splits at gaps).
+      const ok = fixes.length === raw.length && fixes.length >= 2 && fixes.length <= 500 &&
+        fixes.every((p, k) => k === 0 || distanceM(p[1], p[0], fixes[k - 1][1], fixes[k - 1][0]) < 2000);
+      if (!ok) {
+        return new Response(JSON.stringify({ error: "Invalid points" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      const vehicle = body.vehicle === "car" || body.vehicle === "bicycle" ? body.vehicle : "motorcycle";
+      try {
+        const snapped = await valhallaMatch(fixes as LngLat[], vehicle);
+        if (!snapped) throw new Error("no match");
+        return new Response(JSON.stringify({ points: snapped }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 200,
+        });
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Match unavailable:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify({ error: "valhalla_unavailable" }), {
           headers: { ...cors, "Content-Type": "application/json" },
           status: 503,

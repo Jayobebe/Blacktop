@@ -133,16 +133,39 @@ export function buildFlyoverFrames(
 }
 
 /**
+ * Where the ride was at a moment (ms), exactly on its track: the pin is placed from this, not from the frames
+ * in between, which on a fast video are seconds of riding apart and cut every bend in a straight line.
+ * `index` is the track point before it (for the trail drawn so far).
+ */
+export function trackAt(points: GpsPoint[], ts: number): { lat: number; lng: number; index: number } {
+  if (!points.length) return { lat: 0, lng: 0, index: 0 };
+  if (ts <= points[0].timestamp) return { lat: points[0].lat, lng: points[0].lng, index: 0 };
+  const last = points.length - 1;
+  if (ts >= points[last].timestamp) return { lat: points[last].lat, lng: points[last].lng, index: last };
+  let lo = 0;
+  let hi = last;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid].timestamp <= ts) lo = mid;
+    else hi = mid;
+  }
+  const a = points[lo];
+  const b = points[hi];
+  const t = Math.max(0, Math.min(1, (ts - a.timestamp) / Math.max(1, b.timestamp - a.timestamp)));
+  return { lat: lerp(a.lat, b.lat, t), lng: lerp(a.lng, b.lng, t), index: lo };
+}
+
+/**
  * Piecewise-linear resampling leaves visible kinks at every GPS vertex, which
- * reads as a choppy camera. Smooth the flown path and derive bearings from the
- * smoothed track (with an unwrapped moving average) for a continuous glide.
+ * reads as a choppy camera. Derive bearings from the track (with an unwrapped
+ * moving average) for a continuous glide.
  */
 function smoothFrames(frames: FlyoverFrame[], fps: number) {
   if (frames.length < 3) return;
 
-  const posWindow = Math.max(3, Math.round(fps * 0.6));
-  smoothSeries(frames, 'lat', posWindow, 2);
-  smoothSeries(frames, 'lng', posWindow, 2);
+  // Positions aren't smoothed: averaged over frames seconds of riding apart they cut every bend (the pin left
+  // the road on a fast video). The camera's turning is smoothed below instead, and the pin is placed exactly
+  // on the track between frames (trackAt).
   smoothSeries(frames, 'speed', Math.max(3, Math.round(fps * 0.8)), 1);
   smoothSeries(frames, 'lean', Math.max(3, Math.round(fps * 0.4)), 1);
   smoothSeries(frames, 'gForce', Math.max(3, Math.round(fps * 0.4)), 1);
@@ -171,7 +194,7 @@ function smoothFrames(frames: FlyoverFrame[], fps: number) {
   for (let i = 0; i < frames.length; i++) frames[i].bearing = smoothedBearings[i];
 }
 
-function smoothSeries(frames: FlyoverFrame[], key: 'lat' | 'lng' | 'speed' | 'lean' | 'gForce', window: number, passes: number) {
+function smoothSeries(frames: FlyoverFrame[], key: 'speed' | 'lean' | 'gForce', window: number, passes: number) {
   let values = frames.map(f => f[key]);
   for (let p = 0; p < passes; p++) values = movingAverage(values, window);
   for (let i = 0; i < frames.length; i++) frames[i][key] = values[i];

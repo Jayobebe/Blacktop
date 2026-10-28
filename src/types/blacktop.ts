@@ -50,6 +50,8 @@ export interface RideSession {
   roadGaps?: Array<{ after: number; path: Array<[number, number]> }>;
   /** The gaps have been looked at (so a ride with none isn't asked again). */
   roadChecked?: boolean;
+  /** Each fix on the road it was on (ride/lib/roadMatch), aligned to `gpsPoints`, 0 where left as recorded; for the flyover. */
+  roadMatch?: Array<[number, number] | 0>;
   starred?: boolean; // Starred rides are never burned from Ride History
   startedAt: string;
   endedAt: string | null;

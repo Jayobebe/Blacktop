@@ -260,6 +260,43 @@ export async function valhallaRoadLimit(
   });
 }
 
+/**
+ * A ride's own fixes snapped onto the roads it was on (Valhalla's map matching, `map_snap`): one answer
+ * per fix, the point on its road, or null where it couldn't be matched (off road, a car park, a gap).
+ * For the ride's 3D flyover, so the pin and the trail keep to the roads (ride/lib/roadMatch.ts).
+ */
+export async function valhallaMatch(
+  fixes: LngLat[],
+  vehicle: Prefs["vehicle"],
+  timeoutMs = 15000,
+): Promise<Array<LngLat | null> | null> {
+  const costing = vehicle === "bicycle" ? "bicycle" : vehicle === "car" ? "auto" : "motorcycle";
+  const body = JSON.stringify({
+    shape: fixes.map(([lon, lat]) => ({ lat, lon })),
+    costing,
+    shape_match: "map_snap",
+    filters: { attributes: ["matched.point", "matched.type"], action: "include" },
+  });
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+    const res = await fetchWithTimeout(`${base}/trace_attributes`, {
+      method: "POST",
+      headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
+      body,
+    }, timeoutMs);
+    // 400: nothing in it could be matched to a road.
+    if (res.status === 400) return fixes.map(() => null);
+    if (!res.ok) throw new Error(`Valhalla trace ${res.status}`);
+    const json = await res.json();
+    const points: any[] = Array.isArray(json?.matched_points) ? json.matched_points : [];
+    if (points.length !== fixes.length) return null;
+    return points.map((p) =>
+      p && p.type !== "unmatched" && Number.isFinite(p.lon) && Number.isFinite(p.lat)
+        ? [Math.round(p.lon * 1e6) / 1e6, Math.round(p.lat * 1e6) / 1e6] as LngLat
+        : null,
+    );
+  });
+}
+
 /** Routes with the rider's preferences on the chosen engine. OSRM can't avoid anything or route bikes, so those go to Valhalla either way. */
 export async function routeFor(stops: LngLat[], p: Prefs, which: EngineName): Promise<any | null> {
   const engine: OneEngine = which === "both" ? "valhalla" : which;

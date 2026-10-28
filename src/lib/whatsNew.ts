@@ -43,6 +43,15 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29',
+      version: '1.30',
+      lines: [
+        { icon: 'video', text: tr("3D flyover videos are made frame by frame: a smooth 30 a second in full HD, with the roads' colours steady.") },
+        { icon: 'map', text: tr("The flyover's hills only show on rides that have them, and a car's flyover no longer shows lean.") },
+        { icon: 'route', text: tr("Your pin and trail keep to the roads you rode in the flyover, however fast the video.") },
+      ],
+    },
+    {
       id: '2026-10-28c',
       version: '1.29',
       lines: [

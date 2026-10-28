@@ -2,7 +2,7 @@ import { isNativeApp } from '@/lib/platform';
 import { shareFileNative } from '@/lib/nativeShare';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
-import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
+import '@/lib/maplibreWorker';
 import { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { X, Play, Pause, Download, Rewind, SkipBack, LocateFixed, Move3d } from 'lucide-react';
@@ -15,7 +15,8 @@ import { useProfile } from '@/features/profile';
 import { formatDistance, formatDuration, formatSpeed, getSpeedLabel } from '@/lib/format';
 import { convertWebmToMp4 } from '@/lib/convertToMp4';
 import type { RideSession } from '@/types/blacktop';
-import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame } from '../lib/flyover';
+import { buildFlyoverFrames, memberPositionAt, MemberTrack, FlyoverFrame, trackAt } from '../lib/flyover';
+import { roadMatchForRide, withRoadMatch, type RoadMatch } from '../lib/roadMatch';
 import { placeAt, placesAlongRide, type RidePlace } from '../lib/rideNames';
 import { roadGapsForRide, withRoadGaps, type RoadGap } from '../lib/roadGaps';
 import { tr } from '@/lib/i18n';
@@ -23,14 +24,24 @@ import { PixelLoader } from '@/components/PixelLoader';
 import { PageTips } from '@/features/guide';
 import { SensorLook, SENSOR_LOOKS, type SensorLookId } from '@/lib/sensorLook';
 import { isThermal } from '@/lib/thermal';
+import { useExperience } from '@/features/experience';
+import { routeRelief } from '../lib/flyoverRelief';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 // Free, key-less global DEM (Terrarium encoding) hosted by AWS Open Data.
 const TERRAIN_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 
+/** The picture's layout size (everything is drawn in these units)... */
 const CANVAS_W = 1280;
 const CANVAS_H = 720;
+/** ...and its pixels, 1920 × 1080: the map renders at exactly that (no shrinking a bigger picture down, which on
+ * phones dropped thin roads), and the video is made at it. */
+const OUT_SCALE = 1.5;
+const OUT_W = CANVAS_W * OUT_SCALE;
+const OUT_H = CANVAS_H * OUT_SCALE;
 const FPS = 30;
+/** Terrain only for rides with this much climb between their lowest and highest ground (lib/flyoverRelief). */
+const RELIEF_M = 60;
 
 const DURATIONS = [10, 15, 30] as const;
 /** How fast it plays on screen, and how fast the downloaded video runs (percent of the length chosen). */
@@ -67,6 +78,45 @@ function basemapLoaded(map: MapLibreMap) {
   }
 }
 
+/** The phone's own H.264 encoder for 1920 × 1080 at 30 fps, if it has one (WebCodecs); else null. */
+async function pickEncoder(): Promise<VideoEncoderConfig | null> {
+  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined') return null;
+  for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42002a']) {
+    const config: VideoEncoderConfig = { codec, width: OUT_W, height: OUT_H, bitrate: 12_000_000, framerate: FPS, latencyMode: 'quality', avc: { format: 'avc' } };
+    try {
+      if ((await VideoEncoder.isConfigSupported(config)).supported) return config;
+    } catch {
+      /* the next one */
+    }
+  }
+  return null;
+}
+
+/** Once the map has drawn this frame with its tiles in (the basemap's and terrain's; four seconds at most). */
+function mapDrawn(map: MapLibreMap): Promise<void> {
+  return new Promise((resolve) => {
+    const giveUp = performance.now() + 4000;
+    let timer = 0;
+    const check = () => {
+      let tilesIn = true;
+      try {
+        tilesIn = map.areTilesLoaded();
+      } catch {
+        /* drawn as it is */
+      }
+      if ((tilesIn && !map.isMoving()) || performance.now() > giveUp) {
+        map.off('render', check);
+        window.clearInterval(timer);
+        resolve();
+      }
+    };
+    // A frame with nothing new to draw fires no render: look again shortly.
+    timer = window.setInterval(check, 120);
+    map.on('render', check);
+    map.triggerRepaint();
+  });
+}
+
 interface RideFlyoverProps {
   ride: RideSession;
   onClose: () => void;
@@ -75,6 +125,7 @@ interface RideFlyoverProps {
 export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
   const { settings } = useSettings();
   const { profile } = useProfile();
+  const { canLean } = useExperience();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -172,9 +223,31 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ride]);
+  // The fixes snapped onto the roads they were on (roadMatch), so the pin and trail keep to the roads; asked
+  // once a ride alongside the gaps, the map waiting for it the same 8 s at most (undefined: still asking).
+  const [match, setMatch] = useState<RoadMatch | null | undefined>(() => ride.roadMatch);
+  useEffect(() => {
+    if (match !== undefined) return;
+    let live = true;
+    const giveUp = window.setTimeout(() => live && setMatch(null), 8000);
+    void roadMatchForRide(ride)
+      .catch(() => null)
+      .then((m) => {
+        window.clearTimeout(giveUp);
+        if (live) setMatch((cur) => (cur === undefined ? m : cur));
+      });
+    return () => {
+      live = false;
+      window.clearTimeout(giveUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ride]);
   const points = useMemo(
-    () => (gaps ? withRoadGaps((ride.gpsPoints ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)), gaps) : []),
-    [ride, gaps],
+    () =>
+      gaps && match !== undefined
+        ? withRoadGaps(withRoadMatch(ride.gpsPoints ?? [], match).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)), gaps)
+        : [],
+    [ride, gaps, match],
   );
 
   const frames = useMemo(
@@ -199,10 +272,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
 
     // The same dark basemap as the Blacktop map (contrast lifted), so replays match.
     let cancelled = false;
+    // Hilly or not, worked out while the style loads.
+    const relief = routeRelief(routeCoords);
     void loadDarkMapStyle().catch(() => STYLE_URL).then((style) => {
     if (cancelled || !mapContainerRef.current) return;
     const map = new maplibregl.Map({
-      pixelRatio: MAP_PIXEL_RATIO,
+      pixelRatio: isThermal() ? 1 : OUT_SCALE,
       container: mapContainerRef.current,
       style,
       center: routeCoords[0],
@@ -226,7 +301,15 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
           maxzoom: 14,
           attribution: 'Terrain: AWS Terrain Tiles',
         });
-        map.setTerrain({ source: 'flyover-dem', exaggeration: 1.4 });
+        // Only where there are hills to show (flyoverRelief: on phones the roads' colours flickered with it).
+        void relief.then((m) => {
+          if (cancelled || mapRef.current !== map || (m !== null && m < RELIEF_M)) return;
+          try {
+            map.setTerrain({ source: 'flyover-dem', exaggeration: 1.4 });
+          } catch {
+            /* flat it is */
+          }
+        });
       } catch (e) {
         console.warn('[Flyover] terrain unavailable', e);
       }
@@ -390,10 +473,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
+      // Drawn in layout units onto the 1920 × 1080 picture.
+      ctx.setTransform(canvas.width / CANVAS_W, 0, 0, canvas.height / CANVAS_H, 0, 0);
+      ctx.imageSmoothingQuality = 'high';
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
       let picture: CanvasImageSource = map.getCanvas();
       if (lookRef.current !== 'normal') {
-        if (!sensorRef.current) sensorRef.current = new SensorLook(CANVAS_W, CANVAS_H);
+        if (!sensorRef.current) sensorRef.current = new SensorLook(OUT_W, OUT_H);
         picture = sensorRef.current.render(map.getCanvas(), lookRef.current, performance.now() / 1000) ?? picture;
       }
       ctx.drawImage(picture, 0, 0, CANVAS_W, CANVAS_H);
@@ -429,12 +515,12 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       }
 
       const speedLabel = getSpeedLabel(settings.speedUnit);
-      const lines: Array<[string, string]> = [
-        ['Speed', `${Math.round(formatSpeed(frame.speed, settings.speedUnit))} ${speedLabel}`],
-        ['Dist', formatDistance(frame.distance, settings.distanceUnit)],
-        ['Time', formatDuration(Math.round(frame.elapsed))],
-      ];
-      if (settings.leanAngleEnabled) lines.push(['Lean', `${Math.abs(Math.round(frame.lean))}°`]);
+      // What the rider has switched on, as everywhere else: speed with speed focus, lean only on a vehicle that leans.
+      const lines: Array<[string, string]> = [];
+      if (settings.speedFocusEnabled) lines.push([tr("Speed"), `${Math.round(formatSpeed(frame.speed, settings.speedUnit))} ${speedLabel}`]);
+      lines.push([tr("Dist"), formatDistance(frame.distance, settings.distanceUnit)]);
+      lines.push([tr("Time"), formatDuration(Math.round(frame.elapsed))]);
+      if (canLean && settings.leanAngleEnabled) lines.push([tr("Lean"), `${Math.abs(Math.round(frame.lean))}°`]);
       if (settings.gForceEnabled) lines.push(['G', `${(frame.gForce || 0).toFixed(1)}G`]);
 
       // The cards grow as the camera zooms in on the rider (and shrink a little zoomed out). On screen they're
@@ -463,12 +549,13 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       ctx.fillStyle = accentColor;
       ctx.fillRect(0, CANVAS_H - 6, CANVAS_W * progress, 6);
     },
-    [accentColor, drawStatCard, frames.length, memberTracks, profile.name, ride, rideEndTs, rideStartTs, settings],
+    [accentColor, canLean, drawStatCard, frames.length, memberTracks, profile.name, ride, rideEndTs, rideStartTs, settings],
   );
 
   const lastRouteIndexRef = useRef(-1);
 
-  const applyFrame = useCallback(
+  /** The camera and the ride so far for a frame (the picture is made from the map once it has drawn). */
+  const placeFrame = useCallback(
     (frame: FlyoverFrame) => {
       const map = mapRef.current;
       if (!map) return;
@@ -489,9 +576,15 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
           });
         }
       }
+    },
+    [routeCoords],
+  );
+  const applyFrame = useCallback(
+    (frame: FlyoverFrame) => {
+      placeFrame(frame);
       composite(frame);
     },
-    [composite, routeCoords],
+    [placeFrame, composite],
   );
 
   /** Continuous sample between keyframes so playback isn't locked to 30 steps/s. */
@@ -503,19 +596,22 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       const a = frames[i];
       const b = frames[j];
       const mix = (x: number, y: number) => x + (y - x) * f;
+      const elapsed = mix(a.elapsed, b.elapsed);
+      // The pin exactly on the track at that moment (frames are seconds of riding apart on a fast video).
+      const on = trackAt(points, (points[0]?.timestamp ?? 0) + elapsed * 1000);
       return {
-        lat: mix(a.lat, b.lat),
-        lng: mix(a.lng, b.lng),
+        lat: on.lat,
+        lng: on.lng,
         bearing: mix(a.bearing, b.bearing),
-        index: a.index,
-        elapsed: mix(a.elapsed, b.elapsed),
+        index: on.index,
+        elapsed,
         speed: mix(a.speed, b.speed),
         distance: mix(a.distance, b.distance),
         lean: mix(a.lean, b.lean),
         gForce: mix(a.gForce, b.gForce),
       };
     },
-    [frames],
+    [frames, points],
   );
 
   const stopLoop = useCallback(() => {
@@ -723,9 +819,112 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
     if (!rafRef.current) redraw();
   };
 
+  /** Closing mid-export stops it. */
+  const exportStopRef = useRef(false);
+  useEffect(() => () => {
+    exportStopRef.current = true;
+  }, []);
+
+  /**
+   * The video made frame by frame: each frame's camera is set, the map is left to draw it with its tiles in,
+   * the picture is made and handed to the phone's own encoder stamped at its own time (30 a second), so the
+   * video is smooth however slowly the phone draws. Filming the screen as it played (the old way, still the
+   * fallback) kept only the frames a phone managed in time, about 7 a second on one, through a recorder that
+   * gave a quarter of the quality asked for.
+   */
+  const renderVideo = async (config: VideoEncoderConfig): Promise<Blob | null> => {
+    const map = mapRef.current;
+    const canvas = canvasRef.current;
+    if (!map || !canvas) return null;
+    const { Muxer, ArrayBufferTarget } = await import('mp4-muxer');
+    const target = new ArrayBufferTarget();
+    const muxer = new Muxer({ target, video: { codec: 'avc', width: OUT_W, height: OUT_H, frameRate: FPS }, fastStart: 'in-memory' });
+    let failed: unknown = null;
+    const encoder = new VideoEncoder({
+      output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+      error: (e) => {
+        failed = e;
+      },
+    });
+    encoder.configure(config);
+    const end = frames.length - 1;
+    const step = videoSpeed / 100;
+    const count = Math.floor(end / step) + 1;
+    lastRouteIndexRef.current = -1;
+    exportStopRef.current = false;
+    for (let i = 0; i < count; i++) {
+      if (exportStopRef.current || failed) break;
+      const at = Math.min(end, i * step);
+      posRef.current = at;
+      frameIndexRef.current = Math.floor(at);
+      const frame = frameAt(at);
+      placeFrame(frame);
+      await mapDrawn(map);
+      composite(frame);
+      const picture = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
+      encoder.encode(picture, { keyFrame: i % (FPS * 2) === 0 });
+      picture.close();
+      while (encoder.encodeQueueSize > 4) await new Promise((r) => setTimeout(r, 5));
+      if (i % 5 === 0) {
+        setConvertProgress(Math.round((i / count) * 100));
+        setPos(at);
+      }
+    }
+    if (exportStopRef.current) {
+      encoder.close();
+      return null;
+    }
+    await encoder.flush();
+    encoder.close();
+    if (failed) throw failed;
+    muxer.finalize();
+    return new Blob([target.buffer], { type: 'video/mp4' });
+  };
+
+  const saveVideo = async (mp4: Blob) => {
+    const base = (ride.name || 'ride').replace(/[/\\?%*:|"<>]/g, '-').trim();
+    if (isNativeApp()) {
+      await shareFileNative(`${base}-3d-overview.mp4`, mp4);
+      return;
+    }
+    const url = URL.createObjectURL(mp4);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${base}-3d-overview.mp4`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(tr("3D overview downloaded"));
+  };
+
   const handleDownload = async () => {
     const canvas = canvasRef.current;
     if (!canvas || !frames.length || recording) return;
+
+    // Frame by frame where the phone has a video encoder.
+    const config = await pickEncoder();
+    if (config) {
+      stopLoop();
+      setRecording(true);
+      setPlaying(false);
+      chaseRef.current = true;
+      setConvertProgress(0);
+      try {
+        const mp4 = await renderVideo(config);
+        if (mp4) await saveVideo(mp4);
+      } catch (e) {
+        console.error('[Flyover] video failed', e);
+        toast.error(tr("Failed to render the 3D overview"));
+      } finally {
+        chaseRef.current = false;
+        setConvertProgress(null);
+        setRecording(false);
+        redraw();
+      }
+      return;
+    }
 
     stopLoop();
     setRecording(true);
@@ -776,22 +975,7 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
       setConvertProgress(0);
       toast.info(tr("Converting flyover to MP4..."));
       const mp4 = await convertWebmToMp4(blob, p => setConvertProgress(p));
-
-      const base = (ride.name || 'ride').replace(/[/\\?%*:|"<>]/g, '-').trim();
-      if (isNativeApp()) {
-        await shareFileNative(`${base}-3d-overview.mp4`, mp4);
-        return;
-      }
-      const url = URL.createObjectURL(mp4);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${base}-3d-overview.mp4`;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast.success(tr("3D overview downloaded"));
+      await saveVideo(mp4);
     } catch (e) {
       console.error('[Flyover] download failed', e);
       toast.error(tr("Failed to render the 3D overview"));
@@ -840,8 +1024,8 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
           <div className="relative w-full short:max-w-[60vh] short:mx-auto">
             <canvas
               ref={canvasRef}
-              width={CANVAS_W}
-              height={CANVAS_H}
+              width={OUT_W}
+              height={OUT_H}
               className="w-full rounded-xl border border-border bg-black touch-none cursor-grab active:cursor-grabbing"
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
@@ -980,7 +1164,9 @@ export function RideFlyover({ ride, onClose }: RideFlyoverProps) {
             <Download className="w-4 h-4 mr-2" />
           )}
           {convertProgress !== null
-            ? tr("Converting {0}%", [convertProgress])
+            ? recording
+              ? tr("Making the video {0}%", [convertProgress])
+              : tr("Converting {0}%", [convertProgress])
             : recording
               ? tr("Recording…")
               : tr("Download MP4")}
