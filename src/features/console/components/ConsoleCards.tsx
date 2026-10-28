@@ -25,7 +25,7 @@ import { useSavedRoutes, type SavedRoute } from '@/features/map/lib/savedRoutes'
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
 import { requestMapSearch } from '@/features/map/lib/mapConsole';
 import { useGarage, useBikeStats, dueItems } from '@/features/garage';
-import { armAlarm } from '@/features/alarm';
+import { holdFillStyle, useAlarmHold } from '@/features/alarm';
 import { useCrew, setActiveCrew } from '@/features/crew/useCrew';
 import { crewTotals, weekStats } from '@/features/crew/stats';
 import { challengesForWeek, challengeScore, daysLeftInWeek, type CrewUnits } from '@/features/crew/challenges';
@@ -488,17 +488,17 @@ function VehicleCard({ spot, active }: { spot: Spot | null; active: boolean }) {
 
 /** The anti-theft alarm, slim enough for a card's header (a 48 px target all the same). */
 function ArmButton() {
+  // Held for a second to arm, as every alarm button is.
+  const { holding, handlers } = useAlarmHold();
   return (
     <button
       type="button"
-      aria-label={tr("Arm the anti-theft alarm")}
-      onClick={() => {
-        haptics.tick();
-        void armAlarm();
-      }}
-      className="glove-hit ml-1 -my-1 inline-flex items-center gap-1 h-7 px-2 rounded-lg border border-[hsl(var(--burn)/0.4)] bg-[hsl(var(--burn)/0.1)] text-[11px] font-semibold text-[hsl(var(--burn))]"
+      {...handlers}
+      aria-label={tr("Hold to arm the anti-theft alarm")}
+      className="hold-target glove-hit relative overflow-hidden ml-1 -my-1 inline-flex items-center gap-1 h-7 px-2 rounded-lg border border-[hsl(var(--burn)/0.4)] bg-[hsl(var(--burn)/0.1)] text-[11px] font-semibold text-[hsl(var(--burn))]"
     >
-      <Siren className="w-3.5 h-3.5" /> {tr("Alarm")}
+      <span aria-hidden className="absolute inset-x-0 bottom-0 bg-[hsl(var(--burn)/0.3)] pointer-events-none" style={holdFillStyle(holding)} />
+      <Siren className="relative w-3.5 h-3.5" /> <span className="relative">{tr("Alarm")}</span>
     </button>
   );
 }

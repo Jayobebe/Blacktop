@@ -289,30 +289,24 @@ async function searchPlaces(
     : null;
 
   try {
-    // 1) Nearby-first (strict bounds) for non-postal searches
-    const primary = await callPlaceSearch<any[]>({
-      kind: 'search',
-      q: query,
-      countryCode,
-      viewbox: preferNearby ? nearViewbox : null,
-      bounded: preferNearby ? '1' : '0',
-      limit: preferNearby ? 25 : 30,
+    // Nearby (strict bounds, for non-postal searches) and anywhere, at once: nearby-first alone
+    // never looked further when something near half matched, so "Blackpool Tower" from elsewhere
+    // came back as nothing to do with it.
+    const [nearby, anywhere] = await Promise.all([
+      preferNearby
+        ? callPlaceSearch<any[]>({ kind: 'search', q: query, countryCode, viewbox: nearViewbox, bounded: '1', limit: 25 }).catch(() => [])
+        : Promise.resolve([] as any[]),
+      callPlaceSearch<any[]>({ kind: 'search', q: query, countryCode, viewbox: preferNearby ? nearViewbox : null, bounded: '0', limit: preferNearby ? 15 : 30 }),
+    ]);
+    const seenIds = new Set<string>();
+    const places = [...(nearby || []), ...(anywhere || [])].filter((p: any) => {
+      const id = String(p?.place_id ?? '');
+      if (!id || seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
     });
 
-    // 2) If nothing nearby and user didn't type a postcode/ZIP, broaden to anywhere
-    const usedExpanded = preferNearby && (!primary || primary.length === 0);
-    const secondary = usedExpanded
-      ? await callPlaceSearch<any[]>({
-          kind: 'search',
-          q: query,
-          countryCode,
-          viewbox: null,
-          bounded: '0',
-          limit: 30,
-        })
-      : primary;
-
-    let results: SearchResult[] = (secondary || []).map((place: any) => {
+    let results: SearchResult[] = places.map((place: any) => {
       const lat = parseFloat(place.lat);
       const lng = parseFloat(place.lon);
 
@@ -332,14 +326,22 @@ async function searchPlaces(
       return result;
     });
 
-    if (userLocation) {
-      results = results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-
-      // Only clamp to "nearby" when we actually found nearby results.
-      if (!usedExpanded) {
-        results = results.filter((r) => !preferNearby || (r.distance || 0) <= 30);
-      }
+    // The place asked for by name first, wherever it is; then the nearest. A loose match more than
+    // 30 km off is only kept when nothing nearer matched at all.
+    const norm = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
+    const want = norm(query);
+    const words = query.split(/\s+/).map(norm).filter(Boolean);
+    const match = (r: SearchResult) => {
+      const n = norm(r.name);
+      if (n === want) return 0;
+      if (n.startsWith(want)) return 1;
+      if (words.every((w) => n.includes(w))) return 2;
+      return 3;
+    };
+    if (userLocation && preferNearby && results.some((r) => match(r) < 3 || (r.distance || 0) <= 30)) {
+      results = results.filter((r) => match(r) < 3 || (r.distance || 0) <= 30);
     }
+    results.sort((a, b) => match(a) - match(b) || (a.distance || 0) - (b.distance || 0));
 
     return results.slice(0, 8);
   } catch (error) {

@@ -220,6 +220,46 @@ export async function valhallaStretches(
   });
 }
 
+/**
+ * The speed limit of the road at the end of a short trail of GPS fixes, from
+ * Valhalla's own road data (OpenStreetMap's maxspeed, in km/h): the trail is
+ * matched to the roads (`map_snap`) and the last fix's road is the one asked
+ * about. `matched: false` when the last fix couldn't be put on a road; `kmh`
+ * null when the road has no limit mapped. Overpass, the first source, is down
+ * as often as up; this is the server the app already routes on.
+ */
+export async function valhallaRoadLimit(
+  trail: LngLat[],
+  vehicle: Prefs["vehicle"],
+  timeoutMs = 7000,
+): Promise<{ matched: boolean; kmh: number | null; road: string | null } | null> {
+  const costing = vehicle === "bicycle" ? "bicycle" : vehicle === "car" ? "auto" : "motorcycle";
+  const body = JSON.stringify({
+    shape: trail.map(([lon, lat]) => ({ lat, lon })),
+    costing,
+    shape_match: "map_snap",
+    filters: { attributes: ["edge.speed_limit", "edge.names", "matched.edge_index", "matched.type"], action: "include" },
+  });
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+    const res = await fetchWithTimeout(`${base}/trace_attributes`, {
+      method: "POST",
+      headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
+      body,
+    }, timeoutMs);
+    // 400: the trail couldn't be matched to any road at all.
+    if (res.status === 400) return { matched: false, kmh: null, road: null };
+    if (!res.ok) throw new Error(`Valhalla trace ${res.status}`);
+    const json = await res.json();
+    const points: any[] = Array.isArray(json?.matched_points) ? json.matched_points : [];
+    const last = points[points.length - 1];
+    const edge = last && last.type !== "unmatched" && Number.isInteger(last.edge_index) ? json.edges?.[last.edge_index] : null;
+    if (!edge) return { matched: false, kmh: null, road: null };
+    const kmh = typeof edge.speed_limit === "number" && edge.speed_limit > 0 && edge.speed_limit < 250 ? edge.speed_limit : null;
+    const road = Array.isArray(edge.names) && edge.names.length ? String(edge.names[0]).slice(0, 60) : null;
+    return { matched: true, kmh, road };
+  });
+}
+
 /** Routes with the rider's preferences on the chosen engine. OSRM can't avoid anything or route bikes, so those go to Valhalla either way. */
 export async function routeFor(stops: LngLat[], p: Prefs, which: EngineName): Promise<any | null> {
   const engine: OneEngine = which === "both" ? "valhalla" : which;

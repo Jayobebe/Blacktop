@@ -219,17 +219,22 @@ export async function searchPlaces(
     toResult(p.place_id.toString(), p.name || String(p.display_name || '').split(',')[0], p.display_name, parseFloat(p.lat), parseFloat(p.lon)));
 
   try {
-    // Nearby name/brand matches (OSM directly) + address-style matches in a
-    // ~50km box, together, so local places like "Tesco" or "Costa" show up.
-    const [local, bounded] = await Promise.all([
+    // Three asks at once: names and brands near the rider (OSM directly: "Tesco", "Costa"), the
+    // search service inside ~50 km, and the search service anywhere (biased to the rider), so a
+    // place further away (Blackpool Tower) still comes back when something nearby half matches.
+    // Overpass is often down: it gets four seconds, not the half a minute it takes to fail.
+    const within = <T,>(p: Promise<T>, ms: number, fallback: T) =>
+      Promise.race([p.catch(() => fallback), new Promise<T>((r) => window.setTimeout(() => r(fallback), ms))]);
+    const [local, bounded, wide] = await Promise.all([
       anchor
-        ? callPlaceSearch<OverpassElement[]>({ kind: 'overpass', lat: anchor.lat, lon: anchor.lng, radius_m: 20000, amenities: [], name: q, limit: 60 })
-            .catch(() => [] as OverpassElement[])
+        ? within(callPlaceSearch<OverpassElement[]>({ kind: 'overpass', lat: anchor.lat, lon: anchor.lng, radius_m: 20000, amenities: [], name: q, limit: 60 }), 4000, [] as OverpassElement[])
         : Promise.resolve([] as OverpassElement[]),
       nearbyViewbox
         ? callPlaceSearch<NominatimPlace[]>({ kind: 'search', q, countryCode, viewbox: nearbyViewbox, bounded: '1', limit: 20 })
             .catch(() => [] as NominatimPlace[])
         : Promise.resolve([] as NominatimPlace[]),
+      callPlaceSearch<NominatimPlace[]>({ kind: 'search', q, countryCode, viewbox: nearbyViewbox ?? mapViewbox, bounded: '0', limit: 10 })
+        .catch(() => [] as NominatimPlace[]),
     ]);
 
     const localResults = (local || [])
@@ -240,15 +245,7 @@ export async function searchPlaces(
         return toResult(`op:${el.id}`, name, address, el.lat, el.lon);
       });
 
-    let results = [...localResults, ...fromNominatim(bounded)];
-
-    // Nothing nearby: widen out (legit long-distance destinations, towns).
-    if (results.length === 0) {
-      const wide = await callPlaceSearch<NominatimPlace[]>({
-        kind: 'search', q, countryCode, viewbox: nearbyViewbox ?? mapViewbox, bounded: '0', limit: 20,
-      });
-      results = fromNominatim(wide);
-    }
+    const results = [...localResults, ...fromNominatim(bounded), ...fromNominatim(wide)];
 
     // Drop near-duplicates (same name within ~100m).
     const seen: MapSearchResult[] = [];
@@ -258,7 +255,18 @@ export async function searchPlaces(
         && calculateDistance(s.lat, s.lng, r.lat, r.lng) < 0.1);
       if (!dup) seen.push(r);
     }
-    if (anchor) seen.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    // How well the name matches comes first (the place asked for by name, wherever it is), then
+    // how near: sorted by distance alone, a nearby half match buried the one asked for.
+    const want = normaliseName(q);
+    const words = q.split(/\s+/).map(normaliseName).filter(Boolean);
+    const match = (r: MapSearchResult) => {
+      const n = normaliseName(r.name);
+      if (n === want) return 0;
+      if (n.startsWith(want)) return 1;
+      if (words.every((w) => n.includes(w))) return 2;
+      return 3;
+    };
+    seen.sort((a, b) => match(a) - match(b) || (a.distance ?? 0) - (b.distance ?? 0));
     return seen.slice(0, 8);
   } catch (error) {
     console.error('Map place search failed:', error);

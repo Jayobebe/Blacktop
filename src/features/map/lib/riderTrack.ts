@@ -9,7 +9,9 @@
  * and where the fix says is faded out over a moment instead of jumped (an
  * offset that decays), so the drawn position is always continuous and never
  * lags behind. Barely moving, the fade is slower, so GPS wander at a standstill
- * doesn't twitch the pin.
+ * doesn't twitch the pin, and stopped (the phone's own speed under walking
+ * pace) the pin holds where it is until a fix lands clearly outside the
+ * wander: at 0 the pin used to jitter about, and the camera's turn with it.
  */
 export type LatLng = { lat: number; lng: number };
 
@@ -18,6 +20,12 @@ const JUMP_M = 3000;
 const M_PER_DEG = 111_320;
 /** How far a fix pulls the reckoned position towards itself while moving. */
 const PULL = 0.5;
+/** Under this (m/s, about 2 mph) the rider is stopped: the pin holds. */
+const STOPPED_MS = 0.9;
+/** A stopped pin moves for a fix this far away at least, or further than the fix's own accuracy. */
+const HOLD_M = 10;
+/** Heading only from this speed (m/s, about 6 mph): slower, GPS headings swing about. */
+const HEADING_MS = 2.7;
 
 export class RiderTrack {
   private fixAt = 0;
@@ -37,7 +45,7 @@ export class RiderTrack {
 
   /** The way the rider is going (degrees from north), or null when barely moving. */
   get heading(): number | null {
-    return this.speed > 2 ? ((Math.atan2(this.vE, this.vN) * 180) / Math.PI + 360) % 360 : null;
+    return this.speed > HEADING_MS ? ((Math.atan2(this.vE, this.vN) * 180) / Math.PI + 360) % 360 : null;
   }
 
   get hasFix() {
@@ -49,11 +57,22 @@ export class RiderTrack {
     return this.base;
   }
 
-  /** A new fix. `speed` (m/s) and `heading` (degrees) from the phone when it has them. */
-  fix(lat: number, lng: number, at: number, speed: number | null, heading: number | null) {
+  /** A new fix. `speed` (m/s), `heading` (degrees) and `accuracy` (m) from the phone when it has them. */
+  fix(lat: number, lng: number, at: number, speed: number | null, heading: number | null, accuracy: number | null = null) {
     const drawn = this.base ? this.position(at) : null;
     const prev = this.base;
     const prevAt = this.fixAt;
+    // Stopped: hold where the pin is unless this fix is clearly somewhere else (wander isn't movement).
+    const stopped = speed != null && Number.isFinite(speed) ? speed < STOPPED_MS : this.speed < STOPPED_MS;
+    if (prev && stopped && at - prevAt < 30_000) {
+      const [dE, dN] = metresBetween(prev, { lat, lng });
+      // (The last real fix's time stays, so the hold re-anchors after half a minute and the speed
+      // worked out when the rider sets off isn't the whole held gap covered in a second.)
+      if (Math.hypot(dE, dN) < Math.max(HOLD_M, Math.min(40, accuracy ?? 0))) {
+        this.vE = this.vN = 0;
+        return;
+      }
+    }
     // On the move, a fix only pulls where the rider is reckoned to be halfway towards it: a fix's few
     // metres of noise are halved, and a real change of line is caught up within a couple of fixes.
     let base = { lat, lng };

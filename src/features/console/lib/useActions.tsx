@@ -223,7 +223,8 @@ export function useActions(): ConsoleAction[] {
       });
     }
   }
-  out.push({ id: 'safety.alarm', group: 'safety', label: tr("Anti-theft alarm"), Icon: Siren, burn: true, run: () => armAlarm() });
+  // Held to arm, as every alarm button is: a tap only says so.
+  out.push({ id: 'safety.alarm', group: 'safety', label: tr("Anti-theft alarm"), Icon: Siren, burn: true, hold: true, run: () => armAlarm(), onTap: () => toast(tr("Hold to arm the alarm")) });
   out.push({ id: 'safety.drill', group: 'safety', label: tr("Rescue drill"), Icon: LifeBuoy, run: () => openRescueDrill() });
   out.push({
     id: 'toggle.autoRescueEnabled',

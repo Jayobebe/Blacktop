@@ -13,7 +13,8 @@ const ARROW = 'bt-wind-arrow';
 const ROUTE_SOURCE = 'bt-wind-route';
 const ROUTE_LAYER = 'bt-wind-route';
 export const OVERLAY_SOURCE = 'bt-wind-overlay';
-const OVERLAY_LAYER = 'bt-wind-overlay';
+export const WIND_OVERLAY_LAYER = 'bt-wind-overlay';
+const OVERLAY_LAYER = WIND_OVERLAY_LAYER;
 const PR = 2;
 
 /** A plain arrow pointing up (north), white for tinting. */

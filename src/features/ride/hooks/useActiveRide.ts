@@ -220,7 +220,17 @@ function flushRideState() {
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', flushRideState);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flushRideState();
+    if (document.visibilityState === 'hidden') {
+      flushRideState();
+      return;
+    }
+    // Back in a browser after being away: its watch is often left throttled (a fix every 5 s or
+    // so) or stopped, so it's started again. The apps' background GPS carries on by itself.
+    if (rideState.isActive && !rideState.isPaused && watchId !== null && !watchIsBackground && !isNative) {
+      void stopGpsWatch().then(() => {
+        if (rideState.isActive && !rideState.isPaused && watchId === null) void startGpsWatch();
+      });
+    }
   });
 }
 

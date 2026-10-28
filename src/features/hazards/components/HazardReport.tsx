@@ -33,13 +33,14 @@ export function HazardReport({ getPosition, className }: { getPosition?: () => R
           setOpen(true);
         }}
         className={cn(
-          'pointer-events-auto flex items-center gap-1.5 h-12 pl-3.5 pr-4 rounded-xl frost-accent shadow-lg text-sm font-semibold active:scale-95 transition-transform',
+          // The map's button family: a hairline border like the rest, not the accent.
+          'pointer-events-auto flex items-center gap-1.5 h-12 pl-3.5 pr-4 rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary text-sm font-semibold active:scale-95 transition-transform',
           className,
         )}
         aria-label={tr("Report a hazard")}
         data-tip="map-report"
       >
-        <Megaphone className="w-4 h-4" />{" "}{tr("Report")}
+        <Megaphone className="w-4 h-4 text-accent" />{" "}{tr("Report")}
       </button>
       {open && <HazardPicker onClose={() => setOpen(false)} seenAt={seenAt} getPosition={getPosition} />}
     </>

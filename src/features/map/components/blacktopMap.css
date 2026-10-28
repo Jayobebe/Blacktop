@@ -71,27 +71,23 @@
   z-index: 20;
   /* Below the notch / status bar, and level with the search bar (0.75rem down, less MapLibre's own 10px margin). */
   top: calc(2px + var(--safe-top));
-  right: calc(10px + var(--safe-right));
-}
-
-/* In portrait the search bar spans almost full width; shift MapLibre controls
-   further right so they sit in the clear margin instead of clipping the input. */
-@media (orientation: portrait) {
-  .blacktop-maplibre .maplibregl-ctrl-top-right {
-    right: calc(0.25rem + var(--safe-right));
-  }
+  /* 12 px from the edge with MapLibre's own 10 px margin, the same as the close button (0.75rem) under
+     them, so the right-hand column lines up with it either way up (it was 20 px in landscape, 14 in portrait). */
+  right: calc(2px + var(--safe-right));
 }
 
 .blacktop-maplibre .maplibregl-ctrl-bottom-right {
   z-index: 20;
 }
 
-/* The anti-theft alarm's siren (AlarmControl): burn orange, as everywhere the alarm appears. */
-.blacktop-maplibre .maplibregl-ctrl-group button.bt-alarm-ctrl {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: hsl(var(--burn));
+/* The rescue R's place in the right-hand column (SlotControl): burn orange edge to edge, and gone
+   when there's no R (a convoy's leader). */
+.blacktop-maplibre .maplibregl-ctrl-group.bt-rescue-ctrl {
+  overflow: hidden;
+  background: hsl(var(--burn));
+}
+.blacktop-maplibre .maplibregl-ctrl-group.bt-rescue-ctrl:empty {
+  display: none;
 }
 
 /* The compass: north in burn orange, south grey (MapLibre's own needle, redrawn; no invert on this one). */
@@ -136,3 +132,23 @@
     hsl(var(--lava, var(--accent)) / 0.14);
 }
 html.thermal .map-switch-haze { display: none; }
+
+/* The search bar comes and goes as the rider stops and sets off: a fade and a short slide, never a jump.
+   Leaving, it's lifted out of the column so whatever takes its slot (the turn banner) doesn't wait under it. */
+.map-search-slide {
+  transition: opacity 220ms ease, transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.map-search-slide.is-out {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+.map-search-slide.is-leaving {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-search-slide { transition: none; }
+}
+html.thermal .map-search-slide { transition: none; }

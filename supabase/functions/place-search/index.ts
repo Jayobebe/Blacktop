@@ -14,6 +14,7 @@ import {
   type RoutePrefs,
   type ScenicSpot,
   type Vibe,
+  valhallaRoadLimit,
 } from "./routing.ts";
 
 const ALLOWED_ORIGINS = new Set([
@@ -83,6 +84,13 @@ type SpeedLimitsBody = {
   south: number;
   east: number;
   north: number;
+};
+
+/** The speed limit of the road the rider is on: a short trail of their fixes, [lng, lat], oldest first. */
+type RoadLimitBody = {
+  kind: "roadlimit";
+  points: unknown;
+  vehicle?: unknown;
 };
 
 type RouteBody = RoutePrefs & {
@@ -386,7 +394,7 @@ serve(async (req) => {
 
 
   try {
-    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody | RoadsBody | SpeedLimitsBody;
+    const body = (await req.json()) as SearchBody | ReverseBody | OverpassBody | RouteBody | CamerasBody | LoopBody | TwistyBody | RoadsBody | SpeedLimitsBody | RoadLimitBody;
 
     if (body.kind === "twisty") {
       const coords = Array.isArray(body.coordinates) ? body.coordinates : [];
@@ -561,6 +569,38 @@ serve(async (req) => {
     // map cell at a time as the rider goes), as each way's OpenStreetMap maxspeed
     // and its line, flattened and rounded, so the phone can match the rider to
     // the road they're on. The phone reads the maxspeed (lib/speedLimit.ts).
+    // The speed limit where the rider is, from Valhalla's road data (see valhallaRoadLimit): the
+    // phone sends its last few fixes now and then while moving.
+    if (body.kind === "roadlimit") {
+      const raw = Array.isArray(body.points) ? body.points : [];
+      const trail = raw
+        .filter((p): p is [number, number] =>
+          Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === "number" && Number.isFinite(n)) &&
+          Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90)
+        .slice(-12);
+      const spanOk = trail.length >= 2 && trail.every((p) => distanceM(p[1], p[0], trail[trail.length - 1][1], trail[trail.length - 1][0]) < 3000);
+      if (!spanOk) {
+        return new Response(JSON.stringify({ error: "Invalid trail" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      const vehicle = body.vehicle === "car" || body.vehicle === "bicycle" ? body.vehicle : "motorcycle";
+      try {
+        const answer = await valhallaRoadLimit(trail as LngLat[], vehicle);
+        return new Response(JSON.stringify(answer ?? { matched: false, kmh: null, road: null }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 200,
+        });
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] Road limit unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "valhalla_unavailable" }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+          status: 503,
+        });
+      }
+    }
+
     if (body.kind === "speedlimits") {
       const { west, south, east, north } = body;
       const valid =

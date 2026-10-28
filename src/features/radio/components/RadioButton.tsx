@@ -65,12 +65,12 @@ export function RadioButton({ variant = 'ride', className }: Props) {
         'relative',
         variant === 'ride'
           ? 'h-14 w-14 landscape:h-16 landscape:w-16 [@media(max-height:420px)]:h-12 [@media(max-height:420px)]:w-12 rounded-2xl touch-target'
-          : 'w-9 h-9 rounded-none',
+          : 'w-9 h-9 rounded-none hover:bg-secondary',
         className,
       )}
     >
       {/* The same face as every radio button: bars in the station's colour once one is loaded. */}
-      <RadioFace playing={active} small={variant === 'map'} className={cn('absolute inset-0', variant === 'map' && 'border-0')} />
+      <RadioFace playing={active} small={variant === 'map'} plain={variant === 'map'} className={cn('absolute inset-0', variant === 'map' && 'border-0')} />
     </button>
   );
 }

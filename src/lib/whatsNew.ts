@@ -43,6 +43,17 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-28',
+      version: '1.27',
+      lines: [
+        { icon: 'map', text: tr("Your pin keeps to the road: it follows the route or the road you're on, and holds still when you stop.") },
+        { icon: 'map', text: tr("Speed limits come from the router now, so they still show when the map server is down, in your own units.") },
+        { icon: 'map', text: tr("The + and − buttons zoom without losing you, and coming back to the app while navigating picks straight back up.") },
+        { icon: 'map', text: tr("Search finds a place by its name wherever it is, not only places near you.") },
+        { icon: 'map', text: tr("Every alarm button is held for a second to arm, like rescue. On the map the R and the siren have swapped places.") },
+      ],
+    },
+    {
       id: '2026-10-27b',
       version: '1.26',
       lines: [

@@ -24,7 +24,7 @@ import { isRoutingOffline, useRoutingOffline } from "../lib/routingStatus";
 import { checkRouteWeather, findDryRoute, HEAVY_MM } from "../lib/weatherRoute";
 import { checkRouteWind, riderWindClass, windWarningsOn, type RouteWind } from "../lib/windRoute";
 import { setWindWarning, useWindWarning, windColour } from "../lib/windWarning";
-import { addWindRouteLayer, setWindRouteData } from "../lib/windLayers";
+import { addWindRouteLayer, setWindRouteData, WIND_OVERLAY_LAYER } from "../lib/windLayers";
 import { WindBanner } from "./WindBanner";
 import { RadioButton } from "@/features/radio";
 import { useNextWaypoint } from "@/features/waypoints";
@@ -48,7 +48,9 @@ import { addPinLayers, clearCategoryPins, setMyPins, setPinsVisible, showCategor
 import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDropLayer";
 import { CardDropPrompt } from "./CardDropPrompt";
 import { getActiveBikeIdSnapshot } from "@/features/garage/hooks/useGarage";
-import { AlarmControl } from "../lib/alarmControl";
+import { SlotControl } from "../lib/slotControl";
+import { AlarmButton } from "@/features/alarm";
+import { createPortal } from "react-dom";
 import { applyWaterWordmark } from "../lib/waterWordmark";
 import {
   addHazardLayer,
@@ -88,6 +90,8 @@ import { isThermal } from "@/lib/thermal";
 import { chooseRouteTrip } from "@/features/ride/lib/trips";
 import { switchLegs, playLegs, inOutCubic, type Cam } from "../lib/switchCamera";
 import { RiderTrack } from "../lib/riderTrack";
+import { RoadSnapper, type LngLat as SnapLngLat } from "../lib/roadSnap";
+import { usePresence } from "@/hooks/usePresence";
 import { speedBands, useSpeedLimit } from "@/lib/speedLimit";
 import { SpeedLimitSign } from "@/components/SpeedLimitSign";
 import {
@@ -182,6 +186,32 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): num
   const dLng = toRad(lng2 - lng1);
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/** The basemap's roads round a point, as lines for the road snapper (only the tiles already loaded; nothing fetched). */
+const NOT_ROADS = new Set(["rail", "transit", "ferry", "aerialway", "bus_guideway", "pier", "path", "track", "bridleway", "footway", "cycleway", "steps"]);
+function roadLinesNear(map: MapLibreMap, near: { lat: number; lng: number }, motorised: boolean): SnapLngLat[][] {
+  let features: ReturnType<MapLibreMap["querySourceFeatures"]> = [];
+  try {
+    if (!map.getSource("openmaptiles")) return [];
+    features = map.querySourceFeatures("openmaptiles", { sourceLayer: "transportation" });
+  } catch {
+    return [];
+  }
+  const dLat = 800 / 111_320;
+  const dLng = 800 / (111_320 * Math.max(0.2, Math.cos((near.lat * Math.PI) / 180)));
+  const out: SnapLngLat[][] = [];
+  for (const f of features) {
+    const cls = String(f.properties?.class ?? "");
+    // Paths and tracks only for riders with nothing motorised: a path beside a road would steal the pin.
+    if (NOT_ROADS.has(cls) && (motorised || !["path", "track", "cycleway", "bridleway"].includes(cls))) continue;
+    const g = f.geometry;
+    const lines = g.type === "LineString" ? [g.coordinates] : g.type === "MultiLineString" ? g.coordinates : [];
+    for (const line of lines as SnapLngLat[][]) {
+      if (line.some(([lng, lat]) => Math.abs(lat - near.lat) < dLat && Math.abs(lng - near.lng) < dLng)) out.push(line);
+    }
+  }
+  return out;
 }
 
 function safeBearing(heading: number | null, map: MapLibreMap): number {
@@ -377,6 +407,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   /** Where the rider is drawn between GPS fixes (lib/riderTrack), and the follow loop's nudge. */
   const trackRef = useRef(new RiderTrack());
   const kickFollowRef = useRef<() => void>(() => {});
+  /** Keeps the drawn pin on the road (lib/roadSnap): the guided route, else the basemap's roads near the rider. */
+  const snapRef = useRef(new RoadSnapper());
+  const snapRouteRef = useRef<SnapLngLat[] | null>(null);
+  const snapGatheredAtRef = useRef(0);
   /** A quick search's tiles are on the map (Back from one of its places returns to that overview). */
   const quickUpRef = useRef(false);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -407,13 +441,17 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [saveName, setSaveName] = useState("");
   const [basemap, setBasemap] = useState<"dark" | "satellite">("dark");
   const [threeD, setThreeD] = useState(false);
+  /** The right-hand column's place for the rescue R (a MapLibre control the button is portaled into). */
+  const [rescueSlot, setRescueSlot] = useState<HTMLDivElement | null>(null);
   const { settings } = useSettings();
   const isVisibleRef = useRef(isVisible !== false);
   isVisibleRef.current = isVisible !== false;
   // Map look and night map (Settings → Navigation): the basemap's colours; at night the map's own cards dim with it.
   const mapLook = useMapLook(map, isVisible !== false);
   const { user, profile } = useProfile();
-  const { terms } = useExperience();
+  const { terms, motorised } = useExperience();
+  const motorisedRef = useRef(motorised);
+  motorisedRef.current = motorised;
   const { rideState } = useActiveRide();
   // Read from the long-lived GPS callback (it's bound once).
   const rideActiveRef = useRef(rideState.isActive);
@@ -644,7 +682,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       // Its own camera off: while lit it re-fitted the view to every fix (up to zoom 15), so a
       // zoom bounced straight back. Blacktop's follow camera (the GPS watch below) is the only one.
       (geolocate as unknown as { _updateCamera: (p: GeolocationPosition) => void })._updateCamera = () => {};
-      instance.addControl(new AlarmControl(), "top-right");
+      // The rescue R, under recentre (React, portaled into the slot below); the alarm's siren is
+      // under the toolbar, where the R was.
+      const rescueSlot = new SlotControl("bt-rescue-ctrl");
+      instance.addControl(rescueSlot, "top-right");
+      setRescueSlot(rescueSlot.el);
       // The locate button hands the camera back to GPS follow after free panning: only the press
       // itself (tracking starting). Every fix the control reports ("geolocate") used to count too,
       // so once it had been pressed, panning away snapped back to the rider five seconds later.
@@ -670,6 +712,37 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         },
         true,
       );
+
+      // The + and − buttons while the camera follows the rider: they set the follow zoom and the
+      // follow loop glides there, the rider staying put. MapLibre's own zoom is a camera move of
+      // its own, which stopped following for five seconds a press, so a few presses in a row and
+      // the pin rode off the screen.
+      const zoomButton = (step: number) => (e: Event) => {
+        const following =
+          hasFollowedUserRef.current &&
+          !orbitingRef.current &&
+          !returnStopRef.current &&
+          !(freePanRef.current && !destinationRef.current) &&
+          Date.now() - lastInteractionAtRef.current >= LOCATE_RESUME_DELAY_MS;
+        if (!following) return; // panned away: MapLibre's own zoom about the middle of the view
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        if (speedZoomRef.current.out > 0 || zoomOverrideRef.current != null) {
+          // Pulled out by the speed colours: held for the session, the saved zoom untouched.
+          zoomOverrideRef.current = clampNavZoom((zoomOverrideRef.current ?? followZoom()) + step);
+        } else {
+          navZoomRef.current = clampNavZoom(navZoomRef.current + step);
+          try {
+            localStorage.setItem(NAV_ZOOM_KEY, navZoomRef.current.toFixed(2));
+          } catch {
+            /* this session only */
+          }
+        }
+        kickFollowRef.current();
+      };
+      const ctrl = instance.getContainer();
+      ctrl.querySelector(".maplibregl-ctrl-zoom-in")?.addEventListener("click", zoomButton(1), true);
+      ctrl.querySelector(".maplibregl-ctrl-zoom-out")?.addEventListener("click", zoomButton(-1), true);
 
       const markInteraction = (e: { originalEvent?: unknown }) => {
         if (!e.originalEvent) return;
@@ -776,7 +849,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
           if (!m.getLayer(BUILDINGS_LAYER_ID) && m.getSource("openmaptiles")) {
             // Under the first label layer: added on top, the buildings buried place names and every pin.
+            // Under the wind layer too, whichever was switched on first: buildings switched on after
+            // the wind went in over its arrows and figures.
             const firstLabel = m.getStyle().layers?.find((l) => l.type === "symbol")?.id;
+            const under = m.getLayer(WIND_OVERLAY_LAYER) ? WIND_OVERLAY_LAYER : firstLabel;
             m.addLayer({
               id: BUILDINGS_LAYER_ID,
               type: "fill-extrusion",
@@ -789,7 +865,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
                 "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
                 "fill-extrusion-opacity": 0.85,
               },
-            }, firstLabel);
+            }, under);
           }
           if (m.getPitch() < THREE_D_PITCH - 1) {
             const loc = userLocationRef.current;
@@ -843,6 +919,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // carry on with the map closed). The overlay stays mounted (hidden) after its
   // first open, and this watch used to keep GPS, re-renders and camera
   // animations going for the rest of the session. A ride tracks itself.
+  // Coming back to the app: the browser had throttled or paused the watch (fixes every 5 s, or
+  // none), and what the map knew before (the heading, the speed carried on between fixes) is
+  // out of date: the camera turned to an old heading, side-on to the road. So everything about
+  // where the rider was going starts afresh, and the watch is started again (`watchEpoch`).
+  const [watchEpoch, setWatchEpoch] = useState(0);
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
+      }
+      if (!hiddenAt) return;
+      hiddenAt = 0;
+      headingRef.current = null;
+      trackRef.current = new RiderTrack();
+      snapGatheredAtRef.current = 0;
+      motionRef.current = { speed: 0, accel: 0, at: 0 };
+      setWatchEpoch((n) => n + 1);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
   useEffect(() => {
     if ((!isVisible && !guiding) || !("geolocation" in navigator)) return;
 
@@ -853,8 +953,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
         noteLocationGranted();
         const fixAt = Date.now();
+        // A fix kept from before (a phone handing back its last one on resume) says nothing about now.
+        if (position.timestamp && fixAt - position.timestamp > 5000) return;
         // Where the pin and the camera are drawn between fixes (see RiderTrack).
-        trackRef.current.fix(loc.lat, loc.lng, fixAt, position.coords.speed, position.coords.heading);
+        trackRef.current.fix(loc.lat, loc.lng, fixAt, position.coords.speed, position.coords.heading, position.coords.accuracy);
+        // The roads round the rider for the snapper, again after 150 m or 15 s (from tiles already loaded).
+        {
+          const map = mapRef.current;
+          const c = snapRef.current.centre;
+          if (map && (!c || haversineM(c.lat, c.lng, loc.lat, loc.lng) > 150 || fixAt - snapGatheredAtRef.current > 15_000)) {
+            snapGatheredAtRef.current = fixAt;
+            snapRef.current.setLines(snapRouteRef.current, roadLinesNear(map, loc, motorisedRef.current), loc);
+          }
+        }
         setUserLocation(loc);
         // Hazard warnings: the ride feeds them during a ride; the map does otherwise.
         if (!rideActiveRef.current) pushHazardFix({ ...loc, speed: position.coords.speed ?? null, t: position.timestamp || Date.now() });
@@ -876,8 +987,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           const raw = dt > 0.2 && dt < 5 ? (v - m.speed) / dt : 0;
           motionRef.current = { speed: v, accel: m.accel + (Math.max(-8, Math.min(8, raw)) - m.accel) * 0.5, at: fixAt };
         }
-        if (heading != null && Number.isFinite(heading) && speed > 0.5) {
+        // The way the rider is going: only once properly moving (about 6 mph), when GPS headings
+        // mean something. At a standstill they swing about and the camera spun with them.
+        if (heading != null && Number.isFinite(heading) && speed > 2.7) {
           headingRef.current = heading;
+        } else if (speed > 2.7 && trackRef.current.heading != null) {
+          headingRef.current = trackRef.current.heading;
         }
 
         if (!countryResolved) {
@@ -911,7 +1026,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
     return () => navigator.geolocation.clearWatch(watchId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible, guiding]);
+  }, [isVisible, guiding, watchEpoch]);
+
+  // The route being guided is the first line the pin snaps to.
+  useEffect(() => {
+    snapRouteRef.current = destination && route ? (route.geometry.coordinates as SnapLngLat[]) : null;
+    snapGatheredAtRef.current = 0; // gathered again with the next fix
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, destination]);
 
   // ── The rider's navigation zoom ──────────────────────────────────────────
   // A zoom the rider makes themselves (pinch, wheel, the +/- buttons: events
@@ -994,9 +1116,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     let raf = 0;
     let last = 0;
     let following = false;
+    /** The loop's own jumpTo ends a move too: that one mustn't restart it (it would never stop). */
+    let ownMove = false;
     let blend: { center: maplibregl.LngLat; zoom: number; at: number } | null = null;
     let bearing = 0;
     let pitch = 0;
+    let zoomNow = 0;
     let pad = { ...NO_PADDING };
     const BLEND_MS = 900;
     const turn = (a: number, b: number) => ((((b - a) % 360) + 540) % 360) - 180;
@@ -1010,7 +1135,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       const still = isThermal() || !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       const dt = still ? 1e3 : last ? Math.min(0.1, (now - last) / 1000) : 0;
       last = now;
-      const pos = still ? track.latest! : track.step(t);
+      const raw = still ? track.latest! : track.step(t);
+      // On the road line (the route, else the road they're on), when one is close enough to believe.
+      const pos = snapRef.current.snap(raw.lat, raw.lng, track.heading);
       userMarkerRef.current?.setLngLat([pos.lng, pos.lat]);
       let busy = !still && !track.settled(t);
       const canFollow =
@@ -1028,6 +1155,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           blend = still ? null : { center: map.getCenter(), zoom: map.getZoom(), at: now };
           bearing = map.getBearing();
           pitch = map.getPitch();
+          zoomNow = map.getZoom();
           const p = map.getPadding();
           pad = { top: p.top ?? 0, bottom: p.bottom ?? 0, left: p.left ?? 0, right: p.right ?? 0 };
         }
@@ -1043,24 +1171,30 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           left: pad.left + (wantPad.left - pad.left) * k(0.4),
           right: pad.right + (wantPad.right - pad.right) * k(0.4),
         };
-        let zoom = followZoom();
+        // The follow zoom is eased to (the + and − buttons step it), never jumped.
+        const wantZoom = followZoom();
+        zoomNow = still ? wantZoom : zoomNow + (wantZoom - zoomNow) * k(0.18);
+        let zoom = zoomNow;
         let center: [number, number] = [pos.lng, pos.lat];
         if (blend) {
           const u = Math.min(1, (now - blend.at) / BLEND_MS);
           const e = inOutCubic(u);
           center = [blend.center.lng + (pos.lng - blend.center.lng) * e, blend.center.lat + (pos.lat - blend.center.lat) * e];
-          zoom = blend.zoom + (zoom - blend.zoom) * e;
+          zoom = blend.zoom + (wantZoom - blend.zoom) * e;
+          zoomNow = zoom;
           if (u >= 1) blend = null;
           busy = true;
         }
+        ownMove = true;
         map.jumpTo({ center, zoom, bearing, pitch, padding: pad });
+        ownMove = false;
         busy =
           busy ||
           (!still && Math.abs(turn(bearing, wantBearing)) > 0.05) ||
           Math.abs(wantPitch - pitch) > 0.05 ||
           Math.abs(wantPad.top - pad.top) > 0.5 ||
           Math.abs(wantPad.left - pad.left) > 0.5 ||
-          Math.abs(followZoom() - zoom) > 0.005;
+          Math.abs(wantZoom - zoom) > 0.005;
       }
       if (busy) raf = requestAnimationFrame(frame);
       else last = 0;
@@ -1069,8 +1203,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       if (!raf) raf = requestAnimationFrame(frame);
     };
     kickFollowRef.current();
+    // Turning the phone moves where the rider belongs on screen (the follow padding), and the end
+    // of another camera move (the first fly in, a recentre) hands the camera back: place them again
+    // now, not at the next fix. Standing still the next fix can be a while, and turned to landscape
+    // during the first fly in, the pin sat off the bottom edge with the portrait padding.
+    const onResize = () => {
+      if (!ownMove) kickFollowRef.current();
+    };
+    map.on("resize", onResize);
+    map.on("moveend", onResize);
     return () => {
       cancelAnimationFrame(raf);
+      map.off("resize", onResize);
+      map.off("moveend", onResize);
       kickFollowRef.current = () => {};
     };
   }, [map, isVisible]);
@@ -2005,7 +2150,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   useEffect(() => {
     if (!map || isThermal() || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = map.getCanvas();
-    const MAX = 3; // degrees
+    const MAX = 3; // degrees, from a finger
+    // From the ride: more (asked for after a night ride, 2026-10-27). The canvas turns about the
+    // rider's own pin (transform-origin, below), so the road under the pin stays where it is
+    // however far it swings, and the pin (a DOM marker, which doesn't tilt) never leaves it.
+    const RIDE_MAX = 7;
+    const RIDE_ROLL = 6;
     const STIFF = 55; // spring (1/s²): how hard the tilt is pulled towards the lean
     const DAMP = 2 * Math.sqrt(STIFF) * 0.72; // a little under critical: one soft overshoot
     /** The finger's speed, averaged (px per ms). */
@@ -2034,12 +2184,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       yawRate += (Math.max(-120, Math.min(120, raw)) - yawRate) * Math.min(1, dt * 6); // deg/s, smoothed
       const { speed, accel } = motionRef.current;
       const sideG = (speed * yawRate * (Math.PI / 180)) / 9.81; // the bend's sideways G
+      const rideClamp = (v: number) => Math.max(-RIDE_MAX, Math.min(RIDE_MAX, v));
       return {
         // Braking (accel < 0) tips the top away: the nose dips.
-        x: clamp(-accel * 0.9),
+        x: rideClamp(-accel * 2.2),
         // Swung towards the inside of the bend, up to the limit at about half a G.
-        y: clamp(sideG * 6),
-        roll: Math.max(-2.5, Math.min(2.5, sideG * 5)),
+        y: rideClamp(sideG * 14),
+        roll: Math.max(-RIDE_ROLL, Math.min(RIDE_ROLL, sideG * 12)),
       };
     };
     const pointOf = (ev: unknown) => {
@@ -2056,7 +2207,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       vel = { x: vel.x * fade, y: vel.y * fade };
       // The side the map is pulled towards dips away, as a camera swinging after it would see.
       const ride = fromRide(dt);
-      const want = { x: clamp(-vel.y * 4 + ride.x), y: clamp(vel.x * 4 + ride.y) };
+      const want = { x: clamp(-vel.y * 4) + ride.x, y: clamp(vel.x * 4) + ride.y };
       rollSpin += (STIFF * 0.6 * (ride.roll - roll) - DAMP * 0.8 * rollSpin) * dt;
       roll += rollSpin * dt;
       spin = {
@@ -2073,14 +2224,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         Math.hypot(vel.x, vel.y) < 0.005;
       if (still) {
         canvas.style.transform = "";
+        canvas.style.transformOrigin = "";
         tilt = spin = vel = { x: 0, y: 0 };
         roll = rollSpin = 0;
         raf = 0;
         prev = 0;
         return;
       }
-      const lean = Math.min(1, (Math.hypot(tilt.x, tilt.y) + Math.abs(roll)) / MAX);
-      canvas.style.transform = `perspective(1400px) rotateX(${tilt.x.toFixed(3)}deg) rotateY(${tilt.y.toFixed(3)}deg) rotateZ(${roll.toFixed(3)}deg) scale(${(1 + 0.045 * Math.min(1, lean)).toFixed(4)})`;
+      const lean = Math.min(1, (Math.hypot(tilt.x, tilt.y) + Math.abs(roll)) / RIDE_MAX);
+      // Turned about the rider's pin while following them (else about the middle, for a finger).
+      const pin = userMarkerRef.current?.getElement().getBoundingClientRect();
+      // (The container's box, not the canvas's: the canvas's own is the turned one.)
+      const box = map.getContainer().getBoundingClientRect();
+      const about =
+        navSway && pin && box.width
+          ? `${(((pin.left + pin.width / 2 - box.left) / box.width) * 100).toFixed(1)}% ${(((pin.top + pin.height / 2 - box.top) / box.height) * 100).toFixed(1)}%`
+          : "50% 50%";
+      canvas.style.transformOrigin = about;
+      // Scaled up enough that the edges never show, more when turned about a point off the middle.
+      canvas.style.transform = `perspective(1400px) rotateX(${tilt.x.toFixed(3)}deg) rotateY(${tilt.y.toFixed(3)}deg) rotateZ(${roll.toFixed(3)}deg) scale(${(1 + 0.16 * lean).toFixed(4)})`;
       raf = requestAnimationFrame(frame);
     };
     const run = () => {
@@ -2963,6 +3125,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // bar and the bottom destination card always make way for it.
   const showTurnBanner = guiding && !addingWaypoint;
   const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner));
+  const searchBarPresence = usePresence(showSearchBar, 240);
   const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
   // "Finish" replaces "Skip" once we're heading to the very last stop (the
@@ -3045,8 +3208,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             { target: '[data-tip="map-drop"]', text: tr("Plant a spare copy of your card on the map for other riders to find.") },
             { target: '[data-tip="map-save"]', text: tr("Save where you are now as a place, to find or navigate to later.") },
             { target: '[data-tip="handshake"]', text: tr("Riders nearby who have opted in show up here. Tap to invite them to ride with you.") },
-            { target: '.blacktop-maplibre .bt-alarm-ctrl', text: tr("This arms the anti-theft alarm: the same lock as on Home.") },
             { target: '.blacktop-maplibre .maplibregl-ctrl-compass', text: tr("Tap the compass to turn the map north-up again. The locate button brings the map back to you.") },
+          ]}
+        />
+      )}
+      {/* The alarm and the rescue R swapped places and both have to be held (2026-10-28): a set of their own,
+          so riders past the map's first tips learn it too. */}
+      {isVisible && (
+        <PageTips
+          page="map-hold"
+          when={!rideState.isActive && !guiding && showSearchBar && !droppingCard && !showLoopPlanner && !showOfflinePacks}
+          tips={[
+            { target: '[data-tip="map-alarm"]', text: tr("Hold the siren for a second to arm the anti-theft alarm.") },
+            { target: '[data-tip="map-rescue"]', text: tr("Hold the R for a second to call for rescue. It asks if you're okay first.") },
           ]}
         />
       )}
@@ -3166,7 +3340,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           </div>
         )}
 
-        {showSearchBar && (
+        {searchBarPresence.mounted && (
+          // Fades and slides in and out (it comes and goes as the rider stops and sets off).
+          <div
+            className={cn("map-search-slide w-full", searchBarPresence.shown ? "is-in" : "is-out", !showSearchBar && "is-leaving")}
+            {...(!showSearchBar ? { inert: "" } : {})}
+          >
           <MapSearchBar
             inline
             autoFocus={addingWaypoint}
@@ -3231,6 +3410,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             clearSeq={searchClearSeq}
             reopenSeq={searchReopenSeq}
           />
+          </div>
         )}
 
         {showConvoyStrip && (
@@ -3445,13 +3625,13 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
         {/* Nearby riders (opt-in): between save-location and the MapLibre controls. */}
         <HandshakeButton convoy={convoy} placement="down" />
 
-        {/* Rescue: held, then asked; out of the way of Report and the close button. In
-            portrait always on its own line under the toolbar's left end (the row has no room
-            for it once nearby riders shows, and it shouldn't move about); in landscape at the
-            row's end. */}
+        {/* The anti-theft alarm (held to arm): in portrait on its own line under the toolbar's
+            left end, in landscape at the row's end. The rescue R has the right-hand column's
+            place under recentre (portaled into its slot below). */}
         <div className="basis-full landscape:basis-auto flex">
-          <MapRescueButton isLeader={!!convoy.isLeader} />
+          <AlarmButton variant="map" />
         </div>
+        {rescueSlot && createPortal(<MapRescueButton control isLeader={!!convoy.isLeader} />, rescueSlot)}
       </div>
       </div>
 
@@ -3513,7 +3693,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
 
 
-      <div className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] short:right-auto short:w-[22rem] z-10 space-y-1.5">
+      {/* Portrait: every credit on one small line along the very bottom, sized to the screen's width, and the
+          bottom row (Report, the speed card, close) standing on it, level with each other. */}
+      <div className="short:hidden absolute bottom-[calc(0.3rem+var(--safe-bottom))] left-[calc(0.5rem+var(--safe-left))] right-[calc(0.5rem+var(--safe-right))] z-10 pointer-events-none text-center whitespace-nowrap overflow-hidden leading-none text-muted-foreground/70 text-[min(10px,2.3vw)]">
+        <MapCredits weather />
+      </div>
+      <div className="absolute bottom-[calc(1.5rem+var(--safe-bottom))] short:bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] short:right-auto short:w-[22rem] z-10 space-y-1.5">
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
           <div className="animate-slide-up">
@@ -3699,24 +3884,20 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <div aria-hidden className="short:hidden" />
           </div>
 
-          {/* Every credit in one place: under the speed card in portrait (above it, the speed limit sign sat on the
-              weather line); in landscape (short:) they move up beside the search bar (below), clear of the speed card. */}
-          <div className="px-14 py-0.5 text-[10px] leading-tight text-muted-foreground/70 pointer-events-none text-center short:hidden">
-            <MapCredits weather />
-          </div>
         </div>
       </div>
 
       {/* Landscape: every credit at the top, right of the (22rem) search column and clear of the right-hand
           controls. On the narrowest phones on their side that leaves about 100 px, so there they sit at the
           bottom instead, between the speed column and the close button. */}
-      <div className="hidden short:block [@media(max-width:739px)]:!hidden absolute top-[calc(0.75rem+var(--safe-top)+0.6rem)] left-[calc(0.75rem+var(--safe-left)+22.75rem)] right-[calc(var(--safe-right)+5.5rem)] z-20 pointer-events-none">
-        <span className="inline-block px-2 py-0.5 rounded-md bg-background/40 text-[10px] leading-tight text-muted-foreground/80">
+      {/* One line, the letters sized to the room there is (container units: a share of the box's width). */}
+      <div style={{ containerType: "inline-size" }} className="hidden short:block [@media(max-width:739px)]:!hidden absolute top-[calc(0.75rem+var(--safe-top)+0.6rem)] left-[calc(0.75rem+var(--safe-left)+22.75rem)] right-[calc(var(--safe-right)+5.5rem)] z-20 pointer-events-none">
+        <span className="inline-block max-w-full overflow-hidden whitespace-nowrap px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
           <MapCredits weather />
         </span>
       </div>
-      <div className="hidden short:[@media(max-width:739px)]:block absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left)+11rem)] right-[calc(var(--safe-right)+5rem)] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(var(--safe-right)+12rem)] z-20 pointer-events-none text-center">
-        <span className="inline-block px-2 py-0.5 rounded-md bg-background/40 text-[10px] leading-tight text-muted-foreground/80">
+      <div style={{ containerType: "inline-size" }} className="hidden short:[@media(max-width:739px)]:block absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left)+11rem)] right-[calc(var(--safe-right)+5rem)] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(var(--safe-right)+12rem)] z-20 pointer-events-none text-center">
+        <span className="inline-block max-w-full overflow-hidden whitespace-nowrap px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
           <MapCredits weather />
         </span>
       </div>

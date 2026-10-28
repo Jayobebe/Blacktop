@@ -72,7 +72,7 @@ export function BlacktopMapOverlay() {
       {rideState.isActive ? (
         <button
           onClick={handleExit}
-          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 flex items-center gap-1 h-12 pl-2.5 pr-3.5 rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
+          className="absolute bottom-[calc(1.5rem+var(--safe-bottom))] short:bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 flex items-center gap-1 h-12 pl-2.5 pr-3.5 rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
           aria-label={tr("Exit map and return to ride")}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -81,7 +81,7 @@ export function BlacktopMapOverlay() {
       ) : inLobby ? (
         <button
           onClick={() => closeBlacktopMap()}
-          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 flex items-center gap-1 h-12 pl-2.5 pr-3.5 rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
+          className="absolute bottom-[calc(1.5rem+var(--safe-bottom))] short:bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 flex items-center gap-1 h-12 pl-2.5 pr-3.5 rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors text-sm font-medium"
           aria-label={tr("Back to lobby")}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function BlacktopMapOverlay() {
       ) : (
         <button
           onClick={handleExit}
-          className="absolute bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 w-12 h-12 flex items-center justify-center rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
+          className="absolute bottom-[calc(1.5rem+var(--safe-bottom))] short:bottom-[calc(0.75rem+var(--safe-bottom))] right-[calc(0.75rem+var(--safe-right))] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(0.75rem+var(--safe-right)+4.25rem)] z-20 w-12 h-12 flex items-center justify-center rounded-xl bg-card/95 border border-border shadow-lg backdrop-blur hover:bg-secondary transition-colors"
           aria-label={tr("Close map")}
         >
           <X className="w-5 h-5" />
