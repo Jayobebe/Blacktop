@@ -49,6 +49,7 @@ import { addCardDropLayer, setCardDropData, type CardPin } from "../lib/cardDrop
 import { CardDropPrompt } from "./CardDropPrompt";
 import { getActiveBikeIdSnapshot } from "@/features/garage/hooks/useGarage";
 import { SlotControl } from "../lib/slotControl";
+import { takeMapPlace, useMapPlaceSeq } from "../lib/mapConsole";
 import { AlarmButton } from "@/features/alarm";
 import { createPortal } from "react-dom";
 import { applyWaterWordmark } from "../lib/waterWordmark";
@@ -111,8 +112,9 @@ import {
   IdCard,
   Check,
   Camera as CameraIcon,
-
+  MessageSquareShare,
 } from "lucide-react";
+import { sendRouteRequest } from "@/features/convoy/lib/routeRequest";
 import { toast } from "sonner";
 import { useWaypoints } from "@/features/waypoints";
 
@@ -464,6 +466,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   const [showLoopPlanner, setShowLoopPlanner] = useState(false);
   const [showOfflinePacks, setShowOfflinePacks] = useState(false);
   const [addingWaypoint, setAddingWaypoint] = useState(false);
+  /** A rider in someone else's convoy searching for a place to ask the leader to go to (on a convoy ride the strip has the bar's slot otherwise). */
+  const [askingLeader, setAskingLeader] = useState(false);
 
 
   const rescue = useRescueBridge();
@@ -3046,8 +3050,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
    * be had it says so and goes direct. Either way a twisty pick before it is dropped from the solo route.
    */
   const [styleBusy, setStyleBusy] = useState<RouteStyle | null>(null);
-  const navigateWith = async (style: RouteStyle) => {
-    const target = pin;
+  // `place`: from outside the map (a passenger's request a convoy leader accepted), not a card's pin.
+  const navigateWith = async (style: RouteStyle, place?: PinInfo) => {
+    const target = place ?? pin;
     if (!target || styleBusy) return;
     const here = userLocationRef.current;
     const kept = isSolo ? soloRoute.stops.filter((s) => !isTwistyLeg(s.name)) : [];
@@ -3056,7 +3061,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       setStyleBusy("twisty");
       vias = await routeStyleVias("twisty", [here, ...kept, target]);
       setStyleBusy(null);
-      if (pinRef.current !== target) return; // the card was closed or changed meanwhile
+      if (!place && pinRef.current !== target) return; // the card was closed or changed meanwhile
       if (!vias) toast(tr("No twistier way there, so it's the direct one"));
     }
     if (target.fromList && target.kind !== "saved") {
@@ -3069,6 +3074,16 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     handleSearchSelect({ id: target.id ?? `pin:${target.lat.toFixed(5)},${target.lng.toFixed(5)}`, ...dest }, { follow: true });
   };
 
+  // A place asked for from outside the map (lib/mapConsole `requestMapPlace`): its Twisty or Direct, as on its card.
+  const placeSeq = useMapPlaceSeq();
+  useEffect(() => {
+    if (!map) return;
+    const req = takeMapPlace();
+    if (!req) return;
+    void navigateWith(req.style, { name: req.name, category: "", kind: "poi", address: req.address ?? "", lat: req.lat, lng: req.lng });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeSeq, map]);
+
   const handleSearchSelect = (result: MapSearchResult, opts: { follow?: boolean } = {}) => {
     // A route or a stop from here on: a quick search's pins have done their job.
     quickUpRef.current = false;
@@ -3079,6 +3094,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       void resolveWhat3WordsResult(result).then((found) =>
         found ? handleSearchSelect(found, opts) : toast.error(tr("Couldn't find that what3words address")),
       );
+      return;
+    }
+    // Riding in someone else's convoy: the place's card, to ask the leader.
+    if (asksLeader) {
+      handlePreview(result, result.address || result.name);
       return;
     }
     if (addingWaypoint) {
@@ -3113,8 +3133,11 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
   // ── Derived display flags ──────────────────────────────────────────────────
 
-  // Only solo riders and convoy leaders ever search (members follow the leader).
-  const canSearch = isSolo || convoy.isLeader;
+  // Solo riders and convoy leaders search to go somewhere; a rider in someone else's convoy searches to ask the
+  // leader to go there (convoy/lib/routeRequest, as from the passenger map): a place's card asks instead of navigating.
+  const asksLeader = !isSolo && !convoy.isLeader;
+  const leaderName = convoy.members.find((m) => m.isLeader)?.name ?? null;
+  const canSearch = isSolo || convoy.isLeader || asksLeader;
   const inConvoyRide = !isSolo && rideState.isActive && rideState.isConvoyMode;
   // In a convoy ride the status strip owns the top slot; a leader gets the
   // search bar back only while adding a stop. Solo: search unless moving.
@@ -3123,8 +3146,12 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // Any route being guided gets the banner (it shows "Follow the route" with
   // time/distance left when the router returned no manoeuvres), so the search
   // bar and the bottom destination card always make way for it.
-  const showTurnBanner = guiding && !addingWaypoint;
-  const showSearchBar = canSearch && (addingWaypoint || (!inConvoyRide && !moving && !showTurnBanner));
+  const showTurnBanner = guiding && !addingWaypoint && !(asksLeader && askingLeader);
+  // A rider in someone else's convoy with no route set yet: the bar slides in and out as a solo rider's does
+  // (stopped, not guiding), so asking the leader is right there; with a route, the toolbar's button brings it back.
+  const showSearchBar =
+    canSearch &&
+    (addingWaypoint || (asksLeader && askingLeader && !pin) || ((!inConvoyRide || (asksLeader && !destination)) && !moving && !showTurnBanner));
   const searchBarPresence = usePresence(showSearchBar, 240);
   const showConvoyStrip = inConvoyRide && !showSearchBar;
   const canSkipWaypoint = rideState.isActive && rideState.isConvoyMode && convoy.isLeader && nextWaypoint != null;
@@ -3398,6 +3425,10 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
               map.easeTo({ center: [h.lng, h.lat], zoom: Math.max(map.getZoom(), 15), duration: 900, essential: true });
             }}
             onRoute={(r) => {
+              if (asksLeader) {
+                handlePreview({ id: `route:${r.id}`, name: r.to.name, address: r.to.address ?? "", lat: r.to.lat, lng: r.to.lng }, tr("Saved route"));
+                return;
+              }
               // A saved route loads as an imported GPX route does: its start and stops on the way, its end the destination.
               quickUpRef.current = false;
               if (map) clearCategoryPins(map);
@@ -3527,6 +3558,25 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <Download className="w-4 h-4" />
           </button>
           <div className="w-px h-6 bg-border" />
+          {/* Riding in someone else's convoy: the search bar, to ask the leader to go somewhere. */}
+          {asksLeader && inConvoyRide && !!destination && (
+            <>
+              <button
+                type="button"
+                onClick={() => setAskingLeader((v) => !v)}
+                aria-pressed={askingLeader}
+                aria-label={tr("Ask the leader to go somewhere")}
+                data-tip="map-ask-leader"
+                className={cn(
+                  "w-9 h-9 flex items-center justify-center transition-colors",
+                  askingLeader ? "bg-accent text-accent-foreground" : "text-foreground/80 hover:bg-secondary",
+                )}
+              >
+                <MessageSquareShare className="w-4 h-4" />
+              </button>
+              <div className="w-px h-6 bg-border" />
+            </>
+          )}
           {/* Blacktop Radio — hidden unless enabled in Settings */}
           <RadioButton variant="map" />
           {canDropCard && (
@@ -4044,6 +4094,28 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             <Button size="sm" variant="outline" className="gap-1" onClick={() => exitOrbit(true)}>
               <ArrowLeft className="w-3.5 h-3.5" />{" "}{tr("Back")}
             </Button>
+            {/* In someone else's convoy: ask the leader to go there (they pick Twisty or Direct). */}
+            {asksLeader ? (
+              <Button
+                size="sm"
+                className="flex-1 gap-1 bg-accent text-accent-foreground hover:bg-accent hover:brightness-110 min-w-0"
+                onClick={async () => {
+                  if (!pin || !user?.id) return;
+                  const sent = await sendRouteRequest(user.id, profile.name || tr("A rider"), { name: pin.name, address: pin.address, lat: pin.lat, lng: pin.lng });
+                  if (!sent) {
+                    toast.error(tr("Couldn't send that. Try again in a moment."));
+                    return;
+                  }
+                  toast.success(tr("Asked {0} to go to {1}", [leaderName ?? tr("the leader"), pin.name]));
+                  setAskingLeader(false);
+                  exitOrbit(true);
+                }}
+              >
+                <MessageSquareShare className="w-3.5 h-3.5 shrink-0" />{" "}
+                <span className="truncate">{leaderName ? tr("Ask {0} to go here", [leaderName]) : tr("Request")}</span>
+              </Button>
+            ) : (
+            <>
             {/* Two ways there, both straight into guidance: Twisty in the accent, Direct in the second accent (white without one). */}
             <Button
               size="sm"
@@ -4062,6 +4134,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
             >
               <Navigation className="w-3.5 h-3.5" />{" "}{tr("Direct")}
             </Button>
+            </>
+            )}
           </div>
         </div>
       )}

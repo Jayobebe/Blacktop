@@ -36,6 +36,7 @@ import { AutoRescueConsentDialog, RescueDrillHost, RescueAskHost } from "@/featu
 import { CalendarReminders } from "@/features/calendar/lib/reminders";
 import { StorageWatch } from "@/components/StorageWatch";
 import { ReceiptFlight } from "@/features/ride/components/ReceiptFlight";
+import { RouteRequestHost } from "@/features/convoy/components/RouteRequestHost";
 import { SpeedLimitFeed } from "@/components/SpeedLimitFeed";
 import { speedBands, useSpeedLimit } from "@/lib/speedLimit";
 import { NimiqFullscreenPrompt } from "@/components/NimiqFullscreenPrompt";
@@ -392,6 +393,7 @@ const App = () => {
                 <PushBridge />
                 <PushNudge />
                 <ReceiptFlight />
+                <RouteRequestHost />
                 {/* Inside the router: its notice's button opens /storage. */}
                 <StorageWatch />
                 {/* Hazard warnings ahead + "still there?", on the ride screen or the map. */}

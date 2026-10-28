@@ -44,3 +44,46 @@ export function useMapSearchSeq(): number {
     () => seq,
   );
 }
+
+// ── A place to go, Twisty or Direct, from outside the map ──────────────────
+
+/**
+ * A convoy leader accepting a passenger's request (convoy/lib/routeRequest):
+ * the map goes there exactly as its own Twisty or Direct on a place's card does
+ * (the convoy's destination, twisty legs as its stops, guidance for everyone).
+ * Taken by `BlacktopMap` once it has a map.
+ */
+export interface MapPlaceRequest {
+  name: string;
+  address?: string;
+  lat: number;
+  lng: number;
+  style: 'twisty' | 'direct';
+}
+
+let pendingPlace: MapPlaceRequest | null = null;
+let placeSeq = 0;
+const placeListeners = new Set<() => void>();
+
+export function requestMapPlace(req: MapPlaceRequest) {
+  pendingPlace = req;
+  placeSeq += 1;
+  placeListeners.forEach((l) => l());
+}
+
+export function takeMapPlace(): MapPlaceRequest | null {
+  const r = pendingPlace;
+  pendingPlace = null;
+  return r;
+}
+
+export function useMapPlaceSeq(): number {
+  return useSyncExternalStore(
+    (l) => {
+      placeListeners.add(l);
+      return () => placeListeners.delete(l);
+    },
+    () => placeSeq,
+    () => placeSeq,
+  );
+}

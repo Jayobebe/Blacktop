@@ -1529,6 +1529,13 @@ html.thermal .tier-fx { display: none; }
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* The passenger map: its search bar, chips, list, cards and buttons sit over names, rider pins and the edge
+   shade with nothing behind them to calm it, so they're nearly solid: the lettering under them never shows. */
+.passenger-map [class*="bg-card"]:not(.no-frost),
+.passenger-map .frost-accent,
+.passenger-map input {
+  background-color: hsl(var(--card) / 0.96) !important;
+}
 
 /* CRT map look (map/lib/mapLook): scanlines and a rounded vignette over the map.
    One still layer laid over the canvas, never a filter: the browser composites

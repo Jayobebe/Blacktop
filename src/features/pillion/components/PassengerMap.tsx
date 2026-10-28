@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MAP_PIXEL_RATIO } from '@/lib/maplibreWorker';
-import { Flag, UserRound, X } from 'lucide-react';
+import { Flag, MapPin, Search, UserRound, X } from 'lucide-react';
 import { loadDarkMapStyle, OPENFREEMAP_DARK_STYLE_URL } from '@/features/map/lib/darkStyle';
 import { getLastView, saveLastView } from '@/features/map/lib/lastView';
 import { noteLocationGranted } from '@/lib/locationGrant';
@@ -21,9 +21,14 @@ import { useSpeakingUsers } from '@/features/voice';
 import { getMemberColorStyles } from '@/lib/memberColors';
 import { formatDistance, formatSpeed, getDistanceLabel, getSpeedLabel } from '@/lib/format';
 import { tr } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { glideMarker } from '@/lib/markerGlide';
 import { PEAK_HIDDEN, usePeaksHidden } from '@/features/ride';
 import { RiderSwitch } from '@/features/spectate/components/RiderSwitch';
+import { MapSearchBar } from '@/features/map/components/MapSearchBar';
+import type { MapSearchResult } from '@/features/map/lib/placeSearch';
+import { sendRouteRequest } from '@/features/convoy/lib/routeRequest';
+import { PageTips } from '@/features/guide';
 
 /** A passenger who pans away gets the map to themselves for this long after their last touch. */
 const HOLD_AFTER_TOUCH_MS = 8000;
@@ -67,6 +72,11 @@ function accentColour() {
  * map over until the passenger has left it alone for a few seconds. It's an
  * overlay, not a page, so the passenger screen (and its voice chat) stays up
  * underneath; the X or Android's Back closes it.
+ *
+ * The search button opens the map's own search bar: a place picked there is
+ * shown with a card whose Request asks the convoy's leader to go there
+ * (convoy/lib/routeRequest); the leader picks Twisty or Direct, or not, and the
+ * answer comes back as a toast.
  */
 export default function PassengerMap({ onClose }: { onClose: () => void }) {
   const box = useRef<HTMLDivElement>(null);
@@ -74,7 +84,13 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
   const mapLook = useMapLook(map);
   const members = useConvoyMembers();
   const { convoy } = useConvoyState();
-  const { user } = useProfile();
+  const { user, profile } = useProfile();
+  /** Searching for a place to ask the leader to go to, and the place picked (the camera holds on it meanwhile). */
+  const [searching, setSearching] = useState(false);
+  const [pick, setPick] = useState<MapSearchResult | null>(null);
+  const pickRef = useRef(false);
+  pickRef.current = !!pick || searching;
+  const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
   const { settings } = useSettings();
   const speaking = useSpeakingUsers();
   const peaksHidden = usePeaksHidden();
@@ -218,6 +234,7 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
             noteLocationGranted();
             if (!map) return;
             const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setHere(here);
             const mps = pos.coords.speed;
             const moving = (mps ?? 0) >= HEADING_SPEED;
             const heading = pos.coords.heading;
@@ -253,7 +270,7 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
             if (facing != null) bike.setRotation(facing);
             bike.getElement().classList.toggle('spectate-marker-dir', facing != null);
 
-            if (Date.now() - touchedAt < HOLD_AFTER_TOUCH_MS || focusRef.current !== BIKE) return;
+            if (Date.now() - touchedAt < HOLD_AFTER_TOUCH_MS || focusRef.current !== BIKE || pickRef.current) return;
             map.easeTo({
               center: [here.lng, here.lat],
               ...(first && map.getZoom() < 12 ? { zoom: 15.5 } : {}),
@@ -281,14 +298,43 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  // The place picked: a pin on it, and the camera on it until Back or Request.
+  useEffect(() => {
+    if (!map || !pick) return;
+    const el = document.createElement('div');
+    el.innerHTML = '<div class="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white bg-[hsl(var(--accent))] shadow-lg"><span class="block h-2.5 w-2.5 rounded-full bg-white"></span></div>';
+    const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([pick.lng, pick.lat]).addTo(map);
+    map.easeTo({ center: [pick.lng, pick.lat], zoom: Math.max(map.getZoom(), 14), duration: isThermal() ? 0 : 900, essential: true });
+    return () => {
+      marker.remove();
+    };
+  }, [map, pick]);
+
+  const leaderName = leader && leader.userId !== user?.id ? leader.name : null;
+  const request = async () => {
+    if (!pick || !user?.id) return;
+    const sent = await sendRouteRequest(user.id, profile.name || tr("Your passenger"), { name: pick.name, address: pick.address, lat: pick.lat, lng: pick.lng });
+    if (!sent) {
+      toast.error(tr("Couldn't send that. Try again in a moment."));
+      return;
+    }
+    toast.success(tr("Asked {0} to go to {1}", [leaderName ?? tr("the leader"), pick.name]));
+    setPick(null);
+    touchedAtRef.current = 0;
+  };
+
   // Android's back button closes the top dialog by sending Escape (NativeBridge).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      // A place or the search up: Back takes that away first.
+      if (pick) setPick(null);
+      else if (searching) setSearching(false);
+      else onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, pick, searching]);
 
   const speedUnit = getSpeedLabel(settings.speedUnit);
   const riders = convoy.members.length;
@@ -311,7 +357,7 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
   const shownDistance = followed ? followed.distanceDriven ?? 0 : distance;
 
   return (
-    <div role="dialog" data-state="open" aria-label={tr("Map")} className="fixed inset-0 z-[150] bg-background map-shell">
+    <div role="dialog" data-state="open" aria-label={tr("Map")} className="fixed inset-0 z-[150] bg-background map-shell passenger-map">
       {/* MapLibre makes its container position: relative, so the map sits in a box that fills this one. */}
       <div className="absolute inset-0">
         <div ref={box} className="h-full w-full" />
@@ -325,7 +371,8 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
         style={{ background: 'linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent 22%, transparent 70%, rgb(0 0 0 / 0.8))' }}
       />
 
-      {/* Top: whose convoy, where to, close */}
+      {/* Top: whose convoy, where to, close (out of the way while searching) */}
+      <div className={cn(searching && "invisible")} >
       <div className="absolute top-[calc(0.75rem+var(--safe-top))] left-[calc(1rem+var(--safe-left))] right-[calc(1rem+var(--safe-right))] flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
@@ -342,18 +389,106 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
           )}
           {riders > 1 && <p className="text-[11px] text-white/60">{tr("{0} riders", [riders])}</p>}
         </div>
+        <div className="flex gap-2 flex-shrink-0">
+          {leaderName && (
+            <button
+              type="button"
+              onClick={() => {
+                setPick(null);
+                setSearching(true);
+              }}
+              aria-label={tr("Ask the leader to go somewhere")}
+              data-tip="pillion-request"
+              className="h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={tr("Back to ride")}
+            className="h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      </div>
+
+      {/* The map's own search bar, over the top: a place picked there gets a card with Request. In landscape the
+          same 22rem column as on a rider's map (its suggestions run sideways out of it), close pinned top right. */}
+      {searching && (
+        <>
+        <div className="absolute z-20 top-[calc(0.75rem+var(--safe-top))] left-[calc(1rem+var(--safe-left))] right-[calc(1rem+var(--safe-right)+3.5rem)] short:right-auto short:w-[22rem]">
+          <div className="min-w-0">
+            <MapSearchBar
+              inline
+              autoFocus
+              map={map}
+              userLocation={here}
+              countryCode={null}
+              onSelect={(r) => {
+                setSearching(false);
+                setPick(r);
+              }}
+              // A saved route: asking for where it ends.
+              onRoute={(r) => {
+                setSearching(false);
+                setPick({ id: `route:${r.id}`, name: r.to.name, address: r.to.address ?? '', lat: r.to.lat, lng: r.to.lng });
+              }}
+            />
+          </div>
+        </div>
         <button
           type="button"
-          onClick={onClose}
-          aria-label={tr("Back to ride")}
-          className="h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target flex-shrink-0"
+          onClick={() => setSearching(false)}
+          aria-label={tr("Close search")}
+          className="absolute z-20 top-[calc(0.75rem+var(--safe-top))] right-[calc(1rem+var(--safe-right))] h-12 w-12 rounded-2xl frost-accent flex items-center justify-center touch-target"
         >
           <X className="w-5 h-5" />
         </button>
-      </div>
+        </>
+      )}
+
+      {/* The place picked: where, how far, and Request (the leader picks Twisty or Direct). */}
+      {pick && (
+        <div className="absolute z-20 bottom-[calc(1.5rem+var(--safe-bottom))] left-[calc(1rem+var(--safe-left))] right-[calc(1rem+var(--safe-right))] mx-auto max-w-md rounded-3xl frost-accent border p-4 shadow-2xl animate-slide-up">
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-accent/15 flex items-center justify-center shrink-0">
+              <MapPin className="w-5 h-5 text-accent" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-semibold leading-tight truncate">{pick.name}</p>
+              {pick.address && <p className="text-xs text-muted-foreground truncate">{pick.address}</p>}
+              {here && (
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {`${formatDistance(metres(here, pick) * M_TO_MI, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-[auto_1fr] gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPick(null);
+                touchedAtRef.current = 0;
+              }}
+              className="h-12 px-4 rounded-2xl border border-border text-sm font-medium"
+            >
+              {tr("Back")}
+            </button>
+            <button type="button" onClick={() => void request()} className="h-12 rounded-2xl bg-accent text-accent-foreground font-semibold truncate px-3">
+              {leaderName ? tr("Ask {0} to go here", [leaderName]) : tr("Request")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom: the bike's speed, and since the map opened its top speed and distance */}
-      {shownSpeed != null && (
+      {shownSpeed != null && !pick && (
         <div className="absolute bottom-[calc(1rem+var(--safe-bottom))] left-[calc(1rem+var(--safe-left))] right-[calc(1rem+var(--safe-right))] flex items-end justify-between gap-4 text-white pointer-events-none">
           <div>
             <p className="font-mono font-bold leading-none text-6xl short:text-5xl">
@@ -369,6 +504,11 @@ export default function PassengerMap({ onClose }: { onClose: () => void }) {
             <p className="text-lg font-bold leading-tight">{`${formatDistance(shownDistance, settings.distanceUnit)} ${getDistanceLabel(settings.distanceUnit)}`}</p>
           </div>
         </div>
+      )}
+
+      {/* Its own tip, the first time a passenger with a leader to ask opens the map. */}
+      {leaderName && !searching && !pick && (
+        <PageTips page="pillion-request" tips={[{ target: '[data-tip="pillion-request"]', text: tr("Search for somewhere and ask the leader to go there. They pick twisty or direct.") }]} />
       )}
 
       <p className="absolute bottom-[calc(0.15rem+var(--safe-bottom))] left-1/2 -translate-x-1/2 z-10 text-[9px] text-white/40 pointer-events-none whitespace-nowrap">

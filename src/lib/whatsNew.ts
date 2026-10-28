@@ -48,6 +48,7 @@ export function releases(): Release[] {
       lines: [
         { icon: 'tips', text: tr("After a ride, its receipt prints out of a till printer, then whizzes into History. Tap it any time to stop and read it.") },
         { icon: 'tips', text: tr("History glows while a ride hasn't been opened, and the Garage while a service is due. Clear all on the Console clears every glow.") },
+        { icon: 'map', text: tr("In someone else's convoy, riders and passengers can search the map and ask the leader to go somewhere. The leader picks twisty or direct.") },
       ],
     },
     {
