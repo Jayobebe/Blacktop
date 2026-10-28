@@ -9,7 +9,7 @@ import type { Bike } from '../types';
 import { partName, partWear, updateVehicleLedger, useLedger, vehicleLedger } from '../lib/ledger';
 import { tr } from '@/lib/i18n';
 import { dueItems } from '../lib/serviceReminders';
-import { clearGarageDue, setGarageDue } from '../lib/garageNews';
+import { clearGarageDue, setGarageDemo, setGarageDue } from '../lib/garageNews';
 
 /**
  * Maintenance notifications ("due soon" / "overdue"), mounted once:
@@ -106,18 +106,20 @@ export function MaintenanceNotifier() {
     }
   }, [demo]);
 
-  if (demo) return null;
+  // Demo mode: the demo bike's services glow on Home like a real one's (nothing notified, nothing kept).
+  useEffect(() => setGarageDemo(demo), [demo]);
+
   return (
     <>
       {bikes.map((b) => (
-        <BikeMileageWatch key={b.id} bike={b} />
+        <BikeMileageWatch key={b.id} bike={b} demo={demo} />
       ))}
     </>
   );
 }
 
-/** Watches one bike's odometer against its mileage intervals. */
-function BikeMileageWatch({ bike }: { bike: Bike }) {
+/** Watches one bike's odometer against its mileage intervals (in demo mode, only for the Garage's glow). */
+function BikeMileageWatch({ bike, demo }: { bike: Bike; demo: boolean }) {
   const { odometerKm } = useBikeStats(bike);
   const { settings } = useSettings();
   const push = usePush();
@@ -125,6 +127,7 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
   const unit = getDistanceLabel(settings.distanceUnit);
 
   useEffect(() => {
+    if (demo) return;
     const notified = readNotified();
     const silent = !seeded();
     let changed = false;
@@ -154,7 +157,7 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
       });
     }
     if (changed) writeNotified(notified);
-  }, [bike, odometerKm, miles, unit, push.enabled]);
+  }, [bike, odometerKm, miles, unit, push.enabled, demo]);
 
   // Home's Garage button glows while a service is due or due soon (lib/garageNews): this
   // vehicle's, keyed by how due and since which service, so a change glows again.
@@ -169,6 +172,7 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
   // Parts in the logbook's ledger: told once each when it's 90 % worn by distance.
   const ledger = useLedger();
   useEffect(() => {
+    if (demo) return;
     const v = vehicleLedger(ledger, bike.id);
     const worn = v.parts.filter((p) => !p.replacedAt && !p.warned && (partWear(p, odometerKm) ?? 0) >= 0.9);
     if (!worn.length) return;
@@ -182,7 +186,7 @@ function BikeMileageWatch({ bike }: { bike: Bike }) {
     }
     const ids = new Set(worn.map((p) => p.id));
     updateVehicleLedger(bike.id, (vl) => ({ ...vl, parts: vl.parts.map((p) => (ids.has(p.id) ? { ...p, warned: true } : p)) }));
-  }, [bike.id, bike.name, odometerKm, ledger]);
+  }, [bike.id, bike.name, odometerKm, ledger, demo]);
 
   return null;
 }

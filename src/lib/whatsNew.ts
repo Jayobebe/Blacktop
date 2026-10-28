@@ -49,6 +49,8 @@ export function releases(): Release[] {
         { icon: 'video', text: tr("3D flyover videos are made frame by frame: a smooth 30 a second in full HD, with the roads' colours steady.") },
         { icon: 'map', text: tr("The flyover's hills only show on rides that have them, and a car's flyover no longer shows lean.") },
         { icon: 'route', text: tr("Your pin and trail keep to the roads you rode in the flyover, however fast the video.") },
+        { icon: 'pixels', text: tr("Two new accent colours: Pearl, all white, and Eclipse, black with a glowing white edge.") },
+        { icon: 'tips', text: tr("Glows sit inside their buttons now, so none are cut off, and the demo shows off the Garage and History glows.") },
       ],
     },
     {

@@ -86,9 +86,9 @@ export function HandshakeButton({
       className={cn(
         'relative w-[38px] h-[38px] landscape:w-[34px] landscape:h-[34px] rounded-xl flex items-center justify-center border shadow-lg backdrop-blur transition-colors',
         receiving
-          ? 'bg-accent/25 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)]'
+          ? 'bg-accent/25 border-accent text-accent animate-pulse shadow-[inset_0_0_16px_hsl(var(--accent)/0.6)]'
           : nudged
-            ? 'bg-accent/20 border-accent text-accent animate-pulse shadow-[0_0_18px_hsl(var(--accent)/0.7)] motion-reduce:animate-none'
+            ? 'bg-accent/20 border-accent text-accent animate-pulse shadow-[inset_0_0_16px_hsl(var(--accent)/0.6)] motion-reduce:animate-none'
             : st.outgoing
             ? 'bg-card/95 border-accent/60 text-accent'
             : 'bg-card/95 border-border text-foreground hover:bg-secondary',

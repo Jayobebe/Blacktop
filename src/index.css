@@ -75,7 +75,8 @@
     --shadow-md: 0 4px 16px hsl(220 15% 0% / 0.25);
     --shadow-lg: 0 8px 32px hsl(220 15% 0% / 0.3);
     --shadow-xl: 0 16px 48px hsl(220 15% 0% / 0.35);
-    --shadow-glow: 0 0 40px hsl(38 95% 55% / 0.25);
+    /* Inside the edge: a glow outside it was cut off by any card or scroller round the button (2026-10-29). */
+    --shadow-glow: inset 0 0 22px hsl(var(--accent) / 0.28);
     --shadow-burn: 0 0 50px hsl(15 90% 50% / 0.35);
     --shadow-inset: inset 0 1px 0 hsl(220 15% 100% / 0.05);
     --battle-silver: linear-gradient(135deg, hsl(220 8% 72%), hsl(220 6% 55%), hsl(220 10% 30%));
@@ -441,10 +442,10 @@
 
   @keyframes burn-pulse {
     0%, 100% {
-      box-shadow: 0 0 25px hsl(var(--burn) / 0.25);
+      box-shadow: inset 0 0 18px hsl(var(--burn) / 0.3);
     }
     50% {
-      box-shadow: 0 0 50px hsl(var(--burn) / 0.45);
+      box-shadow: inset 0 0 34px hsl(var(--burn) / 0.55);
     }
   }
 
@@ -1938,21 +1939,75 @@ html.thermal .suggest-list.suggest-nudge > * { animation: none; }
   100% { transform: rotate(-6deg) scale(1); opacity: 0.9; }
 }
 
-/* Something new to read (What's new): Home's Settings button and the What's new row glow in the accent until it's opened. */
+/* Something new to read (What's new): Home's Settings button and the What's new row glow in the accent until it's opened.
+   Every glow in the app is drawn inside its own edge (inset): any card, deck or scroller round a button clips what's
+   outside it, which cut glows off flat (Home's nav, Settings' What's new, Start ride; 2026-10-29). The line is
+   1.5 px, the weight of every other outline. */
 .news-glow {
-  /* Kept mostly inside the button: Home's nav sits at the bottom edge of a deck card that clips,
-     and Settings' row at the edge of its scroller, and a wide outer glow was cut off at both. */
-  box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.9), inset 0 0 14px hsl(var(--accent) / 0.35), 0 0 6px hsl(var(--accent) / 0.4);
+  box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.9), inset 0 0 16px hsl(var(--accent) / 0.4);
 }
 @media (prefers-reduced-motion: no-preference) {
   html:not(.thermal) .news-glow { animation: news-glow 1.8s ease-in-out infinite; }
 }
 @keyframes news-glow {
-  0%, 100% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.8), inset 0 0 8px hsl(var(--accent) / 0.2), 0 0 3px hsl(var(--accent) / 0.3); }
-  50% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 1), inset 0 0 18px hsl(var(--accent) / 0.45), 0 0 7px hsl(var(--accent) / 0.5); }
+  0%, 100% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 0.8), inset 0 0 9px hsl(var(--accent) / 0.22); }
+  50% { box-shadow: inset 0 0 0 1.5px hsl(var(--accent) / 1), inset 0 0 22px hsl(var(--accent) / 0.5); }
 }
 /* Thermal mode draws no shadows: an outline says the same. */
 html.thermal .news-glow { outline: 2px solid #fff; outline-offset: -2px; }
+
+/* Eclipse, the black accent (useSettings: `accent-eclipse` on <html>): black with a glowing white edge, like a
+   blade of black light. --accent itself is a pale silver, so every line, map, chart and canvas drawn in it still
+   shows on the near-black app; these turn what's solidly the accent black with a white halo: filled buttons and
+   chips, accent icons (black strokes lit white either side; accent lettering stays pale with a soft glow, to be
+   read), and the "something new" glow (a black line, lit white either side, flickering as it hums). */
+html.accent-eclipse { --accent-foreground: 0 0% 98%; }
+html.accent-eclipse .bg-accent {
+  background-color: hsl(0 0% 3%);
+  color: hsl(0 0% 98%);
+  /* A 1.5 px edge, the weight of every other outline, its light falling inwards (outside it was clipped). */
+  box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.9), inset 0 0 12px hsl(0 0% 100% / 0.3);
+}
+/* Lettering stays pale and only glows: black letters lit at the edge couldn't be read at small sizes. */
+html.accent-eclipse .text-accent,
+html.accent2-eclipse .text-accent-2 {
+  text-shadow: 0 0 5px hsl(0 0% 100% / 0.45);
+}
+/* Text inside that has a colour of its own (a tile's grey subtitle) doesn't take the glow it would inherit. */
+html.accent-eclipse .text-accent :is(.text-foreground, .text-muted-foreground, .text-white, .text-destructive, .text-warning),
+html.accent2-eclipse .text-accent-2 :is(.text-foreground, .text-muted-foreground, .text-white, .text-destructive, .text-warning) {
+  text-shadow: none;
+}
+/* Icons are the black blade: a black stroke lit white on both sides. */
+html.accent-eclipse svg.text-accent,
+html.accent-eclipse .text-accent svg:not([class*="text-"]),
+html.accent2-eclipse svg.text-accent-2,
+html.accent2-eclipse .text-accent-2 svg:not([class*="text-"]) {
+  color: hsl(0 0% 4%);
+  filter: drop-shadow(0 0 0.6px hsl(0 0% 100%)) drop-shadow(0 0 2.5px hsl(0 0% 100% / 0.6));
+}
+html.accent2-eclipse .btn-accent-2 {
+  background-color: hsl(0 0% 3%);
+  color: hsl(0 0% 98%);
+  box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.9), inset 0 0 12px hsl(0 0% 100% / 0.3);
+}
+/* The glow: a white edge, a black blade 1.5 px inside it, and white light falling inwards, all inside the edge. */
+html.accent-eclipse .news-glow {
+  box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.85), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 12px 3px hsl(0 0% 100% / 0.4);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.accent-eclipse:not(.thermal) .news-glow { animation: eclipse-hum 2.4s linear infinite; }
+}
+/* The hum: a steady swell with a couple of quick flickers, never dropping out. */
+@keyframes eclipse-hum {
+  0%, 100% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.7), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 9px 2px hsl(0 0% 100% / 0.28); }
+  18% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 100% / 1), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 14px 4px hsl(0 0% 100% / 0.5); }
+  21% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.5), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 7px 1px hsl(0 0% 100% / 0.2); }
+  24% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 100% / 1), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 14px 4px hsl(0 0% 100% / 0.5); }
+  55% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 100% / 1), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 16px 5px hsl(0 0% 100% / 0.52); }
+  70% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 96% / 0.7), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 9px 2px hsl(0 0% 100% / 0.28); }
+  72% { box-shadow: inset 0 0 0 1.5px hsl(0 0% 100% / 0.95), inset 0 0 0 3px hsl(0 0% 3%), inset 0 0 12px 3px hsl(0 0% 100% / 0.45); }
+}
 
 /* Loading (components/PixelLoader): pixels breaking up and coming back, corner to corner. */
 .pixel-loader rect { animation: pixel-loader 900ms steps(4, end) infinite; transform-box: view-box; }

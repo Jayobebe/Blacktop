@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 're
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useProfile } from '@/features/profile';
 import { useRideHistory, useActiveRide, clearSoloRoute, SetOffPrompt } from '@/features/ride';
-import { isRideNew, useHistorySeen } from '@/features/ride/lib/historySeen';
+import { isDemoRideNew, isRideNew, useHistorySeen } from '@/features/ride/lib/historySeen';
 import { useGarageNews } from '@/features/garage/lib/garageNews';
 import { useDemoMode } from '@/lib/demoMode';
 import { useConvoyState } from '@/features/convoy';
@@ -63,7 +63,8 @@ export default function Home() {
   // A ride not opened yet: History glows. A service due or coming up the Garage hasn't been opened on since: Garage glows.
   useHistorySeen();
   const { enabled: demoOn } = useDemoMode();
-  const historyNew = !demoOn && rides.some(isRideNew);
+  // Demo mode shows it off with its newest ride.
+  const historyNew = demoOn ? rides.some((r) => isDemoRideNew(r, rides)) : rides.some(isRideNew);
   const garageNew = useGarageNews();
   const { rideState, startRide } = useActiveRide();
   const { convoy } = useConvoyState();
@@ -764,7 +765,9 @@ export default function Home() {
                   </Suspense>
                   <HomeRadioDock />
                 </header>
-                  <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden">
+                  {/* pb-0.5: the tile outlines' bottom line ran along this box's clipped edge, and rounding the clip to the
+                      screen's pixels shaved it thinner than the rest (Track Day's, in portrait). */}
+                  <div className="flex-1 flex flex-col landscape:flex-row gap-4 landscape:gap-3 min-h-0 overflow-hidden pb-0.5">
                     {/* Quick Stats: a row in portrait, a tower down the left in landscape */}
                     <div
                       className="grid grid-cols-[repeat(var(--stat-cols),minmax(0,1fr))] landscape:grid-cols-1 landscape:grid-rows-[repeat(var(--stat-cols),minmax(0,1fr))] gap-2 landscape:w-40 md:landscape:w-48 flex-shrink-0"
@@ -943,7 +946,8 @@ export default function Home() {
                   </div>
                 {deckPips}
                 {/* Bottom Navigation */}
-                <nav className="flex justify-around mt-2 pt-3 border-t border-border/30 animate-slide-up delay-300">
+                {/* pb-2: room under the buttons for their glow (Home's card clips at its bottom edge, which cut it off flat). */}
+                <nav className="flex justify-around mt-2 pt-3 pb-2 border-t border-border/30 animate-slide-up delay-300">
                   {navItems.map(({ icon: Icon, label, onClick, ...item }) => (
                     <button
                       key={label}

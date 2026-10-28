@@ -2,6 +2,8 @@ import { PageTips } from '@/features/guide';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { markGarageSeen, useGarageNews } from '@/features/garage/lib/garageNews';
+import { dueItems } from '@/features/garage/lib/serviceReminders';
+import { cn } from '@/lib/utils';
 import { Plus, ChevronLeft, ChevronRight, Trash2, Check, Move, X, BookDown } from 'lucide-react';
 import { LogbookCover, LogbookView, LogbookReceiver } from '@/features/logbook';
 import { DEFAULT_BIKE_PLACEMENT, BikePlacement } from '@/features/garage/types';
@@ -60,6 +62,7 @@ export default function Garage() {
   // Opened from a service reminder (Blacktop Console): straight to that vehicle's Maintenance tab.
   const [params] = useSearchParams();
   const openTab = params.get('tab') === 'maint' ? 'maint' : 'stats';
+  const [tab, setTab] = useState(openTab);
   const wantBike = params.get('bike');
   useEffect(() => {
     if (wantBike && wantBike !== activeBikeId && bikes.some((b) => b.id === wantBike)) setActiveBike(wantBike);
@@ -330,10 +333,13 @@ export default function Garage() {
         </div>
       ) : (
         <div className="mt-4 flex-1 min-h-0">
-          <Tabs defaultValue={openTab} className="w-full">
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList data-tip="garage-tabs" className="grid grid-cols-2 w-full">
               <TabsTrigger value="stats">{tr("Stats")}</TabsTrigger>
-              <TabsTrigger value="maint">{tr("Maintenance")}</TabsTrigger>
+              {/* Glows while a service is overdue or due soon and the tab isn't open: the way to it from Home's glow. */}
+              <TabsTrigger value="maint" className={cn(tab !== 'maint' && dueItems(activeBike.maintenance, stats.odometerKm).length > 0 && 'news-glow')}>
+                {tr("Maintenance")}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="stats" className="mt-3">
               <StatsPanel stats={stats} baseOdometerKm={activeBike.baseOdometerKm} />

@@ -27,7 +27,7 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
       <p className="text-xs text-muted-foreground">
         {tr("Tap a second colour to tint the background glow. Tap it again to remove it.")}
       </p>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-5 gap-1.5">
         {ACCENT_COLORS.map((color) => {
           const isMain = selected === color.id;
           const isSecondary = secondary === color.id;
@@ -36,7 +36,7 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
               key={color.id}
               onClick={() => pick(color.id)}
               className={cn(
-                "relative flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200",
+                "relative flex flex-col items-center gap-2 px-1 py-2.5 rounded-xl transition-all duration-200 min-w-0",
                 "hover:bg-secondary/50 active:scale-95",
                 (isMain || isSecondary) && "bg-secondary"
               )}
@@ -48,16 +48,19 @@ export function AccentColorPicker({ selected, secondary, onChange }: AccentColor
                   isSecondary && "ring-2 ring-dashed ring-offset-2 ring-offset-card"
                 )}
                 style={{
-                  backgroundColor: `hsl(${color.hsl})`,
-                  boxShadow: isMain || isSecondary ? `0 0 20px hsl(${color.hsl} / 0.5)` : undefined,
+                  // Eclipse: a black disc with a white halo, as it looks in the app.
+                  backgroundColor: color.eclipse ? 'hsl(0 0% 3%)' : `hsl(${color.hsl})`,
+                  boxShadow: color.eclipse
+                    ? `0 0 0 1.5px hsl(0 0% 96%), 0 0 ${isMain || isSecondary ? 20 : 9}px hsl(0 0% 100% / 0.55)`
+                    : isMain || isSecondary ? `0 0 20px hsl(${color.hsl} / 0.5)` : undefined,
                   ['--tw-ring-color' as string]: `hsl(${color.hsl})`,
                 }}
               >
-                {isMain && <Check className="w-5 h-5 text-background drop-shadow-md" />}
-                {isSecondary && <span className="text-sm font-bold text-background">2</span>}
+                {isMain && <Check className={cn("w-5 h-5 drop-shadow-md", color.eclipse ? "text-white" : "text-background")} />}
+                {isSecondary && <span className={cn("text-sm font-bold", color.eclipse ? "text-white" : "text-background")}>2</span>}
               </div>
               <span className={cn(
-                "text-xs font-medium transition-colors",
+                "text-[11px] leading-tight text-center font-medium transition-colors max-w-full break-words",
                 isMain || isSecondary ? "text-foreground" : "text-muted-foreground"
               )}>
                 {isSecondary ? tr("{0} · glow", [color.label]) : color.label}

@@ -11,6 +11,7 @@ import { useSettings } from '@/features/settings';
 import { getDistanceLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n';
+import { demoBlocked } from '@/lib/demoGuard';
 
 interface Props {
   bike: Bike;
@@ -57,6 +58,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
 
   const submit = () => {
     if (!name.trim() || !interval) return;
+    if (demoBlocked()) return;
     addMaintItem(bike.id, {
       name: name.trim(),
       intervalKm: toKm(interval),
@@ -167,7 +169,7 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
           {bike.maintenance.map((item) => {
             const { dueInKm, dueInDays, pct, tone, reason } = serviceStatus(item, odometerKm);
             return (
-              <li key={item.id} className="bg-card/60 border border-border/30 rounded-2xl p-3">
+              <li key={item.id} className={cn('bg-card/60 border border-border/30 rounded-2xl p-3', tone !== 'ok' && 'news-glow')}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold truncate">{item.name}</p>
@@ -195,12 +197,13 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                       size="sm"
                       variant="ghost"
                       className="h-8 px-2 text-xs gap-1"
-                      onClick={() =>
+                      onClick={() => {
+                        if (demoBlocked()) return;
                         updateMaintItem(bike.id, item.id, {
                           lastServiceKm: odometerKm,
                           lastServiceAt: Date.now(),
-                        })
-                      }
+                        });
+                      }}
                     >
                       <Check className="w-3.5 h-3.5" />{" "}{tr("Serviced")}
                     </Button>
@@ -208,7 +211,10 @@ export function MaintenanceList({ bike, odometerKm }: Props) {
                       size="sm"
                       variant="ghost"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteMaintItem(bike.id, item.id)}
+                      onClick={() => {
+                        if (demoBlocked()) return;
+                        deleteMaintItem(bike.id, item.id);
+                      }}
                       aria-label={tr("Delete part")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />

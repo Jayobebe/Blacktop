@@ -5,9 +5,15 @@ import { tr } from '@/lib/i18n';
 export type SpeedUnit = 'mph' | 'kph';
 export type DistanceUnit = 'miles' | 'km';
 
-export type AccentColor = 'orange' | 'blue' | 'green' | 'purple' | 'pink' | 'red' | 'cyan' | 'lime';
+export type AccentColor = 'orange' | 'blue' | 'green' | 'purple' | 'pink' | 'red' | 'cyan' | 'lime' | 'white' | 'black';
 
-export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring: string }[] = [
+/**
+ * `hsl` is the colour everything is drawn in (text, icons, lines, maps, the globe, canvases). Eclipse is black
+ * with a glowing white edge, like a blade of black light: on a near-black app a black line or glyph would vanish,
+ * so it's drawn in a pale silver, and the `accent-eclipse` class on <html> (index.css) turns the solid accent
+ * fills, accent text and icons and the "something new" glow black with a white halo. `eclipse` marks it.
+ */
+export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring: string; eclipse?: boolean }[] = [
   { id: 'orange', label: tr("Sunset"), hsl: '38 95% 55%', ring: '38 95% 55%' },
   { id: 'blue', label: tr("Ocean"), hsl: '217 91% 60%', ring: '217 91% 60%' },
   { id: 'green', label: tr("Forest"), hsl: '142 71% 45%', ring: '142 71% 45%' },
@@ -16,6 +22,8 @@ export const ACCENT_COLORS: { id: AccentColor; label: string; hsl: string; ring:
   { id: 'red', label: tr("Crimson"), hsl: '0 84% 60%', ring: '0 84% 60%' },
   { id: 'cyan', label: tr("Arctic"), hsl: '186 94% 50%', ring: '186 94% 50%' },
   { id: 'lime', label: tr("Neon"), hsl: '84 85% 50%', ring: '84 85% 50%' },
+  { id: 'white', label: tr("Pearl"), hsl: '0 0% 96%', ring: '0 0% 96%' },
+  { id: 'black', label: tr("Eclipse"), hsl: '0 0% 86%', ring: '0 0% 86%', eclipse: true },
 ];
 
 export type CardDropVisibility = 'crew' | 'world';
@@ -275,11 +283,13 @@ export function useSettings() {
     const second = ACCENT_COLORS.find(c => c.id === settings.secondaryAccentColor);
     if (second && second.id !== color.id) document.documentElement.style.setProperty('--lava', second.hsl);
     else document.documentElement.style.removeProperty('--lava');
+    document.documentElement.classList.toggle('accent2-eclipse', !thermal && !!second?.eclipse && second.id !== color.id);
 
     // Keep warning (amber) independent of the chosen accent color
     // (this ensures Speed Alerts are always amber/red for all users)
     document.documentElement.style.removeProperty('--warning');
 
+    document.documentElement.classList.toggle('accent-eclipse', !thermal && !!color.eclipse);
     document.documentElement.style.setProperty('--speed-active', color.hsl);
     document.documentElement.style.setProperty('--ptt-active', color.hsl);
   }, [settings.accentColor, settings.secondaryAccentColor, settings.thermalMode]);
