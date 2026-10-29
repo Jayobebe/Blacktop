@@ -125,6 +125,7 @@ import { copyLedger, useCopyBankVersion } from "@/features/cards/lib/dropEconomy
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
 import { SearchCredit, useSearchCredit } from '@/lib/searchCredit';
+import { CreditsTicker } from '@/components/CreditsTicker';
 import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
@@ -3787,9 +3788,9 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
 
       {/* Portrait: every credit on one small line along the very bottom, sized to the screen's width, and the
           bottom row (Report, the speed card, close) standing on it, level with each other. */}
-      <div className="short:hidden absolute bottom-[calc(0.3rem+var(--safe-bottom))] left-[calc(0.5rem+var(--safe-left))] right-[calc(0.5rem+var(--safe-right))] z-10 pointer-events-none text-center whitespace-nowrap overflow-hidden leading-none text-muted-foreground/70 text-[min(10px,2.3vw)]">
+      <CreditsTicker className="short:hidden absolute bottom-[calc(0.3rem+var(--safe-bottom))] left-[calc(0.5rem+var(--safe-left))] right-[calc(0.5rem+var(--safe-right))] z-10 pointer-events-none text-center leading-none text-muted-foreground/70 text-[min(10px,2.3vw)]">
         <MapCredits weather />
-      </div>
+      </CreditsTicker>
       <div className="absolute bottom-[calc(1.5rem+var(--safe-bottom))] short:bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left))] right-[calc(0.75rem+var(--safe-right))] short:right-auto short:w-[22rem] z-10 space-y-1.5">
         {/* Waypoints panel — convoy context: leaders can add/remove, members can see stops */}
         {showWaypointsPanel && (
@@ -3984,14 +3985,14 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
           bottom instead, between the speed column and the close button. */}
       {/* One line, the letters sized to the room there is (container units: a share of the box's width). */}
       <div style={{ containerType: "inline-size" }} className="hidden short:block [@media(max-width:739px)]:!hidden absolute top-[calc(0.75rem+var(--safe-top)+0.6rem)] left-[calc(0.75rem+var(--safe-left)+22.75rem)] right-[calc(var(--safe-right)+5.5rem)] z-20 pointer-events-none">
-        <span className="inline-block max-w-full overflow-hidden whitespace-nowrap px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
+        <CreditsTicker className="inline-block max-w-full align-top px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
           <MapCredits weather />
-        </span>
+        </CreditsTicker>
       </div>
       <div style={{ containerType: "inline-size" }} className="hidden short:[@media(max-width:739px)]:block absolute bottom-[calc(0.75rem+var(--safe-bottom))] left-[calc(0.75rem+var(--safe-left)+11rem)] right-[calc(var(--safe-right)+5rem)] [@media(orientation:landscape)_and_(max-height:350px)]:right-[calc(var(--safe-right)+12rem)] z-20 pointer-events-none text-center">
-        <span className="inline-block max-w-full overflow-hidden whitespace-nowrap px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
+        <CreditsTicker className="inline-block max-w-full align-top px-2 py-0.5 rounded-md bg-background/40 text-[min(10px,2.3cqw)] leading-tight text-muted-foreground/80">
           <MapCredits weather />
-        </span>
+        </CreditsTicker>
       </div>
 
       {/* Tapped hazard: what it is, still there / gone. */}

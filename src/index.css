@@ -2078,3 +2078,19 @@ html.thermal .radio-mica {
   from { transform: translate3d(var(--tx-from), 0, 0); }
   to { transform: translate3d(var(--tx-to), 0, 0); }
 }
+
+/* The map's credits (components/CreditsTicker): too long for the line, they glide at the tuner's
+   pace in a seamless loop (two copies, one copy's width plus the gap per lap), edges faded. */
+.credits-tick { animation: credits-tick linear infinite; will-change: transform; }
+@keyframes credits-tick {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-1 * var(--credits-shift)), 0, 0); }
+}
+.credits-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .credits-tick { animation: none; }
+}
+html.thermal .credits-tick { animation: none; }
