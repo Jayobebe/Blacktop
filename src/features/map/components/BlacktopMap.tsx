@@ -330,6 +330,8 @@ const THREE_D_PITCH = 60;
 /** How fast the camera circles a tapped pin (degrees per second). */
 const ORBIT_DEG_PER_S = 9;
 const SATELLITE_SOURCE_ID = "esri-satellite";
+/** The water's BLACKTOP wordmark over the satellite picture (lib/waterWordmark). */
+const SATELLITE_WATER_ID = "satellite-water-wordmark";
 
 // Dark basemap: OpenFreeMap's free dark vector style (no API key required,
 // built on OpenMapTiles/OpenStreetMap). The satellite raster layer is merged
@@ -367,19 +369,36 @@ let basemapStylePromise: Promise<StyleSpecification> | null = null;
 function getBasemapStyle(): Promise<StyleSpecification> {
   if (!basemapStylePromise) {
     basemapStylePromise = loadDarkMapStyle()
-      .then((style) => ({
-        ...style,
-        sources: { ...style.sources, [SATELLITE_SOURCE_ID]: SATELLITE_SOURCE },
-        layers: [
-          ...style.layers,
-          {
-            id: SATELLITE_LAYER_ID,
-            type: "raster",
-            source: SATELLITE_SOURCE_ID,
-            layout: { visibility: "none" },
-          } as StyleSpecification["layers"][number],
-        ],
-      }))
+      .then((style) => {
+        // The satellite picture goes under the basemap's labels (street and place names, its place
+        // icons), not on top of everything: on top it buried them, and the swap below hid every
+        // other layer to make room, so satellite had no names, pins, radar or wind (2026-10-29).
+        const firstLabel = style.layers.findIndex((l) => l.type === "symbol");
+        const at = firstLabel < 0 ? style.layers.length : firstLabel;
+        const water = style.layers.find((l) => l.id === "water" && l.type === "fill") as
+          | (StyleSpecification["layers"][number] & { source: string; "source-layer"?: string; filter?: unknown })
+          | undefined;
+        const satellite: StyleSpecification["layers"] = [
+          { id: SATELLITE_LAYER_ID, type: "raster", source: SATELLITE_SOURCE_ID, layout: { visibility: "none" } } as StyleSpecification["layers"][number],
+          // The water's wordmark over the picture: the words alone (applyWaterWordmark draws the image).
+          ...(water
+            ? [{
+                id: SATELLITE_WATER_ID,
+                type: "fill",
+                source: water.source,
+                ...(water["source-layer"] ? { "source-layer": water["source-layer"] } : {}),
+                ...(water.filter ? { filter: water.filter } : {}),
+                layout: { visibility: "none" },
+                paint: { "fill-opacity": 1 },
+              } as StyleSpecification["layers"][number]]
+            : []),
+        ];
+        return {
+          ...style,
+          sources: { ...style.sources, [SATELLITE_SOURCE_ID]: SATELLITE_SOURCE },
+          layers: [...style.layers.slice(0, at), ...satellite, ...style.layers.slice(at)],
+        };
+      })
       .catch((err) => {
         console.error("[BlacktopMap] Falling back to plain dark basemap:", err);
         return FALLBACK_DARK_STYLE;
@@ -808,16 +827,18 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     const DEFAULT_MAX_ZOOM = 22; // maplibre default
     const apply = () => {
       if (!m.getLayer(SATELLITE_LAYER_ID)) return;
-      // Dark basemap layers = everything except the satellite raster and our
-      // dynamically added overlays (route line etc. keep their visibility).
-      const darkLayerIds = m
-        .getStyle()
-        .layers.map((l) => l.id)
-        .filter((id) => id !== SATELLITE_LAYER_ID && !id.startsWith("blacktop-"));
-      for (const id of darkLayerIds) {
-        m.setLayoutProperty(id, "visibility", basemap === "dark" ? "visible" : "none");
+      // Only the basemap's own ground (its background, land, water, roads: fills and lines) gives way
+      // to the picture. Its labels (street and place names, its place icons) stay, and so does
+      // everything Blacktop draws (route, pins, hazards, cameras, radar, wind, quick searches), which
+      // other code shows and hides for its own reasons.
+      const satellite = basemap === "satellite";
+      for (const l of m.getStyle().layers) {
+        if (l.id === SATELLITE_LAYER_ID || l.id === SATELLITE_WATER_ID || l.id.startsWith("blacktop-")) continue;
+        const ground = l.type === "background" || ((l as { source?: string }).source === "openmaptiles" && l.type !== "symbol");
+        if (ground) m.setLayoutProperty(l.id, "visibility", satellite ? "none" : "visible");
       }
-      m.setLayoutProperty(SATELLITE_LAYER_ID, "visibility", basemap === "satellite" ? "visible" : "none");
+      m.setLayoutProperty(SATELLITE_LAYER_ID, "visibility", satellite ? "visible" : "none");
+      if (m.getLayer(SATELLITE_WATER_ID)) m.setLayoutProperty(SATELLITE_WATER_ID, "visibility", satellite ? "visible" : "none");
       if (basemap === "satellite") {
         m.setMaxZoom(SAT_MAX_ZOOM);
         if (m.getZoom() > SAT_MAX_ZOOM) m.zoomTo(SAT_MAX_ZOOM, { duration: 250 });

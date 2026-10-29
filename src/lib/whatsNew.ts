@@ -43,6 +43,14 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29e',
+      version: '1.34',
+      lines: [
+        { icon: 'map', text: tr("Satellite view keeps the street names, places, pins, rain radar and wind, and the water wears its BLACKTOP wordmark.") },
+        { icon: 'map', text: tr("The map's credits glide along when they don't fit, instead of running off the screen.") },
+      ],
+    },
+    {
       id: '2026-10-29d',
       version: '1.33',
       lines: [
