@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { RouteResult } from '../lib/routing';
 import {
+  bearingAt,
   buildNavRoute,
+  nearestTurnAlong,
   lowerFirst,
   maneuverText,
   navProgress,
@@ -16,13 +18,8 @@ import { tr } from '@/lib/i18n';
 import { speak, stopSpeaking, setVoiceStyle, type VoiceStyle } from '../lib/speech';
 import { buildPacenotes } from '../lib/pacenotes';
 import { warmPilotVoice } from '@/lib/pilotVoice';
+import { OFF_ROUTE_M, RerouteWatch } from '../lib/rerouteRules';
 
-/** Metres off the line before the rider counts as off route. */
-const OFF_ROUTE_M = 45;
-/** How long they have to stay off it (GPS wobble at junctions is shorter). */
-const OFF_ROUTE_MS = 4000;
-/** Never ask for more than one new route in this window. */
-const REROUTE_GAP_MS = 12000;
 /** Within this of a stop or the destination counts as there. */
 const ARRIVE_M = 30;
 
@@ -37,6 +34,8 @@ interface Options {
   /** Standard, radio (cockpit), or radio plus rally corner calls. */
   voiceStyle?: VoiceStyle;
   unit: DistanceUnit;
+  /** The rider's heading while moving (degrees), or null: for telling a rider riding the route backwards. */
+  heading?: () => number | null;
   /**
    * One entry per leg end: the stop's name, or null for a via point
    * (twisty leg, loop point, weather detour) that isn't announced.
@@ -55,7 +54,7 @@ export interface TurnByTurn {
   describe: (m: NavManeuver) => string;
 }
 
-export function useTurnByTurn({ route, userLocation, speedMph, active, voice, voiceStyle = 'standard', unit, stops, onOffRoute, onStopReached }: Options): TurnByTurn {
+export function useTurnByTurn({ route, userLocation, speedMph, active, voice, voiceStyle = 'standard', unit, heading, stops, onOffRoute, onStopReached }: Options): TurnByTurn {
   const viaKey = stops.map((s) => (s == null ? '1' : '0')).join('');
   const nav = useMemo(
     () => (route ? buildNavRoute(route, viaKey.split('').map((c) => c === '1')) : null),
@@ -73,8 +72,8 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
 
   const stopsRef = useRef(stops);
   stopsRef.current = stops;
-  const cbRef = useRef({ onOffRoute, onStopReached });
-  cbRef.current = { onOffRoute, onStopReached };
+  const cbRef = useRef({ onOffRoute, onStopReached, heading });
+  cbRef.current = { onOffRoute, onStopReached, heading };
 
   const describe = (m: NavManeuver, spoken = false) => {
     const legs = nav?.legEnds.length ?? 1;
@@ -87,17 +86,17 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
 
   // Per-route state, reset whenever a new route arrives.
   const hintRef = useRef<number | null>(null);
-  const offSinceRef = useRef<number | null>(null);
   const stagesRef = useRef<Map<number, number>>(new Map());
   const lastNextRef = useRef<number>(-1);
   const stopsDoneRef = useRef<Set<number>>(new Set());
   /** Legs the rider has been matched onto: a stop only counts once its own leg has been ridden. */
   const legsSeenRef = useRef<Set<number>>(new Set());
   const arrivedRef = useRef(false);
-  const lastRerouteAtRef = useRef(0);
+  /** When to ask for a new route (lib/rerouteRules): off route, a missed turn, the wrong way. */
+  const watchRef = useRef(new RerouteWatch());
   useEffect(() => {
     hintRef.current = null;
-    offSinceRef.current = null;
+    watchRef.current.newRoute();
     stagesRef.current = new Map();
     lastNextRef.current = -1;
     stopsDoneRef.current = new Set();
@@ -143,18 +142,20 @@ export function useTurnByTurn({ route, userLocation, speedMph, active, voice, vo
     if (arrivedRef.current) return;
     const now = Date.now();
 
-    // ── Off route → ask for a new one ──
-    if (snap.offset > OFF_ROUTE_M) {
-      if (offSinceRef.current == null) offSinceRef.current = now;
-      if (now - offSinceRef.current >= OFF_ROUTE_MS && now - lastRerouteAtRef.current >= REROUTE_GAP_MS) {
-        lastRerouteAtRef.current = now;
-        offSinceRef.current = null;
-        if (activeRef.current && nav.maneuvers.length) say(tr("Rerouting"), { interrupt: true });
-        cbRef.current.onOffRoute();
-        return;
-      }
-    } else {
-      offSinceRef.current = null;
+    // ── Off the plan → ask for a new one (rerouteRules: off route, a missed turn, the wrong way) ──
+    const reason = watchRef.current.feed({
+      now,
+      offset: snap.offset,
+      along,
+      speed: Math.max(0, speedMph) * 0.44704,
+      heading: cbRef.current.heading?.() ?? null,
+      lineBearing: bearingAt(nav, along),
+      nearestTurn: nearestTurnAlong(nav, along),
+    });
+    if (reason) {
+      if (activeRef.current && nav.maneuvers.length) say(tr("Rerouting"), { interrupt: true });
+      cbRef.current.onOffRoute();
+      return;
     }
 
     // ── Stops and arrival ──

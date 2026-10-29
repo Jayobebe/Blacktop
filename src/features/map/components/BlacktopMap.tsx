@@ -2498,6 +2498,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
   // Solo: through any user-added stops. A weather detour via (if the rider
   // accepted one) always goes first.
   const [rerouteTick, setRerouteTick] = useState(0);
+  /** The rider's heading while they're moving (about 6 mph and up), else null: a standstill's heading means nothing. */
+  const movingHeading = () => (motionRef.current.speed > 2.7 ? headingRef.current : null);
   const [rerouting, setRerouting] = useState(false);
   const hasLocation = userLocation != null;
   const intermediateStops = useMemo(
@@ -2547,7 +2549,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     let retry: number | null = null;
     fetchRouteThroughStops(
       [from, ...intermediateStops.map(({ lat, lng }) => ({ lat, lng })), { lat: destination.lat, lng: destination.lng }],
-      { steps: true },
+      // Moving: the way they're going, so a reroute carries on rather than starting with a U-turn.
+      { steps: true, bearing: movingHeading() },
     )
       .then((result) => {
         if (routeRequestRef.current !== requestId) return;
@@ -2660,6 +2663,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     unit: settings.distanceUnit,
     stops: navStops,
     onOffRoute: () => setRerouteTick((t) => t + 1),
+    heading: movingHeading,
     onStopReached: handleStopReached,
   });
   const navProgressNow = turnByTurn.progress;

@@ -43,7 +43,16 @@ export type Prefs = {
   avoid: { motorways: boolean; tolls: boolean; ferries: boolean; unpaved: boolean };
   vehicle: "motorcycle" | "car" | "bicycle";
   steps?: boolean;
+  /**
+   * The way the rider is going at the start (degrees from north), for a reroute while moving: the
+   * new route sets off that way instead of turning them round. Ignored where the router can't match
+   * it to a road (routeFor asks again without it).
+   */
+  bearing?: number | null;
 };
+
+/** How far off the rider's heading the starting road may run and still count (degrees either way). */
+const BEARING_RANGE = 60;
 
 /** Only booleans and known vehicles get through. */
 export function readPrefs(b: RoutePrefs | undefined): Prefs {
@@ -61,10 +70,12 @@ const PUBLIC_VALHALLA = ["https://valhalla1.openstreetmap.de"];
 
 // ---- Engines --------------------------------------------------------------------
 
-export async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000): Promise<any | null> {
+export async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000, bearing: number | null = null): Promise<any | null> {
   const path = stops.map(([lo, la]) => `${lo.toFixed(6)},${la.toFixed(6)}`).join(";");
   return viaGeo("osrm", PUBLIC_OSRM, async (base, own, hop) => {
     const url = new URL(`${base}/route/v1/driving/${path}`);
+    // The first stop's heading only; the rest are left open (";;").
+    if (bearing != null) url.searchParams.set("bearings", [`${Math.round(bearing)},${BEARING_RANGE}`, ...stops.slice(1).map(() => "")].join(";"));
     url.searchParams.set("overview", "full");
     url.searchParams.set("geometries", "geojson");
     url.searchParams.set("alternatives", "false");
@@ -99,7 +110,9 @@ function valhallaCosting(p: Prefs): { costing: string; options: Record<string, u
 export async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000): Promise<any | null> {
   const { costing, options } = valhallaCosting(p);
   const body = JSON.stringify({
-    locations: stops.map(([lo, la]) => ({ lat: la, lon: lo })),
+    locations: stops.map(([lo, la], i) => (i === 0 && p.bearing != null
+      ? { lat: la, lon: lo, heading: Math.round(p.bearing), heading_tolerance: BEARING_RANGE }
+      : { lat: la, lon: lo })),
     costing,
     costing_options: options,
     format: "osrm",
@@ -304,6 +317,17 @@ export async function valhallaMatch(
 
 /** Routes with the rider's preferences on the chosen engine. OSRM can't avoid anything or route bikes, so those go to Valhalla either way. */
 export async function routeFor(stops: LngLat[], p: Prefs, which: EngineName): Promise<any | null> {
+  // With the rider's heading first; a router that can't put them on a road that way (a car park,
+  // a heading that's off) gets asked again without it, so a heading never costs them a route.
+  if (p.bearing != null) {
+    const headed = await routeOnce(stops, p, which);
+    if (headed?.geometry) return headed;
+    return routeOnce(stops, { ...p, bearing: null }, which);
+  }
+  return routeOnce(stops, p, which);
+}
+
+async function routeOnce(stops: LngLat[], p: Prefs, which: EngineName): Promise<any | null> {
   const engine: OneEngine = which === "both" ? "valhalla" : which;
   const needsValhalla = p.vehicle === "bicycle" || p.avoid.motorways || p.avoid.tolls || p.avoid.ferries || p.avoid.unpaved;
   if (engine === "valhalla" || needsValhalla) {
@@ -315,7 +339,7 @@ export async function routeFor(stops: LngLat[], p: Prefs, which: EngineName): Pr
       console.warn("[routing] Valhalla failed, using OSRM:", e instanceof Error ? e.message : e);
     }
   }
-  return osrmRoute(stops, p.steps === true);
+  return osrmRoute(stops, p.steps === true, 9000, p.bearing ?? null);
 }
 
 // ---- Scoring ----------------------------------------------------------------------

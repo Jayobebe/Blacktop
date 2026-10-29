@@ -43,6 +43,14 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29f',
+      version: '1.35',
+      lines: [
+        { icon: 'map', text: tr("Miss a turn and the map reroutes at the junction, not halfway down the wrong road, and it notices if you turn round.") },
+        { icon: 'map', text: tr("New routes carry on the way you're going instead of starting with a U-turn.") },
+      ],
+    },
+    {
       id: '2026-10-29e',
       version: '1.34',
       lines: [

@@ -808,7 +808,10 @@ serve(async (req) => {
       }
 
       let route: any = null;
-      const prefs = { ...readPrefs(body), steps: body.steps === true };
+      // The rider's heading for a reroute while moving (Prefs.bearing): a real compass bearing or nothing.
+      const b = Number((body as { bearing?: unknown }).bearing);
+      const bearing = (body as { bearing?: unknown }).bearing != null && Number.isFinite(b) && b >= 0 && b <= 360 ? b : null;
+      const prefs = { ...readPrefs(body), steps: body.steps === true, bearing };
       // Asked at the same time as the route, for the ETA range (null without our own server).
       const other = secondOpinion(coords as LngLat[], prefs);
       try {

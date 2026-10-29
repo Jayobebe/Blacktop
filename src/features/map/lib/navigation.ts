@@ -382,3 +382,27 @@ export function spokenDistance(meters: number, unit: DistanceUnit): string {
 export function lowerFirst(s: string): string {
   return s ? s[0].toLowerCase() + s.slice(1) : s;
 }
+
+/** The line's heading (degrees from north) at `along` metres, for telling a rider riding it backwards. */
+export function bearingAt(nav: NavRoute, along: number): number | null {
+  const { coords, cum } = nav;
+  if (coords.length < 2) return null;
+  let i = 0;
+  while (i < cum.length - 2 && cum[i + 1] < along) i++;
+  const [ax, ay] = coords[i];
+  const [bx, by] = coords[i + 1];
+  const dx = (bx - ax) * Math.cos((ay * Math.PI) / 180);
+  const dy = by - ay;
+  if (dx === 0 && dy === 0) return null;
+  return ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;
+}
+
+/** Metres along the route to the turn nearest `along` that's worth saying (not a renamed road), or null. */
+export function nearestTurnAlong(nav: NavRoute, along: number): number | null {
+  let best: number | null = null;
+  for (const m of nav.maneuvers) {
+    if (m.silent || m.type === 'depart' || m.type === 'arrive') continue;
+    if (best == null || Math.abs(m.along - along) < Math.abs(best - along)) best = m.along;
+  }
+  return best;
+}

@@ -89,8 +89,12 @@ const ROUTE_TIMEOUT_MS = 15000;
 
 export async function fetchRouteThroughStops(
   stops: { lat: number; lng: number }[],
-  /** `quiet`: a look (a place's card), not the ride's route; failing doesn't put the map in offline mode. */
-  opts: { steps?: boolean; quiet?: boolean } = {},
+  /**
+   * `quiet`: a look (a place's card), not the ride's route; failing doesn't put the map in offline mode.
+   * `bearing`: the rider's heading while moving, so the route sets off the way they're going rather
+   * than turning them round (the server asks again without it if the router can't match it).
+   */
+  opts: { steps?: boolean; quiet?: boolean; bearing?: number | null } = {},
 ): Promise<RouteResult | null> {
   if (stops.length < 2) return null;
   // In a convoy: a convoy mate's route for the same plan, from where this rider is on it (sharedRoute.ts).
@@ -109,6 +113,7 @@ export async function fetchRouteThroughStops(
         kind: 'route',
         coordinates: stops.map(s => [s.lng, s.lat]),
         ...(opts.steps ? { steps: true } : {}),
+        ...(opts.bearing != null && Number.isFinite(opts.bearing) ? { bearing: Math.round(((opts.bearing % 360) + 360) % 360) } : {}),
         ...routePrefs(),
       },
       // A dead zone shouldn't hang the request until the phone gives up.
