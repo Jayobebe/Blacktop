@@ -495,7 +495,7 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
     // free for non-commercial use only, ~10,000 calls a day), then the public one.
     let json: unknown
     try {
-      json = await viaGeo('weather', ['https://api.open-meteo.com'], async (base, own) => {
+      json = await viaGeo('weather', ['https://api.open-meteo.com'], async (base, own, hop) => {
         const url = new URL(`${base}/v1/forecast`)
         url.searchParams.set('latitude', batch.map((a) => a.lat.toFixed(1)).join(','))
         url.searchParams.set('longitude', batch.map((a) => a.lng.toFixed(1)).join(','))
@@ -505,7 +505,7 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
         url.searchParams.set('timezone', 'GMT')
         // Ours only holds the model it syncs (infra/geo), so name it.
         if (own) url.searchParams.set('models', OWN_WEATHER_MODEL)
-        const res = await fetchWithTimeout(url.toString(), { headers: upstreamHeaders(own) }, 15000)
+        const res = await fetchWithTimeout(url.toString(), { hop, headers: upstreamHeaders(own) }, 15000)
         if (!res.ok) throw new Error(`weather ${res.status}`)
         const body = await res.json()
         const first = Array.isArray(body) ? body[0] : body

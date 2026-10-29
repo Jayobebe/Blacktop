@@ -69,18 +69,19 @@ export interface Challenge {
 }
 
 export const CHALLENGES: Challenge[] = [
+  // Titles never share a badge's name: badge names stay English, and a shared key kept the challenge English too.
   { id: 'miles', title: tr("Mile Muncher"), blurb: () => tr("Most distance ridden this week."), metric: 'distance', unit: 'mi', target: 200 },
-  { id: 'corners', title: tr("Corner Carver"), blurb: () => tr("Best average corner score across the week."), metric: 'corner_score', unit: 'pts', target: 80 },
+  { id: 'corners', title: tr("Bend Master"), blurb: () => tr("Best average corner score across the week."), metric: 'corner_score', unit: 'pts', target: 80 },
   { id: 'lean', title: tr("Knee Down"), blurb: () => tr("Deepest lean angle of the week."), metric: 'max_lean', unit: '°', target: 45 },
-  { id: 'rides', title: tr("Always Out"), blurb: () => tr("Most rides logged this week."), metric: 'ride_count', unit: 'rides', target: 7 },
+  { id: 'rides', title: tr("Out and About"), blurb: () => tr("Most rides logged this week."), metric: 'ride_count', unit: 'rides', target: 7 },
   { id: 'grand-tour', title: tr("Grand Tour"), blurb: (u) => tr("Rack up the big distance: {0} or bust.", [targetDistance(350, u)]), metric: 'distance', unit: 'mi', target: 350 },
   { id: 'sunday-smasher', title: tr("Sunday Smasher"), blurb: (u) => tr("A quick-hit distance dash. {0} takes it.", [targetDistance(100, u)]), metric: 'distance', unit: 'mi', target: 100 },
   { id: 'daily-rider', title: tr("Daily Rider"), blurb: () => tr("Ride every single day. 10 rides this week."), metric: 'ride_count', unit: 'rides', target: 10 },
   { id: 'full-send', title: tr("Full Lean Send"), blurb: () => tr("Push past 50° of lean."), metric: 'max_lean', unit: '°', target: 50 },
   { id: 'smooth', title: tr("Smooth Operator"), blurb: () => tr("Silky inputs only — average corner score of 90+."), metric: 'corner_score', unit: 'pts', target: 90 },
   { id: 'terminal', title: tr("Terminal Velocity"), blurb: () => tr("Highest top speed of the week."), metric: 'top_speed', unit: 'mph', target: 100 },
-  { id: 'night-owl', title: tr("Night Owl"), blurb: () => tr("Most rides started after 8pm or before 5am."), metric: 'night_rides', unit: 'rides', target: 3 },
-  { id: 'iron-butt', title: tr("Hard Ass"), blurb: () => tr("Longest single ride this week."), metric: 'longest_ride', unit: 'mi', target: 150 },
+  { id: 'night-owl', title: tr("After Dark"), blurb: () => tr("Most rides started after 8pm or before 5am."), metric: 'night_rides', unit: 'rides', target: 3 },
+  { id: 'iron-butt', title: tr("Long Haul"), blurb: () => tr("Longest single ride this week."), metric: 'longest_ride', unit: 'mi', target: 150 },
 ];
 
 /** ISO-8601 week key, e.g. "2026-W36". */

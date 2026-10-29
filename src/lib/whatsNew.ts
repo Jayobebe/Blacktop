@@ -43,6 +43,14 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29c',
+      version: '1.32',
+      lines: [
+        { icon: 'map', text: tr("Search and routes keep going when a map server is down or slow: Blacktop asks the next one, and the quickest answers first.") },
+        { icon: 'language', text: tr("Every weekly and monthly crew challenge has its name in your language now.") },
+      ],
+    },
+    {
       id: '2026-10-29b',
       version: '1.31',
       lines: [

@@ -55,21 +55,22 @@ export function readPrefs(b: RoutePrefs | undefined): Prefs {
   };
 }
 
-const PUBLIC_OSRM = ["https://router.project-osrm.org"];
+// FOSSGIS's own OSRM (car profile) answers the same API under its profile's path: a second public router.
+const PUBLIC_OSRM = ["https://router.project-osrm.org", "https://routing.openstreetmap.de/routed-car"];
 const PUBLIC_VALHALLA = ["https://valhalla1.openstreetmap.de"];
 
 // ---- Engines --------------------------------------------------------------------
 
 export async function osrmRoute(stops: LngLat[], steps = false, timeoutMs = 9000): Promise<any | null> {
   const path = stops.map(([lo, la]) => `${lo.toFixed(6)},${la.toFixed(6)}`).join(";");
-  return viaGeo("osrm", PUBLIC_OSRM, async (base, own) => {
+  return viaGeo("osrm", PUBLIC_OSRM, async (base, own, hop) => {
     const url = new URL(`${base}/route/v1/driving/${path}`);
     url.searchParams.set("overview", "full");
     url.searchParams.set("geometries", "geojson");
     url.searchParams.set("alternatives", "false");
     url.searchParams.set("steps", steps ? "true" : "false");
     url.searchParams.set("annotations", "speed");
-    const res = await fetchWithTimeout(url.toString(), { headers: upstreamHeaders(own, { Accept: "application/json" }) }, timeoutMs);
+    const res = await fetchWithTimeout(url.toString(), { hop, headers: upstreamHeaders(own, { Accept: "application/json" }) }, timeoutMs);
     // OSRM answers 400 NoRoute / NoSegment for points it can't route: an answer, not an outage.
     if (res.status === 400) return null;
     if (!res.ok) throw new Error(`OSRM ${res.status}`);
@@ -105,8 +106,9 @@ export async function valhallaRoute(stops: LngLat[], p: Prefs, timeoutMs = 9000)
     shape_format: "geojson",
     units: "kilometers",
   });
-  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/route`, {
+      hop,
       method: "POST",
       headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
       body,
@@ -193,8 +195,9 @@ export async function valhallaStretches(
       action: "include",
     },
   });
-  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/trace_attributes`, {
+      hop,
       method: "POST",
       headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
       body,
@@ -240,8 +243,9 @@ export async function valhallaRoadLimit(
     shape_match: "map_snap",
     filters: { attributes: ["edge.speed_limit", "edge.names", "matched.edge_index", "matched.type"], action: "include" },
   });
-  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/trace_attributes`, {
+      hop,
       method: "POST",
       headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
       body,
@@ -277,8 +281,9 @@ export async function valhallaMatch(
     shape_match: "map_snap",
     filters: { attributes: ["matched.point", "matched.type"], action: "include" },
   });
-  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own) => {
+  return viaGeo("valhalla", PUBLIC_VALHALLA, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/trace_attributes`, {
+      hop,
       method: "POST",
       headers: upstreamHeaders(own, { "Content-Type": "application/json", Accept: "application/json" }),
       body,
@@ -294,7 +299,7 @@ export async function valhallaMatch(
         ? [Math.round(p.lon * 1e6) / 1e6, Math.round(p.lat * 1e6) / 1e6] as LngLat
         : null,
     );
-  });
+  }, { hedge: false }); // up to 500 fixes: too big to ask two servers at once
 }
 
 /** Routes with the rider's preferences on the chosen engine. OSRM can't avoid anything or route bikes, so those go to Valhalla either way. */

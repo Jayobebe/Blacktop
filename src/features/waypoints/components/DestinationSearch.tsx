@@ -20,6 +20,7 @@ import { tr } from '@/lib/i18n';
 import { resolveWhat3WordsResult, what3wordsResults } from '@/lib/what3words';
 import { QuickChipRow } from '@/components/QuickChipRow';
 import { PixelLoader } from '@/components/PixelLoader';
+import { noteSearchCredit, SearchCredit, useSearchCredit } from '@/lib/searchCredit';
 
 interface SearchResult {
   id: string;
@@ -114,6 +115,7 @@ async function callPlaceSearch<T>(payload: Record<string, unknown>): Promise<T> 
     body: payload,
   });
   if (error) throw error;
+  noteSearchCredit(data);
   return data as T;
 }
 
@@ -373,6 +375,7 @@ export function DestinationSearch({
   const [savedPOIs, setSavedPOIs] = useState<SavedPOI[]>(() => getSavedPOIs());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const { settings } = useSettings();
+  const searchCredit = useSearchCredit();
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -947,6 +950,7 @@ export function DestinationSearch({
               );
             })
           )}
+          {searchCredit && <p className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border"><SearchCredit credit={searchCredit} className="underline-offset-2 hover:underline" /></p>}
         </div>,
         document.body
       )}

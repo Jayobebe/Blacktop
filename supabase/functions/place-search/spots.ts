@@ -20,10 +20,10 @@ export async function ownSpots(kind: "cameras" | "scenic", size: number, south: 
   // Too wide an area isn't the server's fault: say no without resting it.
   if ((row(north) - row(south) + 1) * (col(east) - col(west) + 1) > 16) return null;
   try {
-    return await viaGeo("spots", [], async (base, own) => {
+    return await viaGeo("spots", [], async (base, own, hop) => {
       // A missing cell means "nothing there", so first make sure the extract is there at all (every ten minutes).
       if (Date.now() - spotsCheckedAt > 600_000) {
-        const ready = await fetchWithTimeout(`${base}/ready.json`, { headers: upstreamHeaders(own) }, 4000);
+        const ready = await fetchWithTimeout(`${base}/ready.json`, { hop, headers: upstreamHeaders(own) }, 4000);
         if (!ready.ok) throw new Error(`spots not built: ${ready.status}`);
         await ready.body?.cancel();
         spotsCheckedAt = Date.now();
@@ -31,7 +31,7 @@ export async function ownSpots(kind: "cameras" | "scenic", size: number, south: 
       const cells: string[] = [];
       for (let r = row(south); r <= row(north); r++) for (let c = col(west); c <= col(east); c++) cells.push(`${base}/${kind}/${r}/${c}.json`);
       const parts = await Promise.all(cells.map(async (url) => {
-        const res = await fetchWithTimeout(url, { headers: upstreamHeaders(own) }, 5000);
+        const res = await fetchWithTimeout(url, { hop, headers: upstreamHeaders(own) }, 5000);
         if (res.status === 404) {
           await res.body?.cancel();
           return [];

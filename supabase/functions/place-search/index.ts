@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { fetchWithTimeout, hasOwn, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
+import { geocodeReverse, geocodeSearch } from "./geocode.ts";
 import { distanceM, ownSpots } from "./spots.ts";
 import {
   buildLoop,
@@ -172,7 +173,7 @@ async function photonSearch(opts: {
   limit?: number;
 }): Promise<PhotonHit[]> {
   if (!opts.q) return [];
-  const data = await viaGeo("photon", PUBLIC_PHOTON, async (base, own) => {
+  const data = await viaGeo("photon", PUBLIC_PHOTON, async (base, own, hop) => {
     const url = new URL(`${base}/api/`);
     url.searchParams.set("q", opts.q.slice(0, 100));
     url.searchParams.set("limit", String(opts.limit ?? 20));
@@ -182,7 +183,7 @@ async function photonSearch(opts: {
     }
     if (opts.bbox) url.searchParams.set("bbox", opts.bbox.join(","));
     for (const t of opts.osmTags ?? []) url.searchParams.append("osm_tag", t);
-    const res = await fetchWithTimeout(url.toString(), { headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 7000);
+    const res = await fetchWithTimeout(url.toString(), { hop, headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 7000);
     if (!res.ok) throw new Error(`Photon ${res.status}`);
     return res.json();
   });
@@ -224,8 +225,8 @@ function photonAsNominatim(h: PhotonHit) {
 
 /** Reverse lookup from Photon, in the shape the app reads from Nominatim's (it uses the country). */
 async function photonReverse(lat: number, lon: number) {
-  const j = await viaGeo("photon", PUBLIC_PHOTON, async (base, own) => {
-    const res = await fetchWithTimeout(`${base}/reverse?lat=${lat}&lon=${lon}`, { headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 6000);
+  const j = await viaGeo("photon", PUBLIC_PHOTON, async (base, own, hop) => {
+    const res = await fetchWithTimeout(`${base}/reverse?lat=${lat}&lon=${lon}`, { hop, headers: upstreamHeaders(own, { "Accept": "*/*" }) }, 6000);
     if (!res.ok) throw new Error(`Photon ${res.status}`);
     return res.json();
   });
@@ -267,17 +268,23 @@ function boxAround(lat: number, lon: number, radiusM: number): [number, number, 
 }
 
 // overpass-api.de answers 406 to "Accept: application/json" and wants a
-// contactable User-Agent; kumi.systems was timing out, so it goes last.
+// contactable User-Agent. The pool ranks them by how they're doing; VK's mirror
+// (maps.mail.ru) is slow, but one more server is one more chance when the rest are down.
 const PUBLIC_OVERPASS = [
   "https://overpass-api.de",
   "https://overpass.private.coffee",
   "https://overpass.kumi.systems",
+  "https://maps.mail.ru/osm/tools/overpass",
 ];
 
-/** Overpass: our own server first (when set up), then the public mirrors in turn. */
+/**
+ * Overpass: our own server first (when set up), then the public mirrors by the pool's ranking.
+ * Never asked twice at once: each query is real work for a volunteer-run server.
+ */
 async function fetchOverpass(query: string, timeoutMs = 9000) {
-  return viaGeo("overpass", PUBLIC_OVERPASS, async (base, own) => {
+  return viaGeo("overpass", PUBLIC_OVERPASS, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/api/interpreter`, {
+      hop,
       method: "POST",
       headers: upstreamHeaders(own, { "Content-Type": "application/x-www-form-urlencoded", "Accept": "*/*" }),
       body: `data=${encodeURIComponent(query)}`,
@@ -287,7 +294,7 @@ async function fetchOverpass(query: string, timeoutMs = 9000) {
       throw new Error(`Overpass ${res.status}: ${text.slice(0, 200)}`);
     }
     return JSON.parse(text);
-  });
+  }, { hedge: false });
 }
 
 /** Viewpoints, peaks and waterfalls round a point (scenic loops), best-effort. */
@@ -983,152 +990,46 @@ serve(async (req) => {
       return new Response(JSON.stringify(place), { headers: json, status: 200 });
     }
 
-    let url: URL;
+    const json = { ...cors, "Content-Type": "application/json" };
 
     if (body.kind === "search") {
       const q = body.q?.toString().trim();
-      if (!q) {
-        return new Response(JSON.stringify([]), {
-          headers: { ...cors, "Content-Type": "application/json" },
-          status: 200,
-        });
-      }
-
-      url = new URL("https://nominatim.openstreetmap.org/search");
-      url.searchParams.set("q", q);
-      url.searchParams.set("format", "json");
-      url.searchParams.set("addressdetails", "1");
-      url.searchParams.set("namedetails", "1");
-      url.searchParams.set("extratags", "1");
-
-      if (body.countryCode) {
-        url.searchParams.set("countrycodes", body.countryCode);
-      }
-
-      if (body.viewbox) {
-        url.searchParams.set("viewbox", body.viewbox);
-      }
-
-      const bounded = asBounded(body.bounded);
-      if (bounded) {
-        url.searchParams.set("bounded", bounded);
-      }
-
-      if (body.limit !== undefined && body.limit !== null) {
-        const limit = Math.max(1, Math.min(50, Number(body.limit) || 1));
-        url.searchParams.set("limit", String(limit));
-      }
-    } else if (body.kind === "reverse") {
-      if (typeof body.lat !== "number" || typeof body.lon !== "number") {
-        return new Response(JSON.stringify({ error: "Missing lat/lon" }), {
-          headers: { ...cors, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-      if (body.lat < -90 || body.lat > 90 || body.lon < -180 || body.lon > 180) {
-        return new Response(JSON.stringify({ error: "lat/lon out of range" }), {
-          headers: { ...cors, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-
-      url = new URL("https://nominatim.openstreetmap.org/reverse");
-      url.searchParams.set("lat", String(body.lat));
-      url.searchParams.set("lon", String(body.lon));
-      url.searchParams.set("format", "json");
-      url.searchParams.set("zoom", String(body.zoom ?? 3));
-    } else {
-      return new Response(JSON.stringify({ error: "Invalid kind" }), {
-        headers: { ...cors, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    const upstream = await fetch(url.toString(), {
-      headers: {
-        "User-Agent": "Blacktop/1.0 (https://blacktoplive.com)",
-        "Accept": "application/json",
-      },
-    });
-
-    const text = await upstream.text();
-
-    // Nominatim often refuses cloud servers: answer from Photon (same OSM
-    // data) in Nominatim's shape so the app doesn't notice.
-    if (!upstream.ok && body.kind === "reverse") {
-      console.warn("[PLACE-SEARCH] Nominatim reverse", upstream.status, "- using Photon");
+      if (!q) return new Response(JSON.stringify([]), { headers: json, status: 200 });
       try {
-        const shaped = await photonReverse(body.lat, body.lon);
-        return new Response(JSON.stringify(shaped), {
-          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" }, status: 200,
+        // Nominatim, then the keyed providers that are switched on (geocode.ts). Each result
+        // carries the credit its provider's terms ask for, for the app to show under the list.
+        const { results, credit } = await geocodeSearch({
+          q, countryCode: body.countryCode, viewbox: body.viewbox, bounded: asBounded(body.bounded), limit: body.limit,
         });
-      } catch {
-        return new Response(JSON.stringify({}), {
-          headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "none" }, status: 200,
-        });
+        const out = credit ? results.map((r: any) => ({ ...r, credit })) : results;
+        return new Response(JSON.stringify(out), { headers: { ...json, "Cache-Control": "public, max-age=30" }, status: 200 });
+      } catch (e) {
+        // Every one of them down: Photon (same OSM data) in Nominatim's shape, so the app doesn't notice.
+        console.warn("[PLACE-SEARCH] search pool failed - using Photon:", e instanceof Error ? e.message : e);
+        const shaped = await photonForSearch(body).catch(() => []);
+        return new Response(JSON.stringify(shaped), { headers: { ...json, "X-Fallback": "photon" }, status: 200 });
       }
     }
 
-    if (!upstream.ok && body.kind === "search") {
-      console.warn("[PLACE-SEARCH] Nominatim", upstream.status, "- using Photon");
-      const vb = (body.viewbox ?? "").split(",").map(Number);
-      const hasBox = vb.length === 4 && vb.every(Number.isFinite);
-      const bounded = asBounded(body.bounded) === "1";
-      const center = hasBox ? { lat: (vb[1] + vb[3]) / 2, lon: (vb[0] + vb[2]) / 2 } : null;
-      const hits = await photonSearch({
-        q: String(body.q ?? "").trim(),
-        center,
-        bbox: hasBox && bounded ? [Math.min(vb[0], vb[2]), Math.min(vb[1], vb[3]), Math.max(vb[0], vb[2]), Math.max(vb[1], vb[3])] : null,
-        limit: Math.max(1, Math.min(30, Number(body.limit) || 10)),
-      }).catch(() => []);
-      const shaped = hits.map((h) => ({
-        place_id: h.id,
-        lat: String(h.lat),
-        lon: String(h.lon),
-        name: h.tags.name ?? "",
-        display_name: [h.tags.name, h.tags["addr:street"], h.tags["addr:city"], h.tags["addr:postcode"], h.tags.country].filter(Boolean).join(", "),
-      }));
-      return new Response(JSON.stringify(shaped), {
-        headers: { ...cors, "Content-Type": "application/json", "X-Fallback": "photon" },
-        status: 200,
-      });
-    }
-
-    if (!upstream.ok) {
-      const rateLimited = upstream.status === 429 || upstream.status >= 500;
-      if (rateLimited) {
-        // Return shape matching what the client expects so it doesn't crash
-        const fallback = body.kind === "search" ? [] : {};
-        return new Response(JSON.stringify(fallback), {
-          headers: {
-            ...cors,
-            "Content-Type": "application/json",
-            "X-Fallback": "rate_limited",
-          },
-          status: 200,
-        });
+    if (body.kind === "reverse") {
+      const { lat, lon } = body;
+      if (typeof lat !== "number" || typeof lon !== "number") {
+        return new Response(JSON.stringify({ error: "Missing lat/lon" }), { headers: json, status: 400 });
       }
-      console.error("[PLACE-SEARCH] Upstream failed:", {
-        status: upstream.status,
-        body: text.slice(0, 500),
-      });
-      return new Response(
-        JSON.stringify({ error: "Search service temporarily unavailable" }),
-        {
-          headers: { ...cors, "Content-Type": "application/json" },
-          status: 503,
-        },
-      );
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        return new Response(JSON.stringify({ error: "lat/lon out of range" }), { headers: json, status: 400 });
+      }
+      try {
+        const { place, credit } = await geocodeReverse(lat, lon, Number(body.zoom ?? 3));
+        return new Response(JSON.stringify(credit ? { ...place, credit } : place), { headers: json, status: 200 });
+      } catch (e) {
+        console.warn("[PLACE-SEARCH] reverse pool failed - using Photon:", e instanceof Error ? e.message : e);
+        const shaped = await photonReverse(lat, lon).catch(() => ({}));
+        return new Response(JSON.stringify(shaped), { headers: { ...json, "X-Fallback": "photon" }, status: 200 });
+      }
     }
 
-    return new Response(text, {
-      headers: {
-        ...cors,
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=30",
-      },
-      status: 200,
-    });
+    return new Response(JSON.stringify({ error: "Invalid kind" }), { headers: json, status: 400 });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     console.error("[PLACE-SEARCH] ERROR:", detail);

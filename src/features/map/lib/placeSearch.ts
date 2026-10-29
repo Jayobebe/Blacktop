@@ -1,4 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
+import { noteSearchCredit } from '@/lib/searchCredit';
 import { isDemoModeActive, DEMO_RECENT_LOCATIONS } from '@/lib/demoMode';
 import { supabase } from '@/integrations/supabase/client';
 import { tr } from '@/lib/i18n';
@@ -113,6 +114,7 @@ export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2
 async function callPlaceSearch<T>(payload: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke('place-search', { body: payload });
   if (error) throw error;
+  noteSearchCredit(data);
   return data as T;
 }
 

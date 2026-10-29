@@ -124,6 +124,7 @@ import { useCollectedCards, useVehicleCards } from "@/features/cards";
 import { copyLedger, useCopyBankVersion } from "@/features/cards/lib/dropEconomy";
 import { uploadCardPhoto } from "@/features/cards/lib/cardPhoto";
 import { tr } from '@/lib/i18n';
+import { SearchCredit, useSearchCredit } from '@/lib/searchCredit';
 import { metresText } from '@/lib/units';
 import { PageTips } from '@/features/guide';
 import { setGuidanceActive } from '../lib/guidanceState';
@@ -4367,6 +4368,7 @@ function CameraBanner({ title, onClose }: { title: string; onClose: () => void }
 
 /** The map's credits; `weather` adds the rain radar's and forecasts'. */
 function MapCredits({ weather = false }: { weather?: boolean }) {
+  const searchCredit = useSearchCredit();
   return (
     <>
       ©{" "}
@@ -4389,6 +4391,7 @@ function MapCredits({ weather = false }: { weather?: boolean }) {
       </a>{" "}
       {tr("contributors")}
       {weather && <> · {tr("Weather: RainViewer, Open-Meteo")}</>}
+      {searchCredit && <> · <SearchCredit credit={searchCredit} className="hover:text-muted-foreground underline-offset-2 hover:underline pointer-events-auto" /></>}
     </>
   );
 }

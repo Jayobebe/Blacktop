@@ -231,6 +231,7 @@ export default function PrivacyPolicy() {
           <ul className="space-y-1.5 text-muted-foreground list-disc pl-5">
             <li><span className="text-foreground">{tr("Lovable Cloud")}</span>{" "}{tr("— hosts the realtime convoy backend")}</li>
             <li><span className="text-foreground">{tr("OpenStreetMap / Nominatim / Overpass / Photon (komoot)")}</span>{" "}{tr("— location search and the circuit library (© OpenStreetMap contributors, ODbL)")}</li>
+            <li><span className="text-foreground">{tr("LocationIQ / Geoapify")}</span>{" "}{tr("— answer some place searches when the OpenStreetMap servers are busy or down; our server sends them the search words and the map area, never your account or anything else about you")}</li>
             <li><span className="text-foreground">{tr("OpenFreeMap, Esri World Imagery, AWS Open Data terrain")}</span>{" "}{tr("— map, satellite and elevation tiles (they see which map areas you load)")}</li>
             <li><span className="text-foreground">{tr("RainViewer / Open-Meteo")}</span>{" "}{tr("— rain radar and route weather, only if you turn those on")}</li>
             <li><span className="text-foreground">{tr("Hugging Face, cdnjs, jsDelivr")}</span>{" "}{tr("— the pilot voice download, only if you download it in Settings (they see your IP address). The voice then runs on your phone: nothing it says is sent anywhere.")}</li>
