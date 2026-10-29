@@ -7,7 +7,8 @@
  * alongside, a bridge crossing overhead, a junction, GPS wobble, leaving the
  * roads. It tests the reasoning, not OpenStreetMap's data.
  */
-import { LimitAsker, parseMaxspeed, RoadMatcher, type Way } from '../src/lib/speedLimitRoads';
+import { decodeCellWays, LimitAsker, parseMaxspeed, RoadMatcher, type Way } from '../src/lib/speedLimitRoads';
+import { CELL as CELL_SIZE, MARGIN as CELL_MARGIN, encodeCell } from '../supabase/functions/place-search/speedCells';
 
 let failed = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -203,6 +204,47 @@ const north = (from: number, to: number, step: number, wobble = 0, e = 0): Fix[]
   const asks = simulate(mway, () => ['M1', 113]);
   const gap = Math.max(...asks.map((a, i) => (i ? Math.hypot(a.e - asks[i - 1].e, a.n - asks[i - 1].n) : 0)));
   check('never more than 1 km between questions while moving', gap <= 1050, `${Math.round(gap)} m`);
+}
+
+// ── The shared speed-limit map: the server's cell file read back on the phone ─────
+{
+  const row = Math.floor(51.0 / CELL_SIZE);
+  const col = Math.floor(-0.2 / CELL_SIZE);
+  const south = row * CELL_SIZE;
+  const west = col * CELL_SIZE;
+  // A made-up Overpass answer: a 30 mph street across the cell, and a motorway that runs 30 km on past it.
+  const street = Array.from({ length: 20 }, (_, i) => ({ lat: south + 0.007, lon: west + 0.0005 + i * 0.0007 }));
+  const motorway = Array.from({ length: 400 }, (_, i) => ({ lat: south - 0.1 + i * 0.001, lon: west + 0.01 }));
+  const overpass = {
+    elements: [
+      { type: 'way', tags: { highway: 'residential', maxspeed: '30 mph' }, geometry: street },
+      { type: 'way', tags: { highway: 'motorway', maxspeed: 'GB:motorway' }, geometry: motorway },
+      { type: 'node', lat: 0, lon: 0 },
+    ],
+  };
+  const file = encodeCell(row, col, overpass, 1);
+  const ways = decodeCellWays(file as never, CELL_SIZE, CELL_MARGIN);
+  const worst = (() => {
+    let d = 0;
+    for (let i = 0; i < street.length; i++) {
+      d = Math.max(d, Math.abs(ways[0].pts[i * 2] - street[i].lon), Math.abs(ways[0].pts[i * 2 + 1] - street[i].lat));
+    }
+    return d;
+  })();
+  check('a cell file reads back on the phone within a metre', ways.length === 2 && worst <= 0.000006, `${ways.length} roads, worst ${(worst * 111_320).toFixed(2)} m`);
+  check('its limits read as tagged', ways[0].limit?.value === 30 && ways[0].limit?.unit === 'mph' && ways[1].limit?.value === 70, `${ways[0].limit?.value} / ${ways[1].limit?.value}`);
+  const kept = ways[1].pts.length / 2;
+  check('a road running far past the cell keeps only the stretch near it', kept < 40 && kept >= 15, `${kept} of 400 points`);
+  const json = JSON.stringify(file);
+  check('the file stays small', json.length < 1500, `${json.length} bytes`);
+  // The matcher on the decoded roads: riding the street shows 30.
+  const m = new RoadMatcher();
+  let shown: string | null = null;
+  for (let i = 2; i < 18; i++) {
+    const r = m.step(street[i].lat + 0.00003, street[i].lon, 13, ways);
+    shown = r ? String(r.value) : '-';
+  }
+  check('riding the decoded street shows its 30', shown === '30', String(shown));
 }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nAll speed limit checks passed');

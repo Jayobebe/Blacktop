@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Kartet ble lukket på grunn av inaktivitet",
  "Map look": "Kartlook",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Kartlooker: tegn kartet i infrarød, nattsyn, CRT eller noir. Nattkartet gjør det du velger mørkere.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Kartfliser og fartsgrenser lagret fra turene dine, så kartet lastes raskere. Det fylles opp igjen når du kjører.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Kartfliser lagret fra bruk av kartet, så det laster raskere. Den fylles opp igjen mens du kjører.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Kart © OpenStreetMap-bidragsytere, OpenFreeMap",
  "Map, places and search": "Kart, steder og søk",

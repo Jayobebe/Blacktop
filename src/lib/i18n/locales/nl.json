@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Kaart gesloten wegens inactiviteit",
  "Map look": "Kaartlook",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Kaartlooks: teken de kaart in infrarood, nachtzicht, CRT of noir. De nachtkaart maakt elke look donkerder.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Kaarttegels en snelheidslimieten bewaard van je ritten, zodat de kaart sneller laadt. Het vult zich weer terwijl je rijdt.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Kaarttegels bewaard van het kaartgebruik, zodat hij sneller laadt. Hij vult zich weer terwijl je rijdt.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Kaart © OpenStreetMap-bijdragers, OpenFreeMap",
  "Map, places and search": "Kaart, plekken en zoeken",

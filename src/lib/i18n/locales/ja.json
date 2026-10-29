@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "操作がないため地図を閉じました",
  "Map look": "マップ表示",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "マップ表示：赤外線、暗視、CRT、ノワールで描けます。ナイトマップは選んだ表示を暗くします。",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "走行中に保存した地図タイルと制限速度で、地図が速く表示されます。走るとまた溜まります。",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "地図を使ううちに保存されたタイル。読み込みが速くなります。走るとまた溜まります。",
  "Map © OpenStreetMap contributors, OpenFreeMap": "地図 © OpenStreetMap contributors、OpenFreeMap",
  "Map, places and search": "地図、場所、検索",

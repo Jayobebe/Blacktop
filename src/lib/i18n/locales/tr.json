@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Harita hareketsizlik nedeniyle kapandı",
  "Map look": "Harita görünümü",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Harita görünümleri: haritayı kızılötesi, gece görüşü, CRT ya da noir olarak çiz. Gece haritası seçtiğini karartır.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Sürüşlerinden saklanan harita parçaları ve hız sınırları; harita daha hızlı açılır. Sürdükçe yeniden dolar.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Haritayı kullanırken saklanan harita parçaları, daha hızlı yüklensin diye. Sürdükçe yeniden dolar.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Harita © OpenStreetMap katkıda bulunanları, OpenFreeMap",
  "Map, places and search": "Harita, yerler ve arama",

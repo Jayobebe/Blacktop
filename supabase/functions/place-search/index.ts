@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { fetchWithTimeout, hasOwn, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
 import { geocodeReverse, geocodeSearch } from "./geocode.ts";
+import { cellQuery, encodeCell, isFresh, readStoredCell, storeCell } from "./speedCells.ts";
 import { distanceM, ownSpots } from "./spots.ts";
 import {
   buildLoop,
@@ -80,8 +81,11 @@ type RoadsBody = {
 };
 
 /** Speed limits: every drivable road in a small box (at most 0.03 degrees a side), with its maxspeed. */
+/** A cell of the shared speed-limit map by number (speedCells.ts), or, from an older app, a box. */
 type SpeedLimitsBody = {
   kind: "speedlimits";
+  row?: number;
+  col?: number;
   west: number;
   south: number;
   east: number;
@@ -639,6 +643,30 @@ serve(async (req) => {
           headers: { ...cors, "Content-Type": "application/json" },
           status: 503,
         });
+      }
+    }
+
+    // The shared speed-limit map: the stored cell when it's fresh, otherwise Overpass once, saved for
+    // everyone (speedCells.ts). Phones read stored cells straight from storage and only come here for
+    // a cell nobody has ridden through yet, or one due a refresh.
+    if (body.kind === "speedlimits" && Number.isInteger(body.row) && Number.isInteger(body.col)) {
+      const row = body.row as number;
+      const col = body.col as number;
+      const json = { ...cors, "Content-Type": "application/json" };
+      if (Math.abs(row * 0.015) > 90 || Math.abs(col * 0.015) > 180) {
+        return new Response(JSON.stringify({ error: "Invalid cell" }), { headers: json, status: 400 });
+      }
+      const stored = await readStoredCell(row, col);
+      if (stored && isFresh(stored)) return new Response(JSON.stringify(stored), { headers: json, status: 200 });
+      try {
+        const file = encodeCell(row, col, await fetchOverpass(cellQuery(row, col), 50000));
+        await storeCell(file);
+        return new Response(JSON.stringify(file), { headers: json, status: 200 });
+      } catch (e) {
+        // Overpass down: an old copy beats nothing.
+        if (stored) return new Response(JSON.stringify(stored), { headers: json, status: 200 });
+        console.warn("[PLACE-SEARCH] Speed limit cell unavailable:", e instanceof Error ? e.message : e);
+        return new Response(JSON.stringify({ error: "overpass_unavailable" }), { headers: json, status: 503 });
       }
     }
 

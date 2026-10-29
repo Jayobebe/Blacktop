@@ -13,6 +13,7 @@ import { listRideOverlays, deleteRideOverlayBlob } from '@/lib/overlayStore';
 import { bytesText, localStorageBytes, requestPersist, storageEstimate, storagePersisted } from '@/lib/storageEstimate';
 import { usePilotVoice, removePilotVoice } from '@/lib/pilotVoice';
 import { tileCacheSizes, clearTileCache } from '@/features/map/lib/tileCache';
+import { clearSpeedCells, speedCellBytes } from '@/lib/speedCellStore';
 import { listPacks, deletePack, type OfflinePack } from '@/features/map/lib/offlinePacks';
 import { useSavedRoutes } from '@/features/map/lib/savedRoutes';
 import { useRadioStations, deleteStation } from '@/features/radio';
@@ -62,9 +63,10 @@ export default function StoragePage() {
   const [working, setWorking] = useState(false);
 
   const load = useCallback(async () => {
-    const [v, t, e, k] = await Promise.all([listRideOverlays(), tileCacheSizes(), storageEstimate(), storagePersisted()]);
+    const [v, t, e, k, sc] = await Promise.all([listRideOverlays(), tileCacheSizes(), storageEstimate(), storagePersisted(), speedCellBytes()]);
     setVideos(v.sort((a, b) => b.createdAt - a.createdAt));
-    setTiles(t);
+    // The speed-limit map's cells count as map cache: kept from riding, fetched again as needed.
+    setTiles({ ...t, cache: t.cache + sc });
     setEst(e);
     setKept(k);
     setPacks(listPacks());
@@ -211,13 +213,13 @@ export default function StoragePage() {
           )}
         </Row>
 
-        <Row cat="cache" Icon={Layers} title={tr("Map cache")} size={sizes.cache} text={tr("Map tiles kept from using the map, so it loads faster. It fills up again as you ride.")}>
+        <Row cat="cache" Icon={Layers} title={tr("Map cache")} size={sizes.cache} text={tr("Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.")}>
           {sizes.cache > 0 && (
             <Button
               variant="outline"
               size="sm"
               disabled={blocked}
-              onClick={() => confirm({ title: tr("Clear the map cache ({0})?", [bytesText(sizes.cache)]), body: tr("Offline maps aren't touched."), run: clearTileCache })}
+              onClick={() => confirm({ title: tr("Clear the map cache ({0})?", [bytesText(sizes.cache)]), body: tr("Offline maps aren't touched."), run: () => Promise.all([clearTileCache(), clearSpeedCells()]).then(() => undefined) })}
               className="mt-2 w-full h-11 rounded-xl text-xs"
             >
               {tr("Clear the map cache")}

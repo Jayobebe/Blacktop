@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "활동이 없어 지도가 닫혔습니다",
  "Map look": "지도 스타일",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "지도 스타일: 적외선, 야간 투시, CRT, 누아르로 지도를 그려 보세요. 야간 지도는 고른 스타일을 어둡게 합니다.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "주행하며 저장한 지도 타일과 제한 속도로 지도가 더 빨리 열려요. 달리면 다시 채워져요.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "지도를 쓰면서 저장된 타일로, 더 빨리 불러와요. 달리면 다시 채워져요.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "지도 © OpenStreetMap 기여자, OpenFreeMap",
  "Map, places and search": "지도, 장소 및 검색",

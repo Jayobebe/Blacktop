@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Peta ditutup karena tidak ada aktivitas",
  "Map look": "Tampilan peta",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Tampilan peta: gambar peta dalam inframerah, penglihatan malam, CRT, atau noir. Peta malam menggelapkan pilihanmu.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Ubin peta dan batas kecepatan yang disimpan dari perjalananmu, agar peta lebih cepat dimuat. Akan terisi lagi saat kamu berkendara.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Ubin peta yang disimpan saat memakai peta, agar lebih cepat dimuat. Akan terisi lagi saat kamu berkendara.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Peta © kontributor OpenStreetMap, OpenFreeMap",
  "Map, places and search": "Peta, tempat, dan pencarian",

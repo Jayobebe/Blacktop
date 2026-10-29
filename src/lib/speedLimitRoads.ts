@@ -221,3 +221,31 @@ function angleBetween(a: number, b: number): number {
   const d = Math.abs(a - b) % 360;
   return d > 180 ? 360 - d : d;
 }
+
+/**
+ * A cell of the shared speed-limit map as the server stores it (supabase/functions/place-search/
+ * speedCells.ts, which writes it): each road's maxspeed tag, then its points in whole 1e-5 degrees
+ * from the cell's south-west corner (margin included), each after the first a step from the one before.
+ */
+export type CellFile = { v: 1; at: number; row: number; col: number; w: Array<[string | null, ...number[]]> };
+
+/** A cell file as roads for `RoadMatcher` (`cell` and `margin` in degrees, as the server's). */
+export function decodeCellWays(file: CellFile, cell: number, margin: number): Way[] {
+  const south = file.row * cell - margin;
+  const west = file.col * cell - margin;
+  const ways: Way[] = [];
+  for (const [tag, ...xy] of file.w) {
+    if (xy.length < 4 || xy.length % 2) continue;
+    const pts = new Float64Array(xy.length);
+    let x = 0;
+    let y = 0;
+    for (let i = 0; i < xy.length; i += 2) {
+      x = i === 0 ? xy[0] : x + xy[i];
+      y = i === 0 ? xy[1] : y + xy[i + 1];
+      pts[i] = west + x / 1e5;
+      pts[i + 1] = south + y / 1e5;
+    }
+    ways.push({ limit: parseMaxspeed(tag), pts });
+  }
+  return ways;
+}

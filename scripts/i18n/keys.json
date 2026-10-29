@@ -2120,7 +2120,7 @@
  "Map closed due to inactivity",
  "Map look",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.",
- "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.",
  "Map © OpenStreetMap contributors, OpenFreeMap",
  "Map, places and search",
  "Mark as ready",

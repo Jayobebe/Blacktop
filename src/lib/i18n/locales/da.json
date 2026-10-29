@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Kortet lukket på grund af inaktivitet",
  "Map look": "Kortlook",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Kortlooks: tegn kortet i infrarød, nattesyn, CRT eller noir. Natkortet gør det, du vælger, mørkere.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Kortfliser og fartgrænser gemt fra dine ture, så kortet indlæses hurtigere. Det fyldes op igen, når du kører.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Kortfliser gemt fra brug af kortet, så det indlæses hurtigere. Den fyldes op igen, mens du kører.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Kort © OpenStreetMap-bidragydere, OpenFreeMap",
  "Map, places and search": "Kort, steder og søgning",

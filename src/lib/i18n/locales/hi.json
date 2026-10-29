@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "निष्क्रियता के कारण मैप बंद हुआ",
  "Map look": "मैप का रूप",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "मैप के रूप: मैप को इन्फ्रारेड, नाइट विज़न, CRT या नॉयर में बनाएँ। नाइट मैप आपके चुने रूप को गहरा करता है।",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "आपकी राइड से रखे गए मैप टाइल और स्पीड लिमिट, ताकि मैप जल्दी खुले। चलाते समय यह फिर भर जाता है।",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "मैप इस्तेमाल करते समय रखी गई टाइलें, ताकि वह जल्दी लोड हो। राइड करते हुए यह फिर भर जाता है।",
  "Map © OpenStreetMap contributors, OpenFreeMap": "मैप © OpenStreetMap योगदानकर्ता, OpenFreeMap",
  "Map, places and search": "मैप, जगहें और खोज",

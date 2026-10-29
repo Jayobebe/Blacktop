@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "因长时间无操作，地图已关闭",
  "Map look": "地图外观",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "地图外观：用红外、夜视、CRT 或黑色电影风格绘制地图。夜间地图会调暗你选择的外观。",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "骑行中保存的地图瓦片和限速信息，让地图加载更快。骑行时会重新积累。",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "使用地图时保存的瓦片，让地图加载更快。骑行时会重新填满。",
  "Map © OpenStreetMap contributors, OpenFreeMap": "地图 © OpenStreetMap 贡献者、OpenFreeMap",
  "Map, places and search": "地图、地点与搜索",

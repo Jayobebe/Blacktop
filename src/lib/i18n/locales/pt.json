@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Mapa fechado por inatividade",
  "Map look": "Visual do mapa",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Visuais do mapa: desenha o mapa em infravermelho, visão noturna, CRT ou noir. O mapa noturno escurece o que escolheres.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Mosaicos do mapa e limites de velocidade guardados das tuas voltas, para o mapa carregar mais depressa. Volta a encher enquanto andas.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Mosaicos do mapa guardados ao usá-lo, para carregar mais depressa. Volta a encher enquanto andas.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Mapa © contribuidores do OpenStreetMap, OpenFreeMap",
  "Map, places and search": "Mapa, lugares e busca",

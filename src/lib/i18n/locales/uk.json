@@ -2421,6 +2421,7 @@
  "Map closed due to inactivity": "Мапу закрито через неактивність",
  "Map look": "Вигляд мапи",
  "Map looks: draw the map in infrared, night vision, CRT or noir. The night map darkens whichever you pick.": "Вигляди мапи: малюйте мапу в інфрачервоному, нічному баченні, CRT або нуарі. Нічна мапа затемнює вибраний.",
+ "Map tiles and speed limits kept from riding, so the map loads faster. It fills up again as you ride.": "Плитки мапи й обмеження швидкості, збережені з твоїх поїздок, щоб мапа відкривалася швидше. Під час їзди кеш знову наповнюється.",
  "Map tiles kept from using the map, so it loads faster. It fills up again as you ride.": "Плитки мапи, збережені під час користування, щоб вона завантажувалася швидше. Знову заповниться, поки їдеш.",
  "Map © OpenStreetMap contributors, OpenFreeMap": "Карта © учасники OpenStreetMap, OpenFreeMap",
  "Map, places and search": "Мапа, місця та пошук",

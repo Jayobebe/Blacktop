@@ -10,7 +10,7 @@
  * that isn't Blacktop's.
  */
 const KEY_PREFIXES = ['blacktop', 'bt.', 'bt-'];
-const DATABASES = ['blacktop_overlays', 'blacktop_tile_cache', 'blacktop-radio'];
+const DATABASES = ['blacktop_overlays', 'blacktop_tile_cache', 'blacktop-radio', 'blacktop_speed_cells'];
 
 function sweep(storage: Storage | undefined) {
   if (!storage) return;

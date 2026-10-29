@@ -1,31 +1,31 @@
 /**
  * The speed limit of the road the rider is on, from OpenStreetMap's `maxspeed`.
  *
- * The phone asks the `place-search` function (`kind: 'speedlimits'`) for the
- * roads in one map cell at a time (`CELL` degrees a side, a little margin so a
- * road along the edge still matches), kept in memory, and the next cell along
- * once the rider is near its edge; `RoadMatcher` (lib/speedLimitRoads.ts)
- * follows them along the roads. A road with no limit mapped, or "none" (a
- * German autobahn), shows nothing.
+ * The shared speed-limit map first: the roads of one map cell at a time (`CELL` degrees a side,
+ * a little margin so a road along the edge still matches), fetched from Overpass the first time
+ * anyone rides through a cell and kept in Supabase storage for everyone after that
+ * (supabase/functions/place-search/speedCells.ts, keep `CELL` / `MARGIN` in step). The phone looks
+ * in its own copy (lib/speedCellStore.ts), then reads the stored cell straight from storage, and
+ * only asks the `place-search` function (`kind: 'speedlimits'`, by cell number) for a cell nobody
+ * has yet or one over a month old; the next cell along too once the rider is near an edge.
+ * `RoadMatcher` (lib/speedLimitRoads.ts) then follows the roads on the phone, so a turn or a new
+ * limit along the road shows at once and riding asks nothing. A road with no limit mapped, or
+ * "none" (a German autobahn), shows nothing.
  *
- * First, though, it asks Valhalla (`kind: 'roadlimit'`, the router the app
- * already uses): the rider's last few fixes, matched to the roads, and the limit
- * of the road the last one is on. When is `LimitAsker`'s call (lib/speedLimitRoads):
- * when the road changes (straight away after a turn), and every 500 m, 1 km once
- * two answers agree, for changes it can't see; never on a timer. The
- * public Overpass servers the cells come from were all down on a night out
- * (2026-10-27) and no limit ever showed; the cells are the fallback while
- * Valhalla can't answer (or the function is too old to know the kind). The
- * figure is the rider's own unit, converted from Valhalla's km/h.
+ * While the rider's cell isn't there yet (a first fetch can take Overpass most of a minute) or
+ * couldn't be had, Valhalla (`kind: 'roadlimit'`) answers instead: the rider's last few fixes,
+ * matched to the roads, asked when the road changes (`LimitAsker`). Before the shared map
+ * (2026-10-29) every moving phone asked one of the two all the time, so the public servers capped
+ * how many could ride at once; now it's one fetch a cell a month, however many ride through.
  *
- * Fed by `SpeedLimitFeed` (App) from the ride's GPS or the map's, only while
- * the rider has the live speed on; nothing is fetched otherwise. Requests:
- * one a kilometre or so, plus one a turn (six a minute until 2026-10-29), none standing still.
+ * Fed by `SpeedLimitFeed` (App) from the ride's GPS or the map's, only while the rider has the
+ * live speed on; nothing is fetched otherwise.
  */
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { LimitAsker, parseMaxspeed, RoadMatcher, type SpeedLimit, type Way } from './speedLimitRoads';
+import { decodeCellWays, LimitAsker, RoadMatcher, type CellFile, type SpeedLimit, type Way } from './speedLimitRoads';
 import { currentUnits } from './units';
+import { readSpeedCell, writeSpeedCell } from './speedCellStore';
 import { getExperience } from '@/features/experience';
 
 export type { SpeedLimit } from './speedLimitRoads';
@@ -34,6 +34,9 @@ const CELL = 0.015;
 const MARGIN = 0.002;
 const KEEP_CELLS = 12;
 const RETRY_MS = 120_000;
+/** A stored cell older than this is fetched again (the function refreshes it for everyone). */
+const CELL_FRESH_MS = 30 * 86_400_000;
+const BUCKET_URL = `${import.meta.env.VITE_SUPABASE_URL ?? ''}/storage/v1/object/public/speed-cells/v1`;
 const MPH = 1.609344;
 
 // ── The store ────────────────────────────────────────────────────────────
@@ -67,31 +70,65 @@ const cells = new Map<string, Cell>();
 const cellKey = (row: number, col: number) => `${row}:${col}`;
 const cellOf = (lat: number, lng: number) => [Math.floor(lat / CELL), Math.floor(lng / CELL)] as const;
 
+const usable = (f: unknown, row: number, col: number): f is CellFile => {
+  const c = f as CellFile | null;
+  return !!c && c.v === 1 && c.row === row && c.col === col && Array.isArray(c.w) && typeof c.at === 'number';
+};
+
+/** The cell from this phone's copy, then the shared map in storage, then the function (which fetches and saves it). */
+async function fetchCell(row: number, col: number): Promise<Way[]> {
+  const key = cellKey(row, col);
+  const fresh = (f: CellFile) => Date.now() - f.at < CELL_FRESH_MS;
+  let stale: CellFile | null = null;
+  try {
+    const mine = await readSpeedCell(key);
+    const f = mine ? JSON.parse(mine) : null;
+    if (usable(f, row, col)) {
+      if (fresh(f)) return decodeCellWays(f, CELL, MARGIN);
+      stale = f;
+    }
+  } catch { /* fetch it */ }
+  try {
+    const res = await fetch(`${BUCKET_URL}/${row}/${col}.json`);
+    if (res.ok) {
+      const text = await res.text();
+      const f = JSON.parse(text);
+      if (usable(f, row, col) && fresh(f)) {
+        void writeSpeedCell(key, text);
+        return decodeCellWays(f, CELL, MARGIN);
+      }
+    }
+  } catch { /* not stored yet, or no bucket: ask the function */ }
+  try {
+    const { data, error } = await supabase.functions.invoke('place-search', { body: { kind: 'speedlimits', row, col } });
+    if (error || !usable(data, row, col)) throw error ?? new Error('no cell');
+    void writeSpeedCell(key, JSON.stringify(data));
+    return decodeCellWays(data, CELL, MARGIN);
+  } catch (e) {
+    // Overpass down and nobody has the cell: an old copy beats nothing.
+    if (stale) return decodeCellWays(stale, CELL, MARGIN);
+    throw e;
+  }
+}
+
 function loadCell(row: number, col: number) {
   const key = cellKey(row, col);
   const have = cells.get(key);
   if (have && (have.ways || have.loading || (have.failedAt && Date.now() - have.failedAt < RETRY_MS))) return;
-  const south = row * CELL - MARGIN;
-  const west = col * CELL - MARGIN;
   const cell: Cell = { at: Date.now(), ways: null };
-  cell.loading = supabase.functions
-    .invoke('place-search', { body: { kind: 'speedlimits', south, west, north: south + CELL + 2 * MARGIN, east: west + CELL + 2 * MARGIN } })
-    .then(({ data, error }) => {
-      const raw = (data as { ways?: unknown } | null)?.ways;
-      if (error || !Array.isArray(raw)) throw error ?? new Error('no ways');
-      cell.ways = (raw as [string | null, number[]][])
-        .filter((w) => Array.isArray(w) && Array.isArray(w[1]) && w[1].length >= 4)
-        .map(([tag, line]) => ({ limit: parseMaxspeed(tag), pts: Float64Array.from(line) }));
+  cell.loading = fetchCell(row, col)
+    .then((ways) => {
+      cell.ways = ways;
     })
     .catch(() => {
-      // An older function without speed limits, or Overpass down: try again in a while.
+      // Overpass down and nobody has it yet: Valhalla meanwhile, and try again in a while.
       cell.failedAt = Date.now();
     })
     .finally(() => {
       cell.loading = undefined;
     });
   cells.set(key, cell);
-  // Keep the most recent few.
+  // Keep the most recent few in memory (the rest are on the phone).
   if (cells.size > KEEP_CELLS) {
     const oldest = [...cells.entries()].sort((a, b) => a[1].at - b[1].at)[0];
     if (oldest) cells.delete(oldest[0]);
@@ -103,7 +140,7 @@ function loadCell(row: number, col: number) {
 /** Fixes kept for the trail: at least this far apart, the last few. */
 const TRAIL_STEP_M = 12;
 const TRAIL_LEN = 8;
-/** Valhalla failed (or the function doesn't know the kind): the cells for this long. */
+/** Valhalla failed (or the function doesn't know the kind): left alone for this long. */
 const VALHALLA_REST_MS = 120_000;
 /** Moving at this (m/s, about 4 mph) or more: standing still asks nothing. */
 const MOVING_MS = 1.8;
@@ -167,11 +204,6 @@ export function feedSpeedLimitFix(lat: number, lng: number, speed: number | null
   const before = trail[trail.length - 2];
   if (trail.length < 2 || metres(before, trail[trail.length - 1]) >= TRAIL_STEP_M) trail = [...trail.slice(-(TRAIL_LEN - 1)), here];
   else trail[trail.length - 1] = here;
-  if (Date.now() >= valhallaRestUntil) {
-    const moving = speed == null || speed >= MOVING_MS;
-    if (!asking && moving && asker.due(trail, Date.now())) askValhalla();
-    return;
-  }
   const [row, col] = cellOf(lat, lng);
   loadCell(row, col);
   // Near an edge: the next cell along too, so it's there when the rider crosses.
@@ -182,8 +214,17 @@ export function feedSpeedLimitFix(lat: number, lng: number, speed: number | null
   if (fc < 0.2) loadCell(row, col - 1);
   if (fc > 0.8) loadCell(row, col + 1);
   const cell = cells.get(cellKey(row, col));
-  if (cell?.ways) cell.at = Date.now();
-  set(matcher.step(lat, lng, speed, cell?.ways ?? null));
+  if (cell?.ways) {
+    // The shared map: matched on the phone, nothing asked.
+    cell.at = Date.now();
+    set(matcher.step(lat, lng, speed, cell.ways));
+    return;
+  }
+  // Not here yet (or couldn't be had): Valhalla, when the road changes.
+  if (Date.now() >= valhallaRestUntil) {
+    const moving = speed == null || speed >= MOVING_MS;
+    if (!asking && moving && asker.due(trail, Date.now())) askValhalla();
+  }
 }
 
 /** Forget the road (the ride ended, the map closed). */
