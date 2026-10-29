@@ -1961,6 +1961,7 @@ export type Database = {
           distance_unit: string | null
           endpoint: string
           id: string
+          language: string | null
           last_sent_at: string | null
           p256dh: string
           speed_unit: string | null
@@ -1981,6 +1982,7 @@ export type Database = {
           distance_unit?: string | null
           endpoint: string
           id?: string
+          language?: string | null
           last_sent_at?: string | null
           p256dh: string
           speed_unit?: string | null
@@ -2001,6 +2003,7 @@ export type Database = {
           distance_unit?: string | null
           endpoint?: string
           id?: string
+          language?: string | null
           last_sent_at?: string | null
           p256dh?: string
           speed_unit?: string | null
@@ -2860,6 +2863,7 @@ export type Database = {
           _crew_names?: Json
           _distance_unit?: string
           _endpoint: string
+          _language?: string
           _lat?: number
           _lng?: number
           _p256dh: string
