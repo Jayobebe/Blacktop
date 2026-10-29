@@ -332,6 +332,18 @@ const ORBIT_DEG_PER_S = 9;
 const SATELLITE_SOURCE_ID = "esri-satellite";
 /** The water's BLACKTOP wordmark over the satellite picture (lib/waterWordmark). */
 const SATELLITE_WATER_ID = "satellite-water-wordmark";
+/** Buildings over the satellite picture: see-through, so the real roofs show (the dark map's are solid). */
+const SATELLITE_BUILDING_OPACITY = 0.4;
+
+/**
+ * The basemap's ground: its background and the fills that colour the land and the water. Only these
+ * give way to the satellite picture (it's the real ground); everything above them (rivers, buildings,
+ * airports, every road with its colours, railways, borders, names and icons) is drawn over it as on
+ * the dark map.
+ */
+function isGroundLayer(l: { type: string; ["source-layer"]?: string }): boolean {
+  return l.type === "background" || (l.type === "fill" && ["water", "landcover", "landuse", "park"].includes(l["source-layer"] ?? ""));
+}
 
 // Dark basemap: OpenFreeMap's free dark vector style (no API key required,
 // built on OpenMapTiles/OpenStreetMap). The satellite raster layer is merged
@@ -370,11 +382,11 @@ function getBasemapStyle(): Promise<StyleSpecification> {
   if (!basemapStylePromise) {
     basemapStylePromise = loadDarkMapStyle()
       .then((style) => {
-        // The satellite picture goes under the basemap's labels (street and place names, its place
-        // icons), not on top of everything: on top it buried them, and the swap below hid every
-        // other layer to make room, so satellite had no names, pins, radar or wind (2026-10-29).
-        const firstLabel = style.layers.findIndex((l) => l.type === "symbol");
-        const at = firstLabel < 0 ? style.layers.length : firstLabel;
+        // The satellite picture goes straight over the basemap's ground (isGroundLayer), under
+        // everything else it draws: on top of everything it buried the map, and the swap hid the
+        // rest to make room, so satellite had no roads, names, pins, radar or wind (2026-10-29).
+        const firstAbove = style.layers.findIndex((l) => !isGroundLayer(l as { type: string; ["source-layer"]?: string }));
+        const at = firstAbove < 0 ? style.layers.length : firstAbove;
         const water = style.layers.find((l) => l.id === "water" && l.type === "fill") as
           | (StyleSpecification["layers"][number] & { source: string; "source-layer"?: string; filter?: unknown })
           | undefined;
@@ -827,15 +839,19 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
     const DEFAULT_MAX_ZOOM = 22; // maplibre default
     const apply = () => {
       if (!m.getLayer(SATELLITE_LAYER_ID)) return;
-      // Only the basemap's own ground (its background, land, water, roads: fills and lines) gives way
-      // to the picture. Its labels (street and place names, its place icons) stay, and so does
-      // everything Blacktop draws (route, pins, hazards, cameras, radar, wind, quick searches), which
-      // other code shows and hides for its own reasons.
+      // Only the basemap's ground (isGroundLayer: background, land and water colours) gives way to
+      // the picture. Everything else the dark map has stays, roads and their colours, rivers,
+      // railways, borders, names and icons, and so does everything Blacktop draws (route, pins,
+      // hazards, cameras, radar, wind, quick searches), which other code shows and hides itself.
       const satellite = basemap === "satellite";
       for (const l of m.getStyle().layers) {
         if (l.id === SATELLITE_LAYER_ID || l.id === SATELLITE_WATER_ID || l.id.startsWith("blacktop-")) continue;
-        const ground = l.type === "background" || ((l as { source?: string }).source === "openmaptiles" && l.type !== "symbol");
-        if (ground) m.setLayoutProperty(l.id, "visibility", satellite ? "none" : "visible");
+        const layer = l as { id: string; type: string; ["source-layer"]?: string };
+        if (isGroundLayer(layer)) m.setLayoutProperty(l.id, "visibility", satellite ? "none" : "visible");
+        // Buildings see-through over the picture, solid again on the dark map.
+        if (layer.type === "fill" && layer["source-layer"] === "building") {
+          m.setPaintProperty(l.id, "fill-opacity", satellite ? SATELLITE_BUILDING_OPACITY : 1);
+        }
       }
       m.setLayoutProperty(SATELLITE_LAYER_ID, "visibility", satellite ? "visible" : "none");
       if (m.getLayer(SATELLITE_WATER_ID)) m.setLayoutProperty(SATELLITE_WATER_ID, "visibility", satellite ? "visible" : "none");
