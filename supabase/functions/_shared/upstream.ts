@@ -25,7 +25,7 @@
 //
 // Our own server is used when two secrets are set: GEO_SERVER_URL (e.g.
 // https://geo.blacktoplive.com) and GEO_SERVER_TOKEN, each service under its own path
-// (/valhalla, /photon, /overpass, /weather, /spots). A third, GEO_SERVICES, lists what it
+// (/valhalla, /photon, /overpass, /weather, /spots, /cells). A third, GEO_SERVICES, lists what it
 // runs (e.g. "valhalla,photon,weather,spots"); without it it's taken to run them all.
 // Keyed providers are listed in KEYED below, each switched on by its own secret.
 
@@ -39,8 +39,11 @@ const GEO_URL = env("GEO_SERVER_URL").replace(/\/+$/, "");
 const GEO_TOKEN = env("GEO_SERVER_TOKEN");
 const GEO_SERVICES = env("GEO_SERVICES").toLowerCase().split(/[\s,]+/).filter(Boolean);
 
-/** `spots`: the weekly extract of cameras and scenic spots (infra/geo/build-spots.sh), static files by map cell. */
-export type GeoService = "valhalla" | "osrm" | "photon" | "overpass" | "weather" | "spots" | "nominatim";
+/**
+ * `spots`: the weekly extract of cameras and scenic spots (infra/geo/build-spots.sh), static files by map cell.
+ * `cells`: speed-limit roads and quick-search places from the same download (infra/geo/osmcells), in Overpass's shape.
+ */
+export type GeoService = "valhalla" | "osrm" | "photon" | "overpass" | "weather" | "spots" | "cells" | "nominatim";
 
 /**
  * One server that can answer for a service. `kind` says which API it speaks when that

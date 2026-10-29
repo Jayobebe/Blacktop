@@ -1,4 +1,5 @@
 import { fetchRouteThroughStops, RouteResult, RouteLineString } from './routing';
+import { fetchForecast, forecastUrl } from '@/lib/weatherApi';
 
 /**
  * Weather-aware routing.
@@ -63,7 +64,7 @@ export async function checkRouteWeather(
   if (samples.length === 0) return null;
 
   try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = forecastUrl();
     url.searchParams.set('latitude', samples.map((s) => s.lat.toFixed(3)).join(','));
     url.searchParams.set('longitude', samples.map((s) => s.lng.toFixed(3)).join(','));
     url.searchParams.set('hourly', 'precipitation');
@@ -71,7 +72,7 @@ export async function checkRouteWeather(
     url.searchParams.set('timezone', 'UTC');
     url.searchParams.set('forecast_days', '2');
 
-    const res = await fetch(url.toString());
+    const res = await fetchForecast(url);
     if (!res.ok) return null;
     const json = await res.json();
     const series = Array.isArray(json) ? json : [json];

@@ -6,6 +6,7 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import { dayKey } from './calendarStore';
+import { fetchForecast, forecastUrl } from '@/lib/weatherApi';
 
 export type DayVerdict = 'dry' | 'showers' | 'wet' | 'gusty' | 'icy';
 
@@ -68,13 +69,13 @@ export async function refreshDailyForecast(at: { lat: number; lng: number } | nu
   if (kept && Date.now() - kept.at < FRESH_MS && Math.abs(kept.lat - at.lat) < 0.1 && Math.abs(kept.lng - at.lng) < 0.1) return;
   busy = true;
   try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = forecastUrl();
     url.searchParams.set('latitude', at.lat.toFixed(2));
     url.searchParams.set('longitude', at.lng.toFixed(2));
     url.searchParams.set('daily', 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max');
     url.searchParams.set('timezone', 'auto');
     url.searchParams.set('forecast_days', '16');
-    const r = await fetch(url.toString());
+    const r = await fetchForecast(url);
     if (!r.ok) return;
     const j = await r.json();
     const t = j?.daily?.time as string[] | undefined;

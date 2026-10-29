@@ -8,6 +8,26 @@
 	route {
 		respond /health "ok" 200
 
+		# The app's forecasts, straight from riders' phones (src/lib/weatherApi.ts, VITE_WEATHER_URL =
+		# https://<GEO_DOMAIN>/open-weather): no token, since an app can't keep one secret, so only
+		# the forecast endpoint is open, read-only, to any site. Weather is public data; everything
+		# else on the server still needs the token.
+		handle_path /open-weather/* {
+			header Access-Control-Allow-Origin "*"
+			@forecast {
+				method GET
+				path /v1/forecast
+			}
+			# Two handle blocks, tried in order: inside handle_path Caddy sorts plain directives
+			# (respond before reverse_proxy), which would answer every request with the 404.
+			handle @forecast {
+				reverse_proxy weather:8080
+			}
+			handle {
+				respond "not found" 404
+			}
+		}
+
 		@noToken not header Authorization "Bearer {$GEO_TOKEN}"
 		respond @noToken "unauthorized" 401
 
@@ -25,6 +45,10 @@
 		}
 		handle_path /weather/* {
 			reverse_proxy weather:8080
+		}
+		# Speed-limit roads and quick-search places (build-cells.sh, osmcells/serve.py).
+		handle_path /cells/* {
+			reverse_proxy cells:8090
 		}
 		# Cameras and scenic spots: small JSON files by map cell (build-spots.sh).
 		handle_path /spots/* {

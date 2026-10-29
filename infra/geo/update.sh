@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Weekly refresh (cron). Overpass and the weather keep themselves current; this
 # rebuilds what GEO_SERVICES (.env) lists of the routing tiles, the cameras and
-# scenic spots (with the routing tiles, from the same download) and the search
+# scenic spots and the cells database (with the routing tiles, from the same
+# download) and the search
 # index, from fresh OpenStreetMap data beside the live copies, then restarts
 # each onto its new data (seconds, covered by the Edge Functions' fallback to
 # the public servers).

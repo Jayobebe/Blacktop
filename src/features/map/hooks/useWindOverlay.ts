@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { whenStyleReady } from '../lib/whenStyleReady';
 import { addWindOverlayLayer, removeWindOverlayLayer, setWindOverlayData, type WindCell } from '../lib/windLayers';
+import { fetchForecast, forecastUrl } from '@/lib/weatherApi';
 
 /**
  * The wind layer (Settings → Navigation → Wind on the map, like the rain
@@ -59,12 +60,12 @@ async function fetchCells(points: Array<{ lat: number; lng: number; key: string 
   });
   if (!want.length) return;
   try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = forecastUrl();
     url.searchParams.set('latitude', want.map((p) => p.lat.toFixed(3)).join(','));
     url.searchParams.set('longitude', want.map((p) => p.lng.toFixed(3)).join(','));
     url.searchParams.set('current', 'wind_speed_10m,wind_gusts_10m,wind_direction_10m');
     url.searchParams.set('wind_speed_unit', 'kmh');
-    const res = await fetch(url.toString());
+    const res = await fetchForecast(url);
     if (!res.ok) return;
     const json = await res.json();
     const series = Array.isArray(json) ? json : [json];

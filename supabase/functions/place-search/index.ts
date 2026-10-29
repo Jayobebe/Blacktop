@@ -2,8 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { fetchWithTimeout, hasOwn, upstreamHeaders, viaGeo } from "../_shared/upstream.ts";
 import { geocodeReverse, geocodeSearch } from "./geocode.ts";
-import { cellQuery, encodeCell, isFresh, readStoredCell, storeCell } from "./speedCells.ts";
+import { cellBox, cellQuery, encodeCell, isFresh, readStoredCell, storeCell } from "./speedCells.ts";
 import { distanceM, ownSpots } from "./spots.ts";
+import { ownCells } from "./cells.ts";
 import {
   buildLoop,
   buildTwisty,
@@ -660,7 +661,10 @@ serve(async (req) => {
       const stored = await readStoredCell(row, col);
       if (stored && isFresh(stored)) return new Response(JSON.stringify(stored), { headers: json, status: 200 });
       try {
-        const file = encodeCell(row, col, await fetchOverpass(cellQuery(row, col), 40000, 55000));
+        // Our own server's roads first (cells.ts), then Overpass.
+        const [s, w, n, e] = cellBox(row, col);
+        const roads = (await ownCells("roads", { south: s, west: w, north: n, east: e })) ?? await fetchOverpass(cellQuery(row, col), 40000, 55000);
+        const file = encodeCell(row, col, roads);
         await storeCell(file);
         return new Response(JSON.stringify(file), { headers: json, status: 200 });
       } catch (e) {
@@ -690,7 +694,7 @@ serve(async (req) => {
       `;
       let data: any;
       try {
-        data = await fetchOverpass(query, 16000);
+        data = (await ownCells("roads", { south, west, north, east })) ?? await fetchOverpass(query, 16000);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Speed limits unavailable:", e instanceof Error ? e.message : e);
         return new Response(JSON.stringify({ error: "overpass_unavailable" }), {
@@ -944,7 +948,11 @@ serve(async (req) => {
         // Short budget: Photon below is the quick fallback.
         // Name search goes straight to Photon (Overpass name regex is too slow).
         if (nameQ.length >= 2) throw new Error("name search via Photon");
-        data = await fetchOverpass(query, 9000);
+        // Our own server's places first (cells.ts): the same kinds, already nearest first.
+        data = (await ownCells("places", {
+          lat: body.lat, lon: body.lon, radius_m: radius, limit,
+          ...(filter24h ? { filter24h: 1 } : { amenities: amenities.map((a: string) => a.replace(/[^a-z0-9_]/gi, "")).join(",") }),
+        })) ?? await fetchOverpass(query, 9000);
       } catch (e) {
         console.warn("[PLACE-SEARCH] Overpass unavailable, using Photon:", e instanceof Error ? e.message : e);
         const bbox = boxAround(body.lat, body.lon, radius);

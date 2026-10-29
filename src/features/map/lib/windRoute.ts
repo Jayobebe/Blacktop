@@ -1,6 +1,7 @@
 import type { RouteLineString } from './routing';
 import type { VehicleType } from '@/features/experience/lib/vehicles';
 import { getExperience } from '@/features/experience/lib/profile';
+import { fetchForecast, forecastUrl } from '@/lib/weatherApi';
 
 /**
  * Wind along the route (Settings → Navigation → Wind warnings). Samples the
@@ -148,7 +149,7 @@ export async function checkRouteWind(
   const { samples, total } = sampleLine(coords);
   if (!samples.length) return null;
   try {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const url = forecastUrl();
     url.searchParams.set('latitude', samples.map((s) => s.lat.toFixed(3)).join(','));
     url.searchParams.set('longitude', samples.map((s) => s.lng.toFixed(3)).join(','));
     url.searchParams.set('hourly', 'wind_speed_10m,wind_gusts_10m,wind_direction_10m');
@@ -156,7 +157,7 @@ export async function checkRouteWind(
     url.searchParams.set('timeformat', 'unixtime');
     url.searchParams.set('timezone', 'UTC');
     url.searchParams.set('forecast_days', '2');
-    const res = await fetch(url.toString());
+    const res = await fetchForecast(url);
     if (!res.ok) return null;
     const json = await res.json();
     const series = Array.isArray(json) ? json : [json];

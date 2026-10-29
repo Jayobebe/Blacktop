@@ -8,6 +8,7 @@
 #   /overpass  speed cameras, places, scenic spots, Track Day roads (Overpass)
 #   /weather   forecasts for weather alerts                       (Open-Meteo)
 #   /spots     cameras and scenic spots as static files           (build-spots.sh; Caddy serves them)
+#   /cells     speed-limit roads and quick-search places          (build-cells.sh; osmcells/serve.py)
 #
 # Each service is a profile of its own name, and only the ones listed in
 # GEO_SERVICES (.env) are started: use ./compose.sh instead of "docker compose",
@@ -82,10 +83,23 @@ services:
   weather-sync:
     profiles: ["weather"]
     image: ${OPENMETEO_IMAGE:-ghcr.io/open-meteo/open-meteo:latest}
-    # Keeps the forecast model fresh (checks for new runs every 10 minutes).
-    command: sync ${WEATHER_MODEL:-ecmwf_ifs025} ${WEATHER_VARIABLES:-precipitation,rain,showers,snowfall,cloud_cover,wind_gusts_10m,weather_code} --past-days 1 --repeat-interval 10
+    # Keeps the forecast model fresh (checks for new runs every 10 minutes). The variables are what
+    # the alerts and the app's own forecasts ask for (src/lib/weatherApi.ts): temperature, rain, snow,
+    # cloud, weather code, gusts, and the wind's two components (its speed and direction come from them).
+    command: sync ${WEATHER_MODEL:-ecmwf_ifs025} ${WEATHER_VARIABLES:-precipitation,rain,showers,snowfall,cloud_cover,wind_gusts_10m,weather_code,temperature_2m,wind_u_component_10m,wind_v_component_10m} --past-days 1 --repeat-interval 10
     volumes:
       - ./data/open-meteo:/app/data
+    restart: unless-stopped
+
+  cells:
+    profiles: ["cells"]
+    build: ./osmcells
+    image: blacktop-cells
+    # Answers from data/cells/cells.db (build-cells.sh), picking up a new one as it's swapped in.
+    volumes:
+      - ./data/cells:/data:ro
+    expose:
+      - "8090"
     restart: unless-stopped
 
   caddy:

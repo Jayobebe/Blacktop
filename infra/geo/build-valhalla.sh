@@ -33,6 +33,10 @@ docker run --rm -v "$PWD/data/valhalla-next:/custom_files" \
 case ",${GEO_SERVICES// /}," in
   *",spots,"*) ./build-spots.sh data/valhalla-next/region.osm.pbf || echo "!! spots weren't rebuilt: the previous ones stay" ;;
 esac
+# Speed-limit roads and quick-search places, the same way (when GEO_SERVICES lists cells).
+case ",${GEO_SERVICES// /}," in
+  *",cells,"*) ./build-cells.sh data/valhalla-next/region.osm.pbf || echo "!! cells weren't rebuilt: the previous ones stay" ;;
+esac
 rm -f data/valhalla-next/region.osm.pbf
 
 echo "==> Raising service limits"

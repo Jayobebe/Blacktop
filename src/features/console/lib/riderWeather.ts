@@ -9,6 +9,7 @@
  * Imports nothing heavy: Home reads it for the Console's pip (rain on its way).
  */
 import { useEffect, useSyncExternalStore } from 'react';
+import { fetchForecast, forecastUrl } from '@/lib/weatherApi';
 
 export interface WeatherHour {
   /** Start of the hour, ms. */
@@ -72,7 +73,7 @@ export function refreshRiderWeather(at: { lat: number; lng: number } | null, for
   if (!at) return Promise.resolve();
   if (!force && cached && Date.now() - cached.at < FRESH_MS && km(cached, at) < MOVED_KM) return Promise.resolve();
   if (inFlight) return inFlight;
-  const url = new URL('https://api.open-meteo.com/v1/forecast');
+  const url = forecastUrl();
   url.searchParams.set('latitude', at.lat.toFixed(2));
   url.searchParams.set('longitude', at.lng.toFixed(2));
   url.searchParams.set('hourly', 'temperature_2m,precipitation,precipitation_probability,weather_code,wind_gusts_10m,is_day');
@@ -80,7 +81,7 @@ export function refreshRiderWeather(at: { lat: number; lng: number } | null, for
   url.searchParams.set('timeformat', 'unixtime');
   url.searchParams.set('timezone', 'auto');
   url.searchParams.set('forecast_days', '2');
-  inFlight = fetch(url.toString())
+  inFlight = fetchForecast(url)
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => {
       const h = j?.hourly;
