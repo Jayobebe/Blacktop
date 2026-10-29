@@ -47,6 +47,7 @@ export function releases(): Release[] {
       version: '1.33',
       lines: [
         { icon: 'language', text: tr("Notifications arrive in your language too: rescue calls, crew results, weather warnings and the rest.") },
+        { icon: 'map', text: tr("The speed limit sign now shows on slower roads and in towns too, and it checks the road when you turn onto a new one.") },
       ],
     },
     {

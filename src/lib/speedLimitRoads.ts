@@ -134,3 +134,90 @@ function segmentDistance(lat: number, lng: number, aLat: number, aLng: number, b
   const m = Math.hypot(ax + dx * t, ay + dy * t);
   return { m, bearing: (Math.atan2(dx, dy) * 180) / Math.PI };
 }
+
+/**
+ * When to ask Valhalla for the limit of the road the rider is on (lib/speedLimit.ts). Every
+ * moving rider's question goes to the one public Valhalla server the app shares, so it asks
+ * when the road is likely to have changed, never on a timer: straight away after a turn (the
+ * heading 35 degrees or more off what it was when last asked, over the last few fixes and
+ * 36 m or more on), which is how most new roads begin; and, since the phone can't see a road
+ * change with no turn (straight on across a junction) or a limit changing along one road (a
+ * village's 30 on the same road), every 500 m as well, every 1 km once two answers in a row
+ * agree (the same road at the same limit). Standing in traffic asks nothing. Until 2026-10-29
+ * it was every 10 s or 250 m, about six questions a minute per rider, which capped how many
+ * could ride at once.
+ */
+export class LimitAsker {
+  static readonly EVERY_M = 500;
+  static readonly STEADY_M = 1000;
+  static readonly TURN_DEG = 35;
+  static readonly TURN_AFTER_M = 36;
+  /** A turn never asks twice inside this. */
+  static readonly TURN_GAP_MS = 5000;
+
+  private askedAt = 0;
+  private askedFrom: [number, number] | null = null;
+  private askedBearing: number | null = null;
+  private last: { road: string | null; kmh: number | null } | null = null;
+  private agreeing = 0;
+
+  /** Whether to ask now, given the rider's trail ([lng, lat], oldest first, fixes about 12 m apart). */
+  due(trail: Array<[number, number]>, now: number): boolean {
+    if (trail.length < 3) return false;
+    const here = trail[trail.length - 1];
+    if (!this.askedFrom) return true;
+    const gone = metresBetween(this.askedFrom, here);
+    if (gone >= (this.agreeing >= 1 ? LimitAsker.STEADY_M : LimitAsker.EVERY_M)) return true;
+    const heading = trailBearing(trail);
+    if (
+      heading !== null && this.askedBearing !== null && gone >= LimitAsker.TURN_AFTER_M &&
+      now - this.askedAt >= LimitAsker.TURN_GAP_MS && angleBetween(heading, this.askedBearing) >= LimitAsker.TURN_DEG
+    ) return true;
+    return false;
+  }
+
+  /** A question went out from this trail. */
+  asked(trail: Array<[number, number]>, now: number) {
+    this.askedAt = now;
+    this.askedFrom = trail[trail.length - 1] ?? null;
+    this.askedBearing = trailBearing(trail);
+  }
+
+  /** Valhalla's answer: the road's name and limit (either null when unknown). */
+  answered(road: string | null, kmh: number | null) {
+    const same = this.last !== null && this.last.road === road && this.last.kmh === kmh;
+    this.agreeing = same ? this.agreeing + 1 : 0;
+    this.last = { road, kmh };
+  }
+
+  /** Start again (the ride ended, the map closed). */
+  reset() {
+    this.askedAt = 0;
+    this.askedFrom = null;
+    this.askedBearing = null;
+    this.last = null;
+    this.agreeing = 0;
+  }
+}
+
+function metresBetween(a: [number, number], b: [number, number]): number {
+  const dLat = (b[1] - a[1]) * 111_320;
+  const dLng = (b[0] - a[0]) * 111_320 * Math.cos((a[1] * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
+}
+
+/** The heading (degrees from north) over the last three fixes, or null when they're too close to tell. */
+function trailBearing(trail: Array<[number, number]>): number | null {
+  if (trail.length < 3) return null;
+  const a = trail[trail.length - 3];
+  const b = trail[trail.length - 1];
+  if (metresBetween(a, b) < 15) return null;
+  const dx = (b[0] - a[0]) * Math.cos((a[1] * Math.PI) / 180);
+  const dy = b[1] - a[1];
+  return ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;
+}
+
+function angleBetween(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}

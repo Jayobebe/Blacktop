@@ -7,7 +7,7 @@
  * alongside, a bridge crossing overhead, a junction, GPS wobble, leaving the
  * roads. It tests the reasoning, not OpenStreetMap's data.
  */
-import { parseMaxspeed, RoadMatcher, type Way } from '../src/lib/speedLimitRoads';
+import { LimitAsker, parseMaxspeed, RoadMatcher, type Way } from '../src/lib/speedLimitRoads';
 
 let failed = 0;
 const check = (name: string, ok: boolean, detail = '') => {
@@ -111,6 +111,98 @@ const north = (from: number, to: number, step: number, wobble = 0, e = 0): Fix[]
   const fixes = [...north(0, 150, 15), { e: 18, n: 165, v: 15 }, ...north(180, 300, 15)];
   const shown = ride(fixes);
   check('one stray fix towards the side road changes nothing', shown.every((s) => s === '40'), shown.join(' '));
+}
+
+// ── When to ask Valhalla (LimitAsker): on a new road, never on a timer ─────
+{
+  const LAT0 = 51;
+  const toLngLat = (e: number, n: number): [number, number] => [e / (111_320 * Math.cos((LAT0 * Math.PI) / 180)), LAT0 + n / 111_320];
+  type Leg = { heading: number; metres: number; mps: number; seconds?: number };
+  /**
+   * Rides the legs a fix a second, keeping the trail as lib/speedLimit.ts does (12 m apart, the
+   * last 8), and counts the questions; `road` is the answer (name, limit) at a spot. `oldRule`:
+   * the schedule before 2026-10-29, every 10 s or 250 m.
+   */
+  const simulate = (legs: Leg[], road: (e: number, n: number) => [string, number], oldRule = false) => {
+    const asker = new LimitAsker();
+    let trail: Array<[number, number]> = [];
+    let e = 0, n = 0, t = 0;
+    let lastAsk = -1e9;
+    let lastAskAt: [number, number] | null = null;
+    const asks: Array<{ t: number; e: number; n: number }> = [];
+    for (const leg of legs) {
+      const steps = leg.seconds ?? Math.max(1, Math.round(leg.metres / Math.max(leg.mps, 0.001)));
+      for (let i = 0; i < steps; i++) {
+        t += 1000;
+        e += Math.sin((leg.heading * Math.PI) / 180) * leg.mps;
+        n += Math.cos((leg.heading * Math.PI) / 180) * leg.mps;
+        const here = toLngLat(e, n);
+        // As lib/speedLimit.ts: a new point once the newest is 12 m on from the one before it.
+        const m = (p: [number, number], q: [number, number]) => Math.hypot((q[0] - p[0]) * 111_320 * Math.cos((LAT0 * Math.PI) / 180), (q[1] - p[1]) * 111_320);
+        if (trail.length < 2 || m(trail[trail.length - 2], trail[trail.length - 1]) >= 12) trail = [...trail.slice(-7), here];
+        else trail[trail.length - 1] = here;
+        // lib/speedLimit.ts asks nothing below about 4 mph.
+        if (leg.mps < 1.8 || trail.length < 3) continue;
+        const due = oldRule
+          ? !lastAskAt || t - lastAsk >= 10_000 || Math.hypot(e - lastAskAt[0], n - lastAskAt[1]) >= 250
+          : asker.due(trail, t);
+        if (!due) continue;
+        asks.push({ t, e, n });
+        lastAsk = t;
+        lastAskAt = [e, n];
+        asker.asked(trail, t);
+        const [name, kmh] = road(e, n);
+        asker.answered(name, kmh);
+      }
+    }
+    return asks;
+  };
+  const oneRoad = (): [string, number] => ['High Street', 48];
+
+  // A town at 30 mph (13.4 m/s), ten minutes on one road.
+  const town = [{ heading: 0, metres: 8040, mps: 13.4 }];
+  const oldTown = simulate(town, oneRoad, true).length;
+  const newTown = simulate(town, oneRoad).length;
+  check('ten minutes on one town road asks a fraction of what it did', newTown * 4 <= oldTown, `before ${oldTown}, now ${newTown}`);
+
+  // 20 mph (8.9 m/s), fixes a second apart, under 12 m: still asks (it never did before 2026-10-29).
+  const slow = simulate([{ heading: 0, metres: 1200, mps: 8.9 }], oneRoad);
+  check('a slow town road at 20 mph asks at all', slow.length >= 1 && slow[0].n <= 60, slow.length ? `first at ${Math.round(slow[0].n)} m` : 'never asked');
+
+  // A motorway at 70 mph (31.3 m/s), ten minutes.
+  const mway = [{ heading: 90, metres: 18_780, mps: 31.3 }];
+  const oldM = simulate(mway, () => ['M1', 113], true).length;
+  const newM = simulate(mway, () => ['M1', 113]).length;
+  check('a motorway asks about once a kilometre once it knows the road', newM <= 21 && newM * 3 <= oldM, `before ${oldM}, now ${newM} over 18.8 km`);
+
+  // Five minutes stopped in traffic between two stretches: nothing while stopped.
+  const go = { heading: 0, metres: 300, mps: 10 };
+  const without = simulate([go, go], oneRoad).length;
+  const withJam = simulate([go, { heading: 0, metres: 0, mps: 0, seconds: 300 }, go], oneRoad).length;
+  check('standing in traffic asks nothing', withJam === without, `${without} without the jam, ${withJam} with it`);
+
+  // A right turn at a junction: asked within 60 m of it, long before the next 500 m.
+  const turn = simulate(
+    [{ heading: 0, metres: 1500, mps: 13.4 }, { heading: 90, metres: 400, mps: 13.4 }],
+    (e) => (e > 5 ? ['Mill Lane', 32] : ['High Street', 48]),
+  );
+  const afterTurn = turn.find((a) => a.e > 5);
+  check('a turn onto a new road asks within 60 m of it', !!afterTurn && afterTurn.e <= 60, afterTurn ? `${Math.round(afterTurn.e)} m after the turn` : 'never asked');
+
+  // Gentle bends (15 degrees either way) aren't turns.
+  const bends = Array.from({ length: 20 }, (_, i) => ({ heading: i % 2 ? 15 : -15, metres: 200, mps: 20 }));
+  const bendy = simulate(bends, () => ['B2135', 96]).length;
+  check('gentle bends on one road ask no more than the distance check', bendy <= 6, `${bendy} over 4 km`);
+
+  // A village's 30 on the same road, no turn: found within 500 m.
+  const village = simulate([{ heading: 0, metres: 4000, mps: 22 }], (_e, n) => (n > 2000 ? ['A272', 48] : ['A272', 96]));
+  const found = village.find((a) => a.n > 2000);
+  check('a lower limit on the same road is found within 1 km of it', !!found && found.n - 2000 <= 1000, found ? `${Math.round(found.n - 2000)} m in` : 'never');
+
+  // The longest it goes between questions while moving: 1 km.
+  const asks = simulate(mway, () => ['M1', 113]);
+  const gap = Math.max(...asks.map((a, i) => (i ? Math.hypot(a.e - asks[i - 1].e, a.n - asks[i - 1].n) : 0)));
+  check('never more than 1 km between questions while moving', gap <= 1050, `${Math.round(gap)} m`);
 }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nAll speed limit checks passed');

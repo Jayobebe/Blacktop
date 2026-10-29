@@ -9,8 +9,10 @@
  * German autobahn), shows nothing.
  *
  * First, though, it asks Valhalla (`kind: 'roadlimit'`, the router the app
- * already uses): the rider's last few fixes, every 10 s or 250 m while moving,
- * matched to the roads, and the limit of the road the last one is on. The
+ * already uses): the rider's last few fixes, matched to the roads, and the limit
+ * of the road the last one is on. When is `LimitAsker`'s call (lib/speedLimitRoads):
+ * when the road changes (straight away after a turn), and every 500 m, 1 km once
+ * two answers agree, for changes it can't see; never on a timer. The
  * public Overpass servers the cells come from were all down on a night out
  * (2026-10-27) and no limit ever showed; the cells are the fallback while
  * Valhalla can't answer (or the function is too old to know the kind). The
@@ -18,11 +20,11 @@
  *
  * Fed by `SpeedLimitFeed` (App) from the ride's GPS or the map's, only while
  * the rider has the live speed on; nothing is fetched otherwise. Requests:
- * about six a minute while moving, none standing still.
+ * one a kilometre or so, plus one a turn (six a minute until 2026-10-29), none standing still.
  */
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { parseMaxspeed, RoadMatcher, type SpeedLimit, type Way } from './speedLimitRoads';
+import { LimitAsker, parseMaxspeed, RoadMatcher, type SpeedLimit, type Way } from './speedLimitRoads';
 import { currentUnits } from './units';
 import { getExperience } from '@/features/experience';
 
@@ -98,8 +100,6 @@ function loadCell(row: number, col: number) {
 
 // ── Valhalla: the road the rider's trail is on ──────────────────────────
 
-const ASK_EVERY_MS = 10_000;
-const ASK_AFTER_M = 250;
 /** Fixes kept for the trail: at least this far apart, the last few. */
 const TRAIL_STEP_M = 12;
 const TRAIL_LEN = 8;
@@ -109,8 +109,7 @@ const VALHALLA_REST_MS = 120_000;
 const MOVING_MS = 1.8;
 
 let trail: Array<[number, number]> = [];
-let askedAt = 0;
-let askedFrom: [number, number] | null = null;
+const asker = new LimitAsker();
 let asking = false;
 let valhallaRestUntil = 0;
 
@@ -134,16 +133,17 @@ function vehicleNow(): 'motorcycle' | 'car' | 'bicycle' {
 
 function askValhalla() {
   asking = true;
-  askedAt = Date.now();
-  askedFrom = trail[trail.length - 1];
+  asker.asked(trail, Date.now());
   const sent = trail.slice();
   supabase.functions
     .invoke('place-search', { body: { kind: 'roadlimit', points: sent, vehicle: vehicleNow() } })
     .then(({ data, error }) => {
-      const a = data as { matched?: unknown; kmh?: unknown } | null;
+      const a = data as { matched?: unknown; kmh?: unknown; road?: unknown } | null;
       if (error || !a || typeof a.matched !== 'boolean') throw error ?? new Error('no answer');
+      const kmh = a.matched && typeof a.kmh === 'number' && a.kmh > 0 ? a.kmh : null;
+      asker.answered(a.matched && typeof a.road === 'string' ? a.road : null, kmh);
       // Off every road, or a road with no limit mapped: no sign.
-      set(a.matched && typeof a.kmh === 'number' && a.kmh > 0 ? limitFromKmh(a.kmh) : null);
+      set(kmh !== null ? limitFromKmh(kmh) : null);
     })
     .catch(() => {
       valhallaRestUntil = Date.now() + VALHALLA_REST_MS;
@@ -161,13 +161,15 @@ let matcher = new RoadMatcher();
 export function feedSpeedLimitFix(lat: number, lng: number, speed: number | null) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
   const here: [number, number] = [lng, lat];
-  const last = trail[trail.length - 1];
-  if (!last || metres(last, here) >= TRAIL_STEP_M) trail = [...trail.slice(-(TRAIL_LEN - 1)), here];
+  // The newest point always follows the rider; it's kept as a new point once it's TRAIL_STEP_M on
+  // from the one before. (Measuring from the newest point, which each fix had just replaced, never
+  // got there under about 27 mph with fixes a second apart, so towns never showed a limit.)
+  const before = trail[trail.length - 2];
+  if (trail.length < 2 || metres(before, trail[trail.length - 1]) >= TRAIL_STEP_M) trail = [...trail.slice(-(TRAIL_LEN - 1)), here];
   else trail[trail.length - 1] = here;
   if (Date.now() >= valhallaRestUntil) {
     const moving = speed == null || speed >= MOVING_MS;
-    const due = !askedFrom || Date.now() - askedAt >= ASK_EVERY_MS || metres(askedFrom, here) >= ASK_AFTER_M;
-    if (!asking && moving && trail.length >= 3 && due) askValhalla();
+    if (!asking && moving && asker.due(trail, Date.now())) askValhalla();
     return;
   }
   const [row, col] = cellOf(lat, lng);
@@ -188,7 +190,7 @@ export function feedSpeedLimitFix(lat: number, lng: number, speed: number | null
 export function clearSpeedLimit() {
   matcher = new RoadMatcher();
   trail = [];
-  askedFrom = null;
+  asker.reset();
   set(null);
 }
 
