@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { useConvoyId } from '@/features/convoy';
 import { useProfile } from '@/features/profile';
 
@@ -43,9 +44,7 @@ export function useMapPresenceTracker() {
       return;
     }
 
-    const channel = supabase.channel(`map-presence:${convoyId}`, {
-      config: { presence: { key: userId } },
-    });
+    const channel = convoyChannel(`map-presence:${convoyId}`, { presence: { key: userId } });
 
     const syncFromPresenceState = () => {
       setPresentUserIds(new Set(Object.keys(channel.presenceState())));

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
 
@@ -52,7 +53,7 @@ export function useRegroupListener(convoyId: string | null, userId: string | nul
   useEffect(() => {
     if (!convoyId) return;
 
-    const ch = supabase.channel(`regroup-${convoyId}`);
+    const ch = convoyChannel(`regroup-${convoyId}`);
     ch.on('broadcast', { event: 'regroup' }, async ({ payload }) => {
       const call = payload as RegroupCall;
       if (!call?.fromUserId || call.fromUserId === userId) return;

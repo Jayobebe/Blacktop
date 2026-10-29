@@ -46,6 +46,7 @@ import { GForceCircle } from '@/components/GForceCircle';
 import { AlarmButton, setRescuePosition, startRescueSiren } from '@/features/alarm';
 import { W3WAddress } from '@/components/W3WAddress';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { ConvoyMemberInfo, BadgeType } from '@/types/convoy';
 import { GpsStatus, GForceSample } from '@/types/blacktop';
 import { Button } from '@/components/ui/button';
@@ -741,13 +742,17 @@ export default function ActiveRide() {
   // Subscribe to convoy control channel for broadcasts AND realtime convoy changes
   useEffect(() => {
     if (!convoy.id || !rideState.isConvoyMode) return;
+    const convoyIdNow = convoy.id;
 
     // Control channel for broadcasts (pause/resume/end-ride)
-    const controlChannel = supabase.channel(`convoy-control:${convoy.id}`, {
-      config: { broadcast: { self: false } },
-    });
+    const controlChannel = convoyChannel(`convoy-control:${convoy.id}`, { broadcast: { self: false } });
 
-    controlChannel.on('broadcast', { event: 'end-ride' }, () => {
+    controlChannel.on('broadcast', { event: 'end-ride' }, async () => {
+      // Only when the ride really has ended: the leader writes ride_ended_at before saying so,
+      // so a spoofed "end-ride" can't stop everyone's ride (and crash check with it).
+      if (!convoyIdNow) return;
+      const { data } = await supabase.from('convoys').select('ride_ended_at').eq('id', convoyIdNow).single();
+      if (!data?.ride_ended_at) return;
       handleRideEndedByLeader();
     });
 
@@ -849,9 +854,7 @@ export default function ActiveRide() {
       
       // Also broadcast for immediate notification (best effort)
       try {
-        const broadcastChannel = supabase.channel(`convoy-control:${convoyId}`, {
-          config: { broadcast: { self: false } },
-        });
+        const broadcastChannel = convoyChannel(`convoy-control:${convoyId}`, { broadcast: { self: false } });
 
         await new Promise<void>((resolve) => {
           let resolved = false;

@@ -4,6 +4,7 @@ import { ConvoyState, ConvoyMemberInfo, ConvoyDestination } from '@/types/convoy
 import { useProfile } from '@/features/profile';
 import { useSettings, ACCENT_COLORS } from '@/features/settings';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { toast } from 'sonner';
 import { tr } from '@/lib/i18n';
 import { demoBlocked } from '@/lib/demoGuard';
@@ -11,6 +12,7 @@ import { eventSound } from '@/lib/appSound';
 import { notify } from '@/lib/inbox';
 import type { Tables } from '@/integrations/supabase/types';
 import { sessionUser } from '@/lib/sessionUser';
+import { randomCode } from '@/lib/randomCode';
 
 export const MAX_CONVOY_MEMBERS = 8;
 const ACTIVE_CONVOY_KEY = 'blacktop_active_convoy_id';
@@ -912,7 +914,7 @@ export function useConvoyState() {
     }
 
     // Broadcast leadership change to all members for immediate update
-    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
+    const broadcastChannel = convoyChannel(`convoy-control:${state.id}`);
     await broadcastChannel.subscribe();
     await broadcastChannel.send({
       type: 'broadcast',
@@ -951,7 +953,7 @@ export function useConvoyState() {
     toast.success(newPausedState ? tr("Ride paused") : tr("Ride resumed"));
 
     // Broadcast to all members - await subscription before sending
-    const broadcastChannel = supabase.channel(`convoy-control:${state.id}`);
+    const broadcastChannel = convoyChannel(`convoy-control:${state.id}`);
     
     await new Promise<void>((resolve) => {
       broadcastChannel.subscribe(async (status) => {
@@ -1022,10 +1024,5 @@ export function useConvoyState() {
 }
 
 function generateLocalCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+  return randomCode(6);
 }

@@ -6,6 +6,7 @@ import { isDemoModeActive, onDemoModeChange } from '@/lib/demoMode';
 import { demoBlocked } from '@/lib/demoGuard';
 import { DEMO_ACTIVE_CREW, DEMO_CREW_LIST } from './demo';
 import { sessionUser } from '@/lib/sessionUser';
+import { randomCode } from '@/lib/randomCode';
 
 /**
  * Crew membership. Every rider owns a crew code (generated once, on device).
@@ -47,11 +48,13 @@ const LS_LEGACY_KEY = 'blacktop_crew';
 const LS_OWN_KEY = 'blacktop_crew_own';
 const listeners = new Set<() => void>();
 
+/**
+ * A new crew's code: 8 characters (about a trillion), where they were 6 (about a billion) until
+ * 2026-10-29: every rider has one, so short codes could be guessed in bulk. Codes already made stay
+ * as they are (4 to 10 characters are accepted everywhere).
+ */
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+  return randomCode(8);
 }
 
 export function ownCrewCode(): string {

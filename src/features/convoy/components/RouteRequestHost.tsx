@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { MapPin, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
 import { requestMapPlace } from '@/features/map/lib/mapConsole';
@@ -43,7 +44,7 @@ export function RouteRequestHost() {
       clearRouteRequests();
       return;
     }
-    const ch = supabase.channel(`route-request-${convoy.id}`);
+    const ch = convoyChannel(`route-request-${convoy.id}`);
     ch.on('broadcast', { event: 'request' }, ({ payload }) => {
       const r = payload as Partial<RouteRequest> | null;
       const place = cleanPlace(r?.place);

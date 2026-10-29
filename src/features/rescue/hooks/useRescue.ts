@@ -1,6 +1,7 @@
 import { logActivity } from '@/features/calendar/lib/calendarStore';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { toast } from 'sonner';
 import { announceRescueToDiscord } from '@/features/integrations/discord';
 import { notifyRescue, notifyRescueCancel } from '@/features/notifications';
@@ -44,7 +45,7 @@ export function useRescue(convoyId: string | null, isLeader: boolean, userId: st
   useEffect(() => {
     if (!convoyId) return;
 
-    const channel = supabase.channel(`rescue-${convoyId}`);
+    const channel = convoyChannel(`rescue-${convoyId}`);
     channelRef.current = channel;
 
     channel

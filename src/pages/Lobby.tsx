@@ -9,6 +9,7 @@ import { useWaypoints, WaypointList, DestinationSearch } from '@/features/waypoi
 import { useSettings } from '@/features/settings';
 import { useProfile } from '@/features/profile';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, LogOut, Mic, MicOff, Crown, User, Navigation, ArrowRightLeft, Play, MapPin, X, Plus, QrCode, Lock, Unlock } from 'lucide-react';
 import { useCrew } from '@/features/crew/useCrew';
@@ -227,9 +228,7 @@ export default function Lobby() {
       resolveReady(ready);
     };
 
-    const channel = supabase.channel(`convoy-control:${convoy.id}`, {
-      config: { broadcast: { self: false } },
-    });
+    const channel = convoyChannel(`convoy-control:${convoy.id}`, { broadcast: { self: false } });
 
     channel.on('broadcast', { event: 'start-ride' }, async () => {
       if (hasStartedRide.current) return;
@@ -479,9 +478,7 @@ export default function Lobby() {
     // Fallback: temporary sender channel on the same topic (survives Lobby unmount timing)
     if (!convoy.id) return false;
 
-    const temp = supabase.channel(`convoy-control:${convoy.id}`, {
-      config: { broadcast: { self: true } },
-    });
+    const temp = convoyChannel(`convoy-control:${convoy.id}`, { broadcast: { self: true } });
 
     const tempReady = await new Promise<boolean>((resolve) => {
       const t = window.setTimeout(() => resolve(false), 1500);

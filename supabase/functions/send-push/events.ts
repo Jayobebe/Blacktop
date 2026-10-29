@@ -112,6 +112,33 @@ async function rescueRecipients(ctx: Ctx, userId: string, convoyId?: string | nu
   return [...users]
 }
 
+/**
+ * Whether this rescue may also go to riders nearby. The caller picks the place, so without limits
+ * anyone could send "A rider near you needs help" to strangers anywhere: accounts are free and
+ * anonymous. So: the account a day old at least, two nearby calls a rider a day, and four in any
+ * area (half a degree, about 50 km) an hour from everyone. A real crash still reaches the rider's
+ * convoy and crews whatever happens here; only the strangers nearby are rationed. `cancel` counts
+ * the "is OK" that follows on its own allowance, so cancelling can't be used to spam either.
+ */
+async function nearbyAllowed(ctx: Ctx, userId: string, lat: number, lng: number, cancel = false): Promise<boolean> {
+  try {
+    const { data } = await ctx.admin.auth.admin.getUserById(userId)
+    const created = Date.parse(String(data?.user?.created_at ?? ''))
+    if (!Number.isFinite(created) || Date.now() - created < 86_400_000) return false
+  } catch {
+    return false
+  }
+  const day = new Date().toISOString().slice(0, 10)
+  const kind = cancel ? 'rescue_nearby_ok' : 'rescue_nearby'
+  let mine = false
+  for (const n of [0, 1]) if (!mine && (await markOnce(ctx, `${kind}:${userId}:${day}:${n}`, 86_400))) mine = true
+  if (!mine) return false
+  const hour = Math.floor(Date.now() / 3_600_000)
+  const cell = `${Math.floor(lat * 2)}:${Math.floor(lng * 2)}`
+  for (const n of [0, 1, 2, 3]) if (await markOnce(ctx, `${kind}_area:${cell}:${hour}:${n}`, 3600)) return true
+  return false
+}
+
 export async function rescue(ctx: Ctx, input: RescueInput) {
   // The what3words square is looked up alongside (null without a what3words key).
   const [name, recipients, w3w] = await Promise.all([
@@ -129,7 +156,7 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
     url,
     urgent: true,
   }), opts)
-  if (!input.nearbyKm) return known
+  if (!input.nearbyKm || !(await nearbyAllowed(ctx, input.userId, input.lat, input.lng))) return known
   // Riders nearby who opted in to help (not the convoy / crew, who already have it).
   const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', (u) => ({
     title: `🚨 ${u.say('A rider near you needs help')}`,
@@ -153,6 +180,7 @@ export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'l
   const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
   const known = await deliver(ctx, { userIds: recipients }, 'rescue', message, opts)
   if (!input.nearbyKm || input.lat == null || input.lng == null) return known
+  if (!(await nearbyAllowed(ctx, input.userId, input.lat, input.lng, true))) return known
   const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', message, opts)
   return addResults(known, nearby)
 }

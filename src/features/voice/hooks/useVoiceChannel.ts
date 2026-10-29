@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { setSpeakingUsers } from './voiceActivityStore';
 import {
@@ -1400,12 +1401,10 @@ export function useVoiceChannel(convoyId?: string, options: { /** The convoy's l
       // A new channel: who has a slot is decided afresh from its presence.
       slotsRef.current = null;
       // Create signaling channel
-      const channel = supabase.channel(`voice:${convoyId}`, {
-        config: {
+      const channel = convoyChannel(`voice:${convoyId}`, {
           broadcast: { self: false },
           presence: { key: user.id },
-        },
-      });
+        });
 
       // Listen for signaling events
       channel

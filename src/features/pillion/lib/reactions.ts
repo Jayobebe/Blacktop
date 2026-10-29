@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
 
@@ -53,7 +54,7 @@ function describe(r: Reaction): string {
 export function useReactionsListener(convoyId: string | null, userId: string | null) {
   useEffect(() => {
     if (!convoyId) return;
-    const ch = supabase.channel(`reactions-${convoyId}`);
+    const ch = convoyChannel(`reactions-${convoyId}`);
     ch.on('broadcast', { event: 'reaction' }, ({ payload }) => {
       const r = payload as Reaction;
       if (!r?.fromId || r.fromId === userId || !ALLOWED.has(r.emoji)) return;

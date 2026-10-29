@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { convoyChannel } from '@/lib/convoyChannel';
 import { haptics } from '@/lib/haptics';
 import type { ConvoyState } from '@/types/convoy';
 import { getProximityState, setProximityState } from '../lib/proximityStore';
@@ -97,7 +98,7 @@ export function useConvoyMergeSync({
 
   useEffect(() => {
     if (!convoy.id) return;
-    const ch = supabase.channel(`prox-convoy:${convoy.id}`);
+    const ch = convoyChannel(`prox-convoy:${convoy.id}`);
     ch.on('broadcast', { event: 'merge' }, ({ payload }) => void handleRef.current(payload as MergeMessage))
       .on('broadcast', { event: 'unmerge' }, ({ payload }) => void handleRef.current(payload as MergeMessage))
       .subscribe();
