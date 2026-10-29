@@ -2393,6 +2393,7 @@ export type Database = {
           top_speed: number
         }[]
       }
+      crew_lookup_ok: { Args: { _code: string }; Returns: boolean }
       cw_action: {
         Args: {
           _action: string
