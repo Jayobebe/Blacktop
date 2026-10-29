@@ -2,6 +2,7 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { sendWebPush, type SendOptions, type VapidKeys } from './webpush.ts'
 import { isNativeEndpoint, nativeReady, sendNative } from './native.ts'
 import { DEFAULT_UNITS, type Units } from './crew.ts'
+import { sayIn } from './i18n.ts'
 
 /** What the service worker (public/push-sw.js) receives and shows. */
 export interface PushMessage {
@@ -67,8 +68,9 @@ const PUSH_HOST = /^https:\/\/(fcm\.googleapis\.com|updates\.push\.services\.moz
 /**
  * Sends one message to every matching device that has `category` switched on
  * (null = any device with notifications on, used by the test). Dead devices
- * are removed as they're found. A message with figures in it can be a
- * function of the device's units (miles / km, mph / kph), built per device.
+ * are removed as they're found. A message is a function of the device's units
+ * (miles / km, mph / kph) and language (`u.say`), built per device; a plain
+ * message (a reminder the phone wrote in its own language) goes as it is.
  */
 export async function deliver(
   ctx: Ctx,
@@ -110,11 +112,12 @@ export async function deliver(
       distance: s.distance_unit === 'km' ? 'km' : DEFAULT_UNITS.distance,
       speed: s.speed_unit === 'kph' ? 'kph' : DEFAULT_UNITS.speed,
       stored: s.distance_unit != null || s.speed_unit != null,
+      say: sayIn(s.language),
     }
     const m = typeof message === 'function' ? message(units) : message
     if (!label) return m
     const own = s.crew_names && typeof s.crew_names[label] === 'string' ? s.crew_names[label].trim().slice(0, 30) : ''
-    return { ...m, title: `${own || `Crew ${label}`} · ${m.title}` }
+    return { ...m, title: `${own || units.say('Crew {0}', [label])} · ${m.title}` }
   }
 
   let sent = 0
@@ -160,6 +163,7 @@ type Sub = {
   crew_names?: Record<string, string> | null
   distance_unit?: string | null
   speed_unit?: string | null
+  language?: string | null
 }
 
 /** A crew code as stored (letters and digits, upper case), or null. Also keeps it safe inside a PostgREST filter. */

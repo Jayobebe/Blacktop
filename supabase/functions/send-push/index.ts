@@ -81,12 +81,12 @@ Deno.serve(async (req) => {
     if (action === 'test') {
       if (!(await allowed('send-push-test', 5, 600))) return json({ error: 'Too many requests' }, 429)
       const send = () =>
-        deliver(ctx, { userIds: [userId] }, null, {
+        deliver(ctx, { userIds: [userId] }, null, (u) => ({
           title: 'Blacktop',
-          body: "Notifications are on. You'll get alerts here even when Blacktop is closed.",
+          body: u.say("Notifications are on. You'll get alerts here even when Blacktop is closed."),
           tag: 'test',
           url: '/settings',
-        }, { ttl: 300, urgency: 'high' })
+        }), { ttl: 300, urgency: 'high' })
 
       if (body?.delayed === true) {
         // "Test with the app closed": answer now, send in 10 s so the rider

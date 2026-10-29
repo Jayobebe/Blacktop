@@ -1,5 +1,6 @@
 import type { PushMessage } from './deliver.ts'
 import type { Units } from './crew.ts'
+import { ENGLISH, sentences, words } from './i18n.ts'
 
 /**
  * "Heavy weather inbound": reads an Open-Meteo hourly forecast for the next
@@ -65,42 +66,56 @@ export function findAlert(h: HourlyForecast, nowSec: number, windowHours = 3): W
   return { kind: worst, at, before, maxGustKmh: Math.round(maxGust), maxMm: Math.round(maxMm * 10) / 10 }
 }
 
+const ICONS: Record<WeatherKind, string> = {
+  thunderstorm: '⛈️',
+  freezing: '🧊',
+  snow: '❄️',
+  heavy_rain: '🌧️',
+  wind: '💨',
+}
+
 const TITLES: Record<WeatherKind, string> = {
-  thunderstorm: '⛈️ Thunderstorms heading your way',
-  freezing: '🧊 Freezing rain heading your way',
-  snow: '❄️ Snow heading your way',
-  heavy_rain: '🌧️ Heavy rain heading your way',
-  wind: '💨 Strong winds heading your way',
+  thunderstorm: words('Thunderstorms heading your way'),
+  freezing: words('Freezing rain heading your way'),
+  snow: words('Snow heading your way'),
+  heavy_rain: words('Heavy rain heading your way'),
+  wind: words('Strong winds heading your way'),
 }
 
 const BEFORE: Record<WeatherKind, string> = {
-  thunderstorm: 'Thunderstorms',
-  freezing: 'Freezing rain',
-  snow: 'Snow',
-  heavy_rain: 'Heavy rain',
-  wind: 'Strong winds',
+  thunderstorm: words('Thunderstorms before that.'),
+  freezing: words('Freezing rain before that.'),
+  snow: words('Snow before that.'),
+  heavy_rain: words('Heavy rain before that.'),
+  wind: words('Strong winds before that.'),
 }
 
-/** `u`: the device's units; without stored ones, gusts show in both as before. */
+/** `u`: the device's units and language; without stored units, gusts show in both as before. */
 export function weatherMessage(a: WeatherAlert, nowSec: number, areaKey: string, u?: Units): PushMessage {
+  const say = u?.say ?? ENGLISH
   const minutes = (a.at - nowSec) / 60
-  const when = minutes <= 45 ? 'within the hour' : minutes < 90 ? 'in about an hour' : `in about ${Math.round(minutes / 60)} hours`
+  const hours = Math.round(minutes / 60)
   const extras: string[] = []
-  if (a.before) extras.push(`${BEFORE[a.before]} before that.`)
+  if (a.before) extras.push(say(BEFORE[a.before]))
   if (a.maxGustKmh >= 50) {
     const mph = Math.round(a.maxGustKmh / 1.609)
     extras.push(
       !u?.stored
-        ? `Gusts up to ${a.maxGustKmh} km/h (${mph} mph).`
+        ? say('Gusts up to {0} km/h ({1} mph).', [a.maxGustKmh, mph])
         : u.speed === 'kph'
-          ? `Gusts up to ${a.maxGustKmh} km/h.`
-          : `Gusts up to ${mph} mph.`,
+          ? say('Gusts up to {0} km/h.', [a.maxGustKmh])
+          : say('Gusts up to {0} mph.', [mph]),
     )
   }
-  if (a.kind === 'heavy_rain' && a.maxMm >= HEAVY_RAIN_MM) extras.push(`Up to ${a.maxMm} mm an hour.`)
+  if (a.kind === 'heavy_rain' && a.maxMm >= HEAVY_RAIN_MM) extras.push(say('Up to {0} mm an hour.', [a.maxMm]))
+  const expected = minutes <= 45
+    ? say('Expected within the hour around your last location.')
+    : minutes < 90
+      ? say('Expected in about an hour around your last location.')
+      : say('Expected in about {0} hours around your last location.', [hours])
   return {
-    title: TITLES[a.kind],
-    body: [`Expected ${when} around your last location.`, ...extras].join(' '),
+    title: `${ICONS[a.kind]} ${say(TITLES[a.kind])}`,
+    body: sentences(say, [expected, ...extras]),
     tag: `weather-${areaKey}`,
     url: '/',
   }

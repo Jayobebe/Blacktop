@@ -15,12 +15,14 @@ import {
 import { findAlert, weatherMessage, type HourlyForecast } from './weather.ts'
 import { fetchWithTimeout, upstreamHeaders, viaGeo } from '../_shared/upstream.ts'
 import { wordsAt } from '../_shared/w3w.ts'
+import { lines, type Say, words } from './i18n.ts'
 
 /** The forecast model our own geo server syncs (infra/geo/.env WEATHER_MODEL). */
 const OWN_WEATHER_MODEL = 'ecmwf_ifs025'
 
 /**
- * Every notification Blacktop sends, written here (never taken from a client).
+ * Every notification Blacktop sends, written here (never taken from a client),
+ * each one built per device in its units and language (`(u) => …`, `u.say`).
  *
  *  - rescue / rescueCancel: called by the rider in trouble
  *  - processEvent: database events queued in push_outbox by triggers
@@ -34,7 +36,8 @@ const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0)
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 const amount = (v: unknown, currency: unknown) =>
   `${num(v).toLocaleString('en-GB', { maximumFractionDigits: 4 })} ${str(currency)}`
-const listJoin = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`)
+const listJoin = (say: Say, xs: string[]) =>
+  xs.length <= 1 ? xs.join('') : say('{0} and {1}', [xs.slice(0, -1).join(', '), xs[xs.length - 1]])
 
 async function one(ctx: Ctx, table: string, id: string, columns = '*'): Promise<Row | null> {
   const { data, error } = await ctx.admin.from(table).select(columns).eq('id', id).maybeSingle()
@@ -42,9 +45,10 @@ async function one(ctx: Ctx, table: string, id: string, columns = '*'): Promise<
   return (data as Row | null) ?? null
 }
 
+/** A rider's name, or '' when they have none (each message says "A rider" in its own language). */
 async function displayName(ctx: Ctx, userId: string): Promise<string> {
   const p = await one(ctx, 'profiles', userId, 'display_name')
-  return clip(str(p?.display_name, 'A rider'), 30)
+  return clip(str(p?.display_name), 30)
 }
 
 async function crewDeviceUsers(ctx: Ctx, crew: string): Promise<string[]> {
@@ -116,36 +120,36 @@ export async function rescue(ctx: Ctx, input: RescueInput) {
     wordsAt(input.lat, input.lng).catch(() => null),
   ])
   const where = w3w ? ` ///${w3w.words}` : ''
-  const url = `/rescue?lat=${input.lat.toFixed(5)}&lng=${input.lng.toFixed(5)}&name=${encodeURIComponent(name)}&at=${Date.now()}`
+  const url = `/rescue?lat=${input.lat.toFixed(5)}&lng=${input.lng.toFixed(5)}&name=${encodeURIComponent(name || 'A rider')}&at=${Date.now()}`
   const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
-  const known = await deliver(ctx, { userIds: recipients }, 'rescue', {
-    title: `🚨 ${name} needs rescue`,
-    body: (input.auto ? 'Automatic crash alert: they may have come off. Tap to see where they are.' : 'Tap to see where they are.') + where,
+  const known = await deliver(ctx, { userIds: recipients }, 'rescue', (u) => ({
+    title: `🚨 ${u.say('{0} needs rescue', [name || u.say('A rider')])}`,
+    body: (input.auto ? u.say('Automatic crash alert: they may have come off. Tap to see where they are.') : u.say('Tap to see where they are.')) + where,
     tag: `rescue-${input.userId}`,
     url,
     urgent: true,
-  }, opts)
+  }), opts)
   if (!input.nearbyKm) return known
   // Riders nearby who opted in to help (not the convoy / crew, who already have it).
-  const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', {
-    title: `🚨 A rider near you needs help`,
-    body: `${name} called for rescue within about ${input.nearbyKm} km of you. Tap to see where they are.${where}`,
+  const nearby = await deliver(ctx, { box: nearbyBox(input.lat, input.lng, input.nearbyKm), exclude: [input.userId, ...recipients] }, 'rescue_nearby', (u) => ({
+    title: `🚨 ${u.say('A rider near you needs help')}`,
+    body: u.say('{0} called for rescue within about {1} km of you. Tap to see where they are.', [name || u.say('A rider'), input.nearbyKm]) + where,
     tag: `rescue-${input.userId}`,
     url,
     urgent: true,
-  }, opts)
+  }), opts)
   return addResults(known, nearby)
 }
 
 export async function rescueCancel(ctx: Ctx, input: Omit<RescueInput, 'lat' | 'lng' | 'auto'> & { lat?: number | null; lng?: number | null }) {
   const name = await displayName(ctx, input.userId)
   const recipients = await rescueRecipients(ctx, input.userId, input.convoyId, input.crewCode, input.crewCodes)
-  const message = {
-    title: `✅ ${name} is OK`,
-    body: 'They cancelled their rescue call.',
+  const message = (u: Units) => ({
+    title: `✅ ${u.say('{0} is OK', [name || u.say('A rider')])}`,
+    body: u.say('They cancelled their rescue call.'),
     tag: `rescue-${input.userId}`,
     url: '/',
-  }
+  })
   const opts = { ttl: 1800, urgency: 'high' as const, topic: `rescue-${input.userId.slice(0, 20)}` }
   const known = await deliver(ctx, { userIds: recipients }, 'rescue', message, opts)
   if (!input.nearbyKm || input.lat == null || input.lng == null) return known
@@ -196,14 +200,14 @@ async function trackBeaten(ctx: Ctx, p: Row) {
   const by = num(p.by_ms)
   if (!user || !theirs || !by) return
   if (!(await markOnce(ctx, `track_beaten:${user}:${str(p.track)}:${theirs}:${clip(str(p.by_name), 30)}`))) return
-  const who = clip(str(p.by_name, 'A rider'), 30)
-  const track = clip(str(p.track, 'the track'), 60)
-  await deliver(ctx, { userIds: [user] }, 'timeattack', {
-    title: `🏁 Your ${track} time was beaten`,
-    body: `${who} ran ${lapTime(by)} vs your ${lapTime(theirs)} and took your dog tag. Go get it back on track.`,
+  const who = clip(str(p.by_name), 30)
+  const track = clip(str(p.track), 60)
+  await deliver(ctx, { userIds: [user] }, 'timeattack', (u) => ({
+    title: `🏁 ${track ? u.say('Your {0} time was beaten', [track]) : u.say('Your track time was beaten')}`,
+    body: u.say('{0} ran {1} vs your {2} and took your dog tag. Go get it back on track.', [who || u.say('A rider'), lapTime(by), lapTime(theirs)]),
     tag: `track-beaten-${track}`,
     url: '/track',
-  })
+  }))
 }
 
 async function cardCollected(ctx: Ctx, id: string) {
@@ -212,12 +216,14 @@ async function cardCollected(ctx: Ctx, id: string) {
   const drop = await one(ctx, 'card_drops', str(c.drop_id), 'owner_id, vehicle_name')
   if (!drop || drop.owner_id === c.collector_id) return
   if (!(await markOnce(ctx, `card_collected:${id}`))) return
-  await deliver(ctx, { userIds: [str(drop.owner_id)] }, 'card_pickups', {
-    title: `🃏 ${clip(str(c.collector_name, 'A rider'), 30)} picked up your card`,
-    body: `Your ${clip(str(drop.vehicle_name, 'vehicle'), 40)} card is in their vault now.`,
+  const collector = clip(str(c.collector_name), 30)
+  const vehicle = clip(str(drop.vehicle_name), 40)
+  await deliver(ctx, { userIds: [str(drop.owner_id)] }, 'card_pickups', (u) => ({
+    title: `🃏 ${u.say('{0} picked up your card', [collector || u.say('A rider')])}`,
+    body: vehicle ? u.say('Your {0} card is in their vault now.', [vehicle]) : u.say('Your card is in their vault now.'),
     tag: `card-collected-${str(c.drop_id)}`,
     url: '/world',
-  })
+  }))
 }
 
 async function tankMembers(ctx: Ctx, crew: string): Promise<string[]> {
@@ -232,52 +238,65 @@ async function tankRequest(ctx: Ctx, id: string) {
   const r = await one(ctx, 'blacktank_requests', id)
   if (!r || !(await markOnce(ctx, `tank_request:${id}`))) return
   const members = await tankMembers(ctx, str(r.crew_code))
-  await deliver(ctx, { userIds: members, exclude: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', {
-    title: `⛽ ${clip(str(r.requester_name, 'A rider'), 30)} asked the Blacktank`,
-    body: `${amount(r.amount, r.currency)} for ${clip(str(r.reason, 'the crew'), 80)}. Tap to vote.`,
+  await deliver(ctx, { userIds: members, exclude: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', (u) => ({
+    title: `⛽ ${u.say('{0} asked the Blacktank', [clip(str(r.requester_name), 30) || u.say('A rider')])}`,
+    body: u.say('{0}. Tap to vote.', [tankWhat(u.say, r)]),
     tag: `tank-${id}`,
     url: TANK_URL,
-  })
+  }))
 }
 
 async function tankStatus(ctx: Ctx, id: string, status: string, actor: string) {
   const r = await one(ctx, 'blacktank_requests', id)
   if (!r || !(await markOnce(ctx, `tank_status:${id}:${status}`))) return
   const requester = str(r.requester_id)
-  const what = `${amount(r.amount, r.currency)} for ${clip(str(r.reason, 'the crew'), 80)}`
-  const toRequester = (title: string, body: string) =>
-    deliver(ctx, { userIds: [requester], crewLabel: str(r.crew_code) }, 'blacktank', { title, body, tag: `tank-${id}`, url: TANK_URL })
+  const toRequester = (title: (s: Say) => string, body: (s: Say) => string) =>
+    deliver(ctx, { userIds: [requester], crewLabel: str(r.crew_code) }, 'blacktank', (u) => ({ title: title(u.say), body: body(u.say), tag: `tank-${id}`, url: TANK_URL }))
 
   if (status === 'approved') {
-    await toRequester('✅ Your Blacktank request was approved', `The crew approved ${what}. Shares are on their way.`)
+    await toRequester(
+      (say) => `✅ ${say('Your Blacktank request was approved')}`,
+      (say) => say('The crew approved {0}. Shares are on their way.', [tankWhat(say, r)]),
+    )
     const members = await tankMembers(ctx, str(r.crew_code))
     const others = members.filter((m) => m !== requester)
     const share = num(r.amount) / Math.max(1, others.length)
-    await deliver(ctx, { userIds: others, crewLabel: str(r.crew_code) }, 'blacktank', {
-      title: `💸 Pay your share to ${clip(str(r.requester_name, 'the rider'), 30)}`,
-      body: `${amount(share, r.currency)} towards ${clip(str(r.reason, 'the request'), 80)}. Tap to settle up.`,
+    const reason = clip(str(r.reason), 80)
+    await deliver(ctx, { userIds: others, crewLabel: str(r.crew_code) }, 'blacktank', (u) => ({
+      title: `💸 ${u.say('Pay your share to {0}', [clip(str(r.requester_name), 30) || u.say('the rider')])}`,
+      body: reason
+        ? u.say('{0} towards {1}. Tap to settle up.', [amount(share, r.currency), reason])
+        : u.say('{0} towards the request. Tap to settle up.', [amount(share, r.currency)]),
       tag: `tank-${id}`,
       url: TANK_URL,
-    })
+    }))
   } else if (status === 'rejected' && actor !== requester) {
-    await toRequester('❌ Your Blacktank request was declined', `${what[0].toUpperCase()}${what.slice(1)}.`)
+    await toRequester((say) => `❌ ${say('Your Blacktank request was declined')}`, (say) => `${tankWhat(say, r)}.`)
   } else if (status === 'expired') {
-    await toRequester('⌛ Your Blacktank request expired', `Not everyone voted in time on ${what}.`)
+    await toRequester((say) => `⌛ ${say('Your Blacktank request expired')}`, (say) => say('Not everyone voted in time on {0}.', [tankWhat(say, r)]))
   } else if (status === 'settled') {
-    await toRequester('🎉 Your Blacktank request is fully paid', `Everyone has paid their share of ${what}.`)
+    await toRequester((say) => `🎉 ${say('Your Blacktank request is fully paid')}`, (say) => say('Everyone has paid their share of {0}.', [tankWhat(say, r)]))
   }
+}
+
+/** "20 USDT for fuel" (or "for the crew" with no reason given). */
+function tankWhat(say: Say, r: Row): string {
+  const reason = clip(str(r.reason), 80)
+  return reason
+    ? say('{0} for {1}', [amount(r.amount, r.currency), reason])
+    : say('{0} for the crew', [amount(r.amount, r.currency)])
 }
 
 async function tankPledge(ctx: Ctx, id: string) {
   const p = await one(ctx, 'blacktank_pledges', id)
   if (!p || !(await markOnce(ctx, `tank_pledge:${id}`))) return
   const members = await tankMembers(ctx, str(p.crew_code))
-  await deliver(ctx, { userIds: members, exclude: [str(p.user_id)], crewLabel: str(p.crew_code) }, 'blacktank', {
-    title: `⛽ ${clip(str(p.display_name, 'A rider'), 30)} chipped in ${amount(p.amount, p.currency)}`,
-    body: 'The crew Blacktank just grew.',
+  await deliver(ctx, { userIds: members, exclude: [str(p.user_id)], crewLabel: str(p.crew_code) }, 'blacktank', (u) => ({
+    title: `⛽ ${u.say('{0} chipped in {1}', [clip(str(p.display_name), 30) || u.say('A rider'), amount(p.amount, p.currency)])}`,
+    body: u.say('The crew Blacktank just grew.'),
     tag: `tank-pledge-${str(p.crew_code)}`,
     url: TANK_URL,
-  })
+  }))
 }
 
 async function tankSettlement(ctx: Ctx, id: string) {
@@ -285,19 +304,23 @@ async function tankSettlement(ctx: Ctx, id: string) {
   if (!s || !(await markOnce(ctx, `tank_settlement:${id}`))) return
   const r = await one(ctx, 'blacktank_requests', str(s.request_id))
   if (!r) return
-  await deliver(ctx, { userIds: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', {
-    title: `💸 ${clip(str(s.payer_name, 'A rider'), 30)} paid their share`,
-    body: `${amount(s.amount, s.currency)} towards ${clip(str(r.reason, 'your request'), 80)}.`,
+  const reason = clip(str(r.reason), 80)
+  await deliver(ctx, { userIds: [str(r.requester_id)], crewLabel: str(r.crew_code) }, 'blacktank', (u) => ({
+    title: `💸 ${u.say('{0} paid their share', [clip(str(s.payer_name), 30) || u.say('A rider')])}`,
+    body: reason
+      ? u.say('{0} towards {1}.', [amount(s.amount, s.currency), reason])
+      : u.say('{0} towards your request.', [amount(s.amount, s.currency)]),
     tag: `tank-settle-${str(s.request_id)}`,
     url: TANK_URL,
-  })
+  }))
 }
 
 const METRIC_LABELS: Record<string, string> = {
-  distance: 'distance',
-  top_speed: 'top speed',
-  max_lean: 'lean',
-  ride_count: 'rides',
+  distance: words('distance'),
+  top_speed: words('top speed'),
+  max_lean: words('lean'),
+  ride_count: words('rides'),
+  // Game names stay as they are in every language.
   hit_heavy: 'Hit Heavy',
   petrol_head: 'Petrol Head',
 }
@@ -309,12 +332,14 @@ async function crewOvertake(ctx: Ctx, p: Row) {
   // Once per rider pair every 3 hours, so a back-and-forth doesn't spam.
   if (!(await markOnce(ctx, `overtake:${by}:${victim}`, 3 * 3600))) return
   const metrics = (Array.isArray(p.metrics) ? p.metrics : []).map((m) => METRIC_LABELS[String(m)]).filter(Boolean)
-  await deliver(ctx, { userIds: [victim], crewLabel: str(p.crew) }, 'leaderboard', {
-    title: `📉 ${clip(str(p.by_name, 'A crew mate'), 30)} passed you on the crew board`,
-    body: `They're now ahead of you on ${listJoin(metrics) || 'the board'}.`,
+  await deliver(ctx, { userIds: [victim], crewLabel: str(p.crew) }, 'leaderboard', (u) => ({
+    title: `📉 ${u.say('{0} passed you on the crew board', [clip(str(p.by_name), 30) || u.say('A crew mate')])}`,
+    body: metrics.length
+      ? u.say("They're now ahead of you on {0}.", [listJoin(u.say, metrics.map((m) => u.say(m)))])
+      : u.say("They're now ahead of you on the board."),
     tag: `overtake-${by}-${str(p.crew)}`,
     url: '/crew/leaderboard',
-  })
+  }))
 }
 
 /** list_crew_month's definition: weeks active this month, summed for the crew. */
@@ -347,8 +372,8 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
       const value = num((row as Row)[c.metric])
       if (value < c.target || !(await markOnce(ctx, `wk_target:${userId}:${week}:${c.id}`))) continue
       await deliver(ctx, { userIds: [userId], crewLabel: crew }, 'challenges', (u) => ({
-        title: `🏁 ${c.title}: target hit`,
-        body: `${formatScore(value, c.unit, u)} this week (target ${formatTarget(c.target, c.unit, u)}). See where you stand in Crew Challenges.`,
+        title: `🏁 ${u.say('{0}: target hit', [u.say(c.title)])}`,
+        body: u.say('{0} this week (target {1}). See where you stand in Crew Challenges.', [formatScore(value, c.unit, u), formatTarget(c.target, c.unit, u)]),
         tag: `wk-${week}-${c.id}-${crew}`,
         url: '/crew/challenges',
       }))
@@ -361,8 +386,8 @@ async function crewWeek(ctx: Ctx, userId: string, crew: string, week: string) {
   const totals = await monthTotals(ctx, crew, month)
   if (totals[goal.metric] >= goal.target && (await markOnce(ctx, `month_goal:${crew}:${month}`))) {
     await deliver(ctx, { crew }, 'challenges', (u) => ({
-      title: `🏆 ${goal.title} smashed`,
-      body: `Your crew hit ${formatTarget(goal.target, goal.unit, u)} this month. Nice riding.`,
+      title: `🏆 ${u.say('{0} smashed', [u.say(goal.title)])}`,
+      body: u.say('Your crew hit {0} this month. Nice riding.', [formatTarget(goal.target, goal.unit, u)]),
       tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
     }))
@@ -374,14 +399,14 @@ async function crewConvoy(ctx: Ctx, id: string) {
   if (!c || !c.is_listed || c.ride_ended_at || !c.crew_code) return
   if (!(await markOnce(ctx, `crew_convoy:${id}`))) return
   const leader = str(c.leader_id)
-  const name = leader ? await displayName(ctx, leader) : 'A crew mate'
+  const name = leader ? await displayName(ctx, leader) : ''
   const dest = str(c.destination_name)
-  await deliver(ctx, { crew: str(c.crew_code), exclude: [leader] }, 'crew_convoys', {
-    title: `🏍️ ${name} opened a crew convoy`,
-    body: dest ? `Heading to ${clip(dest, 60)}. Tap to see it and join.` : 'Tap to see it and join.',
+  await deliver(ctx, { crew: str(c.crew_code), exclude: [leader] }, 'crew_convoys', (u) => ({
+    title: `🏍️ ${u.say('{0} opened a crew convoy', [name || u.say('A crew mate')])}`,
+    body: dest ? u.say('Heading to {0}. Tap to see it and join.', [clip(dest, 60)]) : u.say('Tap to see it and join.'),
     tag: `crew-convoy-${id}`,
     url: '/crew/convoys',
-  })
+  }))
 }
 
 /** A crew plan put on the calendar: the crew hears about it (not whoever posted it). */
@@ -389,14 +414,17 @@ async function crewEventPosted(ctx: Ctx, id: string) {
   const e = await one(ctx, 'crew_events', id, 'id, crew_code, created_by, creator_name, kind, title, place_name, starts_at')
   if (!e || !e.crew_code) return
   if (!(await markOnce(ctx, `crew_event:${id}`))) return
-  const who = clip(str(e.creator_name, 'A crew mate'), 30)
+  const creator = clip(str(e.creator_name), 30)
   const what = clip(str(e.title), 60)
   const where = str(e.place_name)
-  await deliver(ctx, { crew: str(e.crew_code), exclude: [str(e.created_by)] }, 'crew_events', {
-    title: e.kind === 'meet' ? `📅 ${who} planned a meet` : `📅 ${who} planned a crew ride`,
-    body: where ? `${what} · ${clip(where, 60)}. Tap to say if you're going.` : `${what}. Tap to say if you're going.`,
-    tag: `crew-event-${id}`,
-    url: '/calendar',
+  await deliver(ctx, { crew: str(e.crew_code), exclude: [str(e.created_by)] }, 'crew_events', (u) => {
+    const who = creator || u.say('A crew mate')
+    return {
+      title: `📅 ${e.kind === 'meet' ? u.say('{0} planned a meet', [who]) : u.say('{0} planned a crew ride', [who])}`,
+      body: where ? u.say("{0} · {1}. Tap to say if you're going.", [what, clip(where, 60)]) : u.say("{0}. Tap to say if you're going.", [what]),
+      tag: `crew-event-${id}`,
+      url: '/calendar',
+    }
   })
 }
 
@@ -416,12 +444,12 @@ async function crewEventEve(ctx: Ctx, now: Date) {
     if (!(await markOnce(ctx, `crew_event_eve:${e.id}`))) continue
     const hours = Math.round((Date.parse(str(e.starts_at)) - now.getTime()) / 3600_000)
     const where = str(e.place_name)
-    await deliver(ctx, { userIds }, 'crew_events', {
-      title: `📅 Tomorrow: ${clip(str(e.title), 60)}`,
-      body: where ? `Starts in about ${hours} hours at ${clip(where, 60)}.` : `Starts in about ${hours} hours.`,
+    await deliver(ctx, { userIds }, 'crew_events', (u) => ({
+      title: `📅 ${u.say('Tomorrow: {0}', [clip(str(e.title), 60)])}`,
+      body: where ? u.say('Starts in about {0} hours at {1}.', [hours, clip(where, 60)]) : u.say('Starts in about {0} hours.', [hours]),
       tag: `crew-event-eve-${e.id}`,
       url: '/calendar',
-    })
+    }))
   }
 }
 
@@ -534,26 +562,28 @@ async function weatherAlerts(ctx: Ctx, now: Date) {
 }
 
 function weekLine(c: Challenge, me: Row, rows: Row[], solo: boolean, u: Units): { line: string; won: boolean } {
+  const say = u.say
+  const title = say(c.title)
   // A peak this rider keeps private (Public Road Privacy) is null: it reads "--" and can't win.
   if (me[c.metric] == null) {
-    if (solo) return { line: `${c.title}: --`, won: false }
+    if (solo) return { line: `${title}: --`, won: false }
     const leader = [...rows].filter((r) => r[c.metric] != null).sort((a, b) => num(b[c.metric]) - num(a[c.metric]))[0]
     return leader && num(leader[c.metric]) > 0
-      ? { line: `${c.title}: ${clip(str(leader.display_name, 'a crew mate'), 20)} took it (${formatScore(num(leader[c.metric]), c.unit, u)}), you --`, won: false }
-      : { line: `${c.title}: nobody scored`, won: false }
+      ? { line: say('{0}: {1} took it ({2}), you --', [title, clip(str(leader.display_name), 20) || say('a crew mate'), formatScore(num(leader[c.metric]), c.unit, u)]), won: false }
+      : { line: say('{0}: nobody scored', [title]), won: false }
   }
   const mine = num(me[c.metric])
   if (solo) {
     const hit = mine >= c.target
-    return { line: `${c.title}: ${hit ? `${formatScore(mine, c.unit, u)} ✓` : formatOf(mine, c.target, c.unit, u)}`, won: hit }
+    return { line: `${title}: ${hit ? `${formatScore(mine, c.unit, u)} ✓` : formatOf(mine, c.target, c.unit, u)}`, won: hit }
   }
   const top = [...rows].sort((a, b) => num(b[c.metric]) - num(a[c.metric]))[0]
-  if (!top || num(top[c.metric]) <= 0) return { line: `${c.title}: nobody scored`, won: false }
+  if (!top || num(top[c.metric]) <= 0) return { line: say('{0}: nobody scored', [title]), won: false }
   if (top.user_id === me.user_id || num(top[c.metric]) === mine) {
-    return { line: `${c.title}: you won (${formatScore(mine, c.unit, u)})`, won: true }
+    return { line: say('{0}: you won ({1})', [title, formatScore(mine, c.unit, u)]), won: true }
   }
   return {
-    line: `${c.title}: ${clip(str(top.display_name, 'a crew mate'), 20)} took it (${formatScore(num(top[c.metric]), c.unit, u)}), you ${formatScore(mine, c.unit, u)}`,
+    line: say('{0}: {1} took it ({2}), you {3}', [title, clip(str(top.display_name), 20) || say('a crew mate'), formatScore(num(top[c.metric]), c.unit, u), formatScore(mine, c.unit, u)]),
     won: false,
   }
 }
@@ -576,16 +606,16 @@ async function weekResults(ctx: Ctx, now: Date) {
     for (const me of rows) {
       const linesIn = (u: Units) => challenges.map((c) => weekLine(c, me, rows, solo, u))
       const wins = linesIn(DEFAULT_UNITS).filter((l) => l.won).length
-      const title = solo
-        ? '🏁 Your weekly challenges are in'
+      const title = (say: Say) => solo
+        ? `🏁 ${say('Your weekly challenges are in')}`
         : wins === 2
-          ? '🏆 You won both weekly challenges'
+          ? `🏆 ${say('You won both weekly challenges')}`
           : wins === 1
-            ? '🏆 Weekly results: you took one'
-            : '🏁 Weekly challenge results'
+            ? `🏆 ${say('Weekly results: you took one')}`
+            : `🏁 ${say('Weekly challenge results')}`
       await deliver(ctx, { userIds: [str(me.user_id)], crewLabel: crew }, 'challenges', (u) => ({
-        title,
-        body: `${linesIn(u).map((l) => l.line).join('. ')}. New challenges are live.`,
+        title: title(u.say),
+        body: u.say('{0}. New challenges are live.', [lines(u.say, linesIn(u).map((l) => l.line))]),
         tag: `week-${week}-${crew}`,
         url: '/crew/challenges',
       }))
@@ -614,8 +644,8 @@ async function monthResults(ctx: Ctx, now: Date) {
     const totals = await monthTotals(ctx, crew, prev)
     if (totals[goal.metric] >= goal.target) continue // already celebrated when it fell
     await deliver(ctx, { crew }, 'challenges', (u) => ({
-      title: `😤 ${goal.title} missed`,
-      body: `Your crew reached ${formatOf(totals[goal.metric], goal.target, goal.unit, u)}. This month: ${next.title}.`,
+      title: `😤 ${u.say('{0} missed', [u.say(goal.title)])}`,
+      body: u.say('Your crew reached {0}. This month: {1}.', [formatOf(totals[goal.metric], goal.target, goal.unit, u), u.say(next.title)]),
       tag: `month-${prev}-${crew}`,
       url: '/crew/challenges',
     }))
@@ -644,8 +674,8 @@ async function monthReminder(ctx: Ctx, now: Date) {
     const totals = await monthTotals(ctx, crew, month)
     if (totals[goal.metric] >= goal.target) continue
     await deliver(ctx, { crew }, 'challenges', (u) => ({
-      title: `⏳ 5 days left: ${goal.title}`,
-      body: `Your crew is at ${formatOf(totals[goal.metric], goal.target, goal.unit, u)}. Get out there.`,
+      title: `⏳ ${u.say('5 days left: {0}', [u.say(goal.title)])}`,
+      body: u.say('Your crew is at {0}. Get out there.', [formatOf(totals[goal.metric], goal.target, goal.unit, u)]),
       tag: `month-${month}-${crew}`,
       url: '/crew/challenges',
     }))

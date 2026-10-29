@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { whenPwaCleanedUp } from '@/pwa';
 import { isDemoModeActive } from '@/lib/demoMode';
 import { getCrewCode, getCrews } from '@/features/crew/useCrew';
-import { tr } from '@/lib/i18n';
+import { getLanguage, tr } from '@/lib/i18n';
 import { sessionUser } from '@/lib/sessionUser';
 import { kmText } from '@/lib/units';
 import { paymentsAvailable } from '@/lib/platform';
@@ -351,13 +351,18 @@ async function registerDevice(endpoint: string, p256dh: string, auth: string) {
   // The rider's units, so crew scores and wind gusts arrive in them. A server
   // without these parameters yet (PGRST202) gets the call without them.
   const units = pushUnits();
+  // The app's language, so every notification arrives in it (send-push/i18n.ts). A server
+  // without the parameter yet (PGRST202) gets the call without it, as with the units.
+  const language = getLanguage();
   // The area as the server keeps it (to 0.1°), so a phone moving about town doesn't count as a change.
-  const sent = JSON.stringify({ ...withCrews, _lat: loc ? Math.round(loc.lat * 10) : null, _lng: loc ? Math.round(loc.lng * 10) : null, _user_agent: undefined, units, who: (await sessionUser())?.id ?? null });
+  const sent = JSON.stringify({ ...withCrews, _lat: loc ? Math.round(loc.lat * 10) : null, _lng: loc ? Math.round(loc.lng * 10) : null, _user_agent: undefined, units, language, who: (await sessionUser())?.id ?? null });
   try {
     const last = JSON.parse(localStorage.getItem(REGISTERED_KEY) || 'null') as { sent: string; at: number } | null;
     if (last && last.sent === sent && Date.now() - last.at < REREGISTER_MS) return;
   } catch { /* ask the server */ }
-  let { error } = await supabase.rpc('register_push_subscription' as never, { ...withCrews, _distance_unit: units.distance, _speed_unit: units.speed } as never);
+  const withUnits = { ...withCrews, _distance_unit: units.distance, _speed_unit: units.speed };
+  let { error } = await supabase.rpc('register_push_subscription' as never, { ...withUnits, _language: language } as never);
+  if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, withUnits as never));
   if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, withCrews as never));
   if (error?.code === 'PGRST202') ({ error } = await supabase.rpc('register_push_subscription' as never, base as never));
   if (error) throw new PushSetupError(tr("Couldn't register this device ({0}). Try again in a moment.", [error.code || error.message]));

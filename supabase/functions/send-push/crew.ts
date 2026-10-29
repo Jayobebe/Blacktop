@@ -3,7 +3,10 @@
  * KEEP IN SYNC with src/features/crew/challenges.ts (ids, titles, metrics,
  * units, targets and the week/month rotation). Everything is derived from the
  * week / month number, so the app and the server agree without a schedule.
+ * Titles are words(): each device reads them in its language (say(c.title)).
  */
+
+import { ENGLISH, type Say, words } from './i18n.ts'
 
 export type ChallengeMetric =
   | 'distance'
@@ -23,18 +26,18 @@ export interface Challenge {
 }
 
 export const CHALLENGES: Challenge[] = [
-  { id: 'miles', title: 'Mile Muncher', metric: 'distance', unit: 'mi', target: 200 },
-  { id: 'corners', title: 'Bend Master', metric: 'corner_score', unit: 'pts', target: 80 },
-  { id: 'lean', title: 'Knee Down', metric: 'max_lean', unit: '°', target: 45 },
-  { id: 'rides', title: 'Out and About', metric: 'ride_count', unit: 'rides', target: 7 },
-  { id: 'grand-tour', title: 'Grand Tour', metric: 'distance', unit: 'mi', target: 350 },
-  { id: 'sunday-smasher', title: 'Sunday Smasher', metric: 'distance', unit: 'mi', target: 100 },
-  { id: 'daily-rider', title: 'Daily Rider', metric: 'ride_count', unit: 'rides', target: 10 },
-  { id: 'full-send', title: 'Full Lean Send', metric: 'max_lean', unit: '°', target: 50 },
-  { id: 'smooth', title: 'Smooth Operator', metric: 'corner_score', unit: 'pts', target: 90 },
-  { id: 'terminal', title: 'Terminal Velocity', metric: 'top_speed', unit: 'mph', target: 100 },
-  { id: 'night-owl', title: 'After Dark', metric: 'night_rides', unit: 'rides', target: 3 },
-  { id: 'iron-butt', title: 'Long Haul', metric: 'longest_ride', unit: 'mi', target: 150 },
+  { id: 'miles', title: words('Mile Muncher'), metric: 'distance', unit: 'mi', target: 200 },
+  { id: 'corners', title: words('Bend Master'), metric: 'corner_score', unit: 'pts', target: 80 },
+  { id: 'lean', title: words('Knee Down'), metric: 'max_lean', unit: '°', target: 45 },
+  { id: 'rides', title: words('Out and About'), metric: 'ride_count', unit: 'rides', target: 7 },
+  { id: 'grand-tour', title: words('Grand Tour'), metric: 'distance', unit: 'mi', target: 350 },
+  { id: 'sunday-smasher', title: words('Sunday Smasher'), metric: 'distance', unit: 'mi', target: 100 },
+  { id: 'daily-rider', title: words('Daily Rider'), metric: 'ride_count', unit: 'rides', target: 10 },
+  { id: 'full-send', title: words('Full Lean Send'), metric: 'max_lean', unit: '°', target: 50 },
+  { id: 'smooth', title: words('Smooth Operator'), metric: 'corner_score', unit: 'pts', target: 90 },
+  { id: 'terminal', title: words('Terminal Velocity'), metric: 'top_speed', unit: 'mph', target: 100 },
+  { id: 'night-owl', title: words('After Dark'), metric: 'night_rides', unit: 'rides', target: 3 },
+  { id: 'iron-butt', title: words('Long Haul'), metric: 'longest_ride', unit: 'mi', target: 150 },
 ]
 
 export interface MonthlyGoal {
@@ -46,10 +49,10 @@ export interface MonthlyGoal {
 }
 
 export const MONTHLY_GOALS: MonthlyGoal[] = [
-  { id: 'crew-marathon', title: 'Crew Marathon', metric: 'distance', unit: 'mi', target: 2000 },
-  { id: 'crew-century', title: 'Century of Rides', metric: 'ride_count', unit: 'rides', target: 100 },
-  { id: 'crew-enduro', title: 'Crew Enduro', metric: 'distance', unit: 'mi', target: 3500 },
-  { id: 'crew-swarm', title: 'Swarm Season', metric: 'ride_count', unit: 'rides', target: 150 },
+  { id: 'crew-marathon', title: words('Crew Marathon'), metric: 'distance', unit: 'mi', target: 2000 },
+  { id: 'crew-century', title: words('Century of Rides'), metric: 'ride_count', unit: 'rides', target: 100 },
+  { id: 'crew-enduro', title: words('Crew Enduro'), metric: 'distance', unit: 'mi', target: 3500 },
+  { id: 'crew-swarm', title: words('Swarm Season'), metric: 'ride_count', unit: 'rides', target: 150 },
 ]
 
 /** ISO-8601 week key of a UTC date, e.g. "2026-W36". */
@@ -98,8 +101,10 @@ export interface Units {
   speed: 'mph' | 'kph'
   /** False when the device sent none (the defaults stand in). */
   stored?: boolean
+  /** The device's language (push_subscriptions.language; English without one). */
+  say: Say
 }
-export const DEFAULT_UNITS: Units = { distance: 'miles', speed: 'mph' }
+export const DEFAULT_UNITS: Units = { distance: 'miles', speed: 'mph', say: ENGLISH }
 
 const KM_PER_MILE = 1.60934
 
@@ -115,8 +120,11 @@ export function formatScore(value: number, unit: string, u: Units = DEFAULT_UNIT
   const c = inUnits(value, unit, u)
   // Distances and speeds whole, as the app shows them; lean and points to one place.
   const v = ['mi', 'km', 'mph', 'kph'].includes(c.unit) ? Math.round(c.v) : Math.round(c.v * 10) / 10
-  const n = v.toLocaleString('en-GB')
-  return c.unit === '°' ? `${n}°` : `${n} ${c.unit}`
+  const n = v.toLocaleString(locale(u))
+  if (c.unit === '°') return `${n}°`
+  if (c.unit === 'rides') return u.say('{0} rides', [n])
+  if (c.unit === 'pts') return u.say('{0} pts', [n])
+  return `${n} ${c.unit}`
 }
 
 /** A target as the app shows it: a round figure in km ("560 km", "5,600 km"), otherwise as stored. */
@@ -124,13 +132,21 @@ export function formatTarget(target: number, unit: string, u: Units = DEFAULT_UN
   const c = inUnits(target, unit, u)
   if (c.unit !== 'km') return formatScore(target, unit, u)
   const step = c.v >= 1000 ? 100 : 10
-  return `${(Math.round(c.v / step) * step).toLocaleString('en-GB')} km`
+  return `${(Math.round(c.v / step) * step).toLocaleString(locale(u))} km`
 }
 
 /** "10 of 100 rides", "40° of 55°", "212 of 560 km". */
 export function formatOf(value: number, target: number, unit: string, u: Units = DEFAULT_UNITS): string {
   const t = formatTarget(target, unit, u)
-  if (unit === '°') return `${formatScore(value, unit, u)} of ${t}`
+  if (unit === '°' || unit === 'rides' || unit === 'pts') {
+    const v = unit === '°' ? formatScore(value, unit, u) : Math.round(value).toLocaleString(locale(u))
+    return u.say('{0} of {1}', [v, t])
+  }
   const suffix = ` ${inUnits(0, unit, u).unit}`
-  return `${formatScore(value, unit, u).replace(suffix, '')} of ${t}`
+  return u.say('{0} of {1}', [formatScore(value, unit, u).replace(suffix, ''), t])
+}
+
+/** Figures grouped the device's way (1,000 / 1.000); English ones the British way, as before. */
+function locale(u: Units): string {
+  return u.say.lang === 'en' ? 'en-GB' : u.say.lang
 }

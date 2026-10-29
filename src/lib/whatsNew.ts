@@ -43,6 +43,13 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29d',
+      version: '1.33',
+      lines: [
+        { icon: 'language', text: tr("Notifications arrive in your language too: rescue calls, crew results, weather warnings and the rest.") },
+      ],
+    },
+    {
       id: '2026-10-29c',
       version: '1.32',
       lines: [
