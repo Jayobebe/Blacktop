@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { setRoutingOffline } from './routingStatus';
 import { getExperience } from '@/features/experience';
+import { findSharedRoute, shareRoute, waitForSharedRoute } from './sharedRoute';
 
 /**
  * The rider's route preferences (Settings → Navigation) and what they ride,
@@ -92,6 +93,16 @@ export async function fetchRouteThroughStops(
   opts: { steps?: boolean; quiet?: boolean } = {},
 ): Promise<RouteResult | null> {
   if (stops.length < 2) return null;
+  // In a convoy: a convoy mate's route for the same plan, from where this rider is on it (sharedRoute.ts).
+  const guiding = opts.steps === true && !opts.quiet;
+  if (guiding) {
+    // A convoy setting off: the leader's route, for a member who waits a moment for it.
+    const mates = findSharedRoute(stops, routePrefsKey()) ?? (await waitForSharedRoute(stops, routePrefsKey()));
+    if (mates) {
+      setRoutingOffline(false);
+      return mates;
+    }
+  }
   try {
     const { data, error } = await supabase.functions.invoke('place-search', {
       body: {
@@ -109,7 +120,7 @@ export async function fetchRouteThroughStops(
     const geometry = data?.geometry as RouteLineString | undefined;
     if (!geometry?.coordinates?.length || typeof data.distance !== 'number') return null;
 
-    return {
+    const result: RouteResult = {
       geometry,
       distanceMeters: data.distance,
       durationSeconds: data.duration,
@@ -119,6 +130,9 @@ export async function fetchRouteThroughStops(
         ? { durationRangeSeconds: [data.durationRange[0], data.durationRange[1]] as [number, number] }
         : {}),
     };
+    // In a convoy, the others going the same way take it from here instead of asking.
+    if (guiding) shareRoute(stops, routePrefsKey(), result);
+    return result;
   } catch (err) {
     // No signal, a timeout or the router down: the map follows GPS until it's back.
     console.warn('Map routing failed:', err);

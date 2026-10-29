@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { openBlacktopMap } from '@/features/map/hooks/useMapOverlay';
 import { requestMapPlace } from '@/features/map/lib/mapConsole';
+import { receiveSharedRoute, setRouteLeading, setRoutePublisher } from '@/features/map/lib/sharedRoute';
 import { haptics } from '@/lib/haptics';
 import { tr } from '@/lib/i18n';
 import { useConvoyState } from '../hooks/useConvoyState';
@@ -59,9 +60,13 @@ export function RouteRequestHost() {
         else if (a.answer === 'direct') toast.success(tr("{0} is heading to {1}", [who, where]));
         else if (a.answer === 'no') toast(tr("{0} isn't going to {1} this time", [who, where]));
       })
+      // Convoy route sharing (map/lib/sharedRoute): one routing request for the convoy, not one a phone.
+      .on('broadcast', { event: 'route' }, ({ payload }) => receiveSharedRoute(payload))
       .subscribe();
     setRouteRequestChannel(ch);
+    setRoutePublisher((payload) => void ch.send({ type: 'broadcast', event: 'route', payload }));
     return () => {
+      setRoutePublisher(null);
       setRouteRequestChannel(null);
       void supabase.removeChannel(ch);
     };
@@ -70,6 +75,7 @@ export function RouteRequestHost() {
   // No longer leading (handed over): the requests are for the new leader now.
   useEffect(() => {
     if (!convoy.isLeader) clearRouteRequests();
+    setRouteLeading(!!convoy.isLeader);
   }, [convoy.isLeader]);
 
   const r = requests[requests.length - 1];
