@@ -242,6 +242,31 @@ function fresh() {
   check("our own server goes first", asked.every((x) => x === "own"), asked.join());
 }
 
+// 11b. An overall deadline: slow servers one after another don't add up past it.
+{
+  fresh();
+  const s1 = P("slow1"), s2 = P("slow2");
+  acts.set("slow1", () => ({ ms: 5, fail: true }));
+  acts.set("slow2", () => ({ ms: 5, fail: true }));
+  await ask([s1], { hedge: false }).catch(() => {}); // timed, so the order is known
+  await ask([s2], { hedge: false }).catch(() => {});
+  resetPool();
+  acts.set("slow1", () => ({ ms: 700 }));
+  acts.set("slow2", () => ({ ms: 700 }));
+  const t0 = Date.now();
+  let err = "";
+  try {
+    await viaPool("test", [s1, s2], async (base, _own, hop) => {
+      const res = await fetchWithTimeout(`${base}/x`, { hop }, 600);
+      return res.json();
+    }, { hedge: false, deadlineMs: 900 });
+  } catch (e) {
+    err = e instanceof Error ? e.message : String(e);
+  }
+  const took = Date.now() - t0;
+  check("an overall deadline stops the call however many servers are left", err !== "" && took < 1100, `${took} ms`);
+}
+
 // 12. QuotaError carries Retry-After.
 check("QuotaError keeps its wait", new QuotaError("x", 5000).retryAfterMs === 5000);
 

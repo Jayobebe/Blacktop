@@ -285,7 +285,8 @@ const PUBLIC_OVERPASS = [
  * Overpass: our own server first (when set up), then the public mirrors by the pool's ranking.
  * Never asked twice at once: each query is real work for a volunteer-run server.
  */
-async function fetchOverpass(query: string, timeoutMs = 9000) {
+/** `deadlineMs`: give up on every mirror after this in all (each one still gets `timeoutMs`). */
+async function fetchOverpass(query: string, timeoutMs = 9000, deadlineMs?: number) {
   return viaGeo("overpass", PUBLIC_OVERPASS, async (base, own, hop) => {
     const res = await fetchWithTimeout(`${base}/api/interpreter`, {
       hop,
@@ -298,7 +299,7 @@ async function fetchOverpass(query: string, timeoutMs = 9000) {
       throw new Error(`Overpass ${res.status}: ${text.slice(0, 200)}`);
     }
     return JSON.parse(text);
-  }, { hedge: false });
+  }, { hedge: false, deadlineMs });
 }
 
 /** Viewpoints, peaks and waterfalls round a point (scenic loops), best-effort. */
@@ -659,7 +660,7 @@ serve(async (req) => {
       const stored = await readStoredCell(row, col);
       if (stored && isFresh(stored)) return new Response(JSON.stringify(stored), { headers: json, status: 200 });
       try {
-        const file = encodeCell(row, col, await fetchOverpass(cellQuery(row, col), 50000));
+        const file = encodeCell(row, col, await fetchOverpass(cellQuery(row, col), 40000, 55000));
         await storeCell(file);
         return new Response(JSON.stringify(file), { headers: json, status: 200 });
       } catch (e) {

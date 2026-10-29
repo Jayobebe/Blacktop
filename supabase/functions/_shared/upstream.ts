@@ -283,13 +283,15 @@ export interface PoolResult<T> {
  * Asks the providers for `service` in their best order until one answers. A resolved value
  * (including null for "no result") is an answer; only a throw moves on. If the first is slow,
  * the next is asked alongside it (see the top of the file). `hedge: false` for calls too
- * big to send twice.
+ * big to send twice. `deadlineMs`: the whole call gives up after this, however many providers
+ * are left (each provider's own time limit is the call's; slow ones in a row otherwise add up
+ * past the Edge Function's own limit, and a shared speed-limit cell was never saved).
  */
 export async function viaPool<T>(
   service: string,
   providers: Provider[],
   call: (base: string, own: boolean, hop: Hop) => Promise<T>,
-  opts: { hedge?: boolean } = {},
+  opts: { hedge?: boolean; deadlineMs?: number } = {},
 ): Promise<PoolResult<T>> {
   const queue = poolOrder(providers);
   if (!queue.length) throw new Error(`${service} unavailable`);
@@ -301,10 +303,18 @@ export async function viaPool<T>(
     let lastError: unknown = null;
     let hedgeTimer: ReturnType<typeof setTimeout> | null = null;
     const controllers: AbortController[] = [];
+    const deadline = opts.deadlineMs
+      ? setTimeout(() => {
+        if (done) return;
+        finish();
+        reject(lastError ?? new Error(`${service}: no answer in ${opts.deadlineMs} ms`));
+      }, opts.deadlineMs)
+      : null;
 
     const finish = () => {
       done = true;
       if (hedgeTimer) clearTimeout(hedgeTimer);
+      if (deadline) clearTimeout(deadline);
       for (const c of controllers) c.abort();
     };
 
@@ -382,7 +392,7 @@ export async function viaGeo<T>(
   service: GeoService,
   publicBases: string[],
   call: (base: string, own: boolean, hop: Hop) => Promise<T>,
-  opts: { hedge?: boolean } = {},
+  opts: { hedge?: boolean; deadlineMs?: number } = {},
 ): Promise<T> {
   return (await viaPool(service, providersFor(service, publicBases), call, opts)).value;
 }
