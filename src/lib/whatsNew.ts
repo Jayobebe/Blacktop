@@ -43,6 +43,15 @@ export interface Release {
 export function releases(): Release[] {
   return [
     {
+      id: '2026-10-29b',
+      version: '1.31',
+      lines: [
+        { icon: 'track', text: tr("Over 2,000 kart tracks around the world in Track Day's library, laps and pit lanes ready to time.") },
+        { icon: 'map', text: tr("The letter on your map pin is black or white, whichever stands out on your accent.") },
+        { icon: 'language', text: tr("Blacktop World and Blacktop Console are in your language now, and icons on the Console take your second colour.") },
+      ],
+    },
+    {
       id: '2026-10-29',
       version: '1.30',
       lines: [

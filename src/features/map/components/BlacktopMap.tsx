@@ -139,6 +139,7 @@ import { resolveWhat3WordsResult, W3W_RESULT_PREFIX } from '@/lib/what3words';
 import { noteLocationGranted } from '@/lib/locationGrant';
 import { ParkedSpotPin } from './ParkedSpotPin';
 import { glideMarker } from '@/lib/markerGlide';
+import { contrastText } from '@/lib/contrastText';
 import { PixelLoader } from '@/components/PixelLoader';
 
 // How long the home map (no active ride) can stay idle before auto-closing.
@@ -1246,7 +1247,8 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       el.style.fontSize = "13px";
       el.style.fontWeight = "700";
       el.style.fontFamily = "inherit";
-      el.style.color = "#ffffff";
+      // Black or white, whichever stands out on the rider's accent (white letters vanished on Pearl).
+      el.style.color = contrastText(accentColor);
       el.style.background = accentColor;
       el.style.border = "3px solid #ffffff";
       el.style.boxShadow = "0 0 0 2px rgba(0,0,0,0.4)";
@@ -1261,6 +1263,7 @@ export function BlacktopMap({ initialDestination, onContextLost, isVisible, rese
       const el = userMarkerRef.current.getElement();
       el.textContent = letter;
       el.style.background = accentColor;
+      el.style.color = contrastText(accentColor);
       // On screen the follow loop moves it every frame, in step with the camera; hidden, it just goes there.
       if (!isVisible) userMarkerRef.current.setLngLat([userLocation.lng, userLocation.lat]);
     }

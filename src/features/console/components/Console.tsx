@@ -172,7 +172,7 @@ export function BlacktopConsole({ active, footer }: { active: boolean; footer?: 
         <div ref={barRef} className="sticky top-0 z-20 -mx-1 px-1 pt-1 pb-3 landscape:pb-2">
           {/* 3 px in from each side: the deck's card clips at its edges, and the focus glow reaches 2 px past the bar. */}
           <label className="relative block mx-[3px]">
-            <Search className="absolute z-[1] left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent pointer-events-none" />
+            <Search className="absolute z-[1] left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-accent-2 pointer-events-none" />
             <input
               data-tip="console-search"
               value={query}
@@ -318,7 +318,7 @@ function ActionTile({ action: a, onRun }: { action: ConsoleAction; onRun: () => 
           style={{ height: hold.holding ? '100%' : '0%', transition: hold.holding ? `height ${RESCUE_HOLD_MS}ms linear` : 'height 150ms ease-out' }}
         />
       )}
-      <Icon className={cn('w-5 h-5 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent')} style={a.color ? { color: a.color } : undefined} />
+      <Icon className={cn('w-5 h-5 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent-2')} style={a.color ? { color: a.color } : undefined} />
       <span className="w-full min-w-0">
         <span className="block text-[13px] font-semibold leading-tight line-clamp-2 break-words">{a.label}</span>
         {a.needs ? (
@@ -364,7 +364,7 @@ function NotificationRow({ item: n }: { item: InboxItem }) {
   return (
     <li className="flex items-start gap-3 rounded-2xl frost border border-border/60 p-3">
       <span className={cn('mt-0.5 shrink-0 rounded-lg p-1.5', n.kind === 'rescue' ? 'bg-[hsl(var(--burn)/0.15)]' : 'bg-accent/10')}>
-        <Icon className={cn('w-4 h-4', n.kind === 'rescue' ? 'text-[hsl(var(--burn))]' : 'text-accent')} />
+        <Icon className={cn('w-4 h-4', n.kind === 'rescue' ? 'text-[hsl(var(--burn))]' : 'text-accent-2')} />
       </span>
       <button type="button" onClick={open} disabled={!n.url} className="flex-1 min-w-0 text-left disabled:cursor-default">
         <span className="flex items-center gap-1.5">
@@ -500,7 +500,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
         return (
           <Row
             key={a.id}
-            icon={<Icon className={cn('w-5 h-5', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent')} style={a.color ? { color: a.color } : undefined} />}
+            icon={<Icon className={cn('w-5 h-5', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent-2')} style={a.color ? { color: a.color } : undefined} />}
             label={a.label}
             caption={[groupLabel(a.group), a.caption].filter(Boolean).join(' · ')}
             onClick={() => onRun(a)}
@@ -510,7 +510,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
       {recent.map((p) => (
         <Row
           key={p.id}
-          icon={<Navigation className="w-5 h-5 text-accent" />}
+          icon={<Navigation className="w-5 h-5 text-accent-2" />}
           label={p.name}
           caption={[tr("Navigate"), p.address].filter(Boolean).join(' · ')}
           onClick={() => openBlacktopMap({ lat: p.lat, lng: p.lng, name: p.name, address: p.address })}
@@ -519,7 +519,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
       {pastRides.map((r) => (
         <Row
           key={r.id}
-          icon={<Route className="w-5 h-5 text-accent" />}
+          icon={<Route className="w-5 h-5 text-accent-2" />}
           label={r.name!}
           caption={[tr("Rides"), new Date(r.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })].join(' · ')}
           onClick={() => navigate(`/ride/${r.id}`)}
@@ -528,7 +528,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
       {calendar.map((c) => (
         <Row
           key={c.id}
-          icon={<CalendarDays className="w-5 h-5 text-accent" />}
+          icon={<CalendarDays className="w-5 h-5 text-accent-2" />}
           label={c.title}
           caption={[tr("Calendar"), dayStart(c.day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })].join(' · ')}
           onClick={() => navigate(`/calendar?day=${c.day}`)}
@@ -536,7 +536,7 @@ function SearchResults({ query, actions, onRun, onDone }: { query: string; actio
       ))}
       {/* Anything else: the map's own search. */}
       <Row
-        icon={<Search className="w-5 h-5 text-accent" />}
+        icon={<Search className="w-5 h-5 text-accent-2" />}
         label={tr("Search the map for “{0}”", [query])}
         onClick={() => {
           openBlacktopMap();
@@ -576,7 +576,7 @@ function QuickActionsEditor({ open, onOpenChange, actions, ids }: { open: boolea
             const Icon = a.Icon;
             return (
               <li key={id} className="flex items-center gap-2 rounded-xl frost border border-border/60 pl-3 pr-1 py-1">
-                <Icon className={cn('w-4 h-4 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent')} style={a.color ? { color: a.color } : undefined} />
+                <Icon className={cn('w-4 h-4 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent-2')} style={a.color ? { color: a.color } : undefined} />
                 <span className="flex-1 min-w-0 text-sm font-medium truncate">
                   {a.label}
                   {a.caption && a.on === undefined && <span className="text-muted-foreground font-normal"> · {a.caption}</span>}
@@ -713,7 +713,7 @@ function QuickActionPicker({
                   onClick={() => setGroup(g)}
                   className="pressable flex items-center gap-3 rounded-2xl frost border border-border/60 p-3 min-h-14 text-left disabled:opacity-40"
                 >
-                  <Icon className="w-5 h-5 text-accent shrink-0" />
+                  <Icon className="w-5 h-5 text-accent-2 shrink-0" />
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-semibold truncate">{groupLabel(g)}</span>
                     <span className="block text-[11px] text-muted-foreground">{n}</span>
@@ -730,7 +730,7 @@ function QuickActionPicker({
               return (
                 <li key={a.id}>
                   <button type="button" onClick={() => add(a)} className="pressable w-full flex items-center gap-3 rounded-2xl frost border border-border/60 p-3 min-h-12 text-left">
-                    <Icon className={cn('w-5 h-5 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent')} style={a.color ? { color: a.color } : undefined} />
+                    <Icon className={cn('w-5 h-5 shrink-0', a.burn ? 'text-[hsl(var(--burn))]' : !a.color && 'text-accent-2')} style={a.color ? { color: a.color } : undefined} />
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm font-semibold truncate">{a.label}</span>
                       {a.needs ? (
@@ -739,7 +739,7 @@ function QuickActionPicker({
                         a.caption && <span className="block text-[11px] text-muted-foreground truncate">{a.caption}</span>
                       )}
                     </span>
-                    <Plus className="w-4 h-4 text-accent shrink-0" />
+                    <Plus className="w-4 h-4 text-accent-2 shrink-0" />
                   </button>
                 </li>
               );

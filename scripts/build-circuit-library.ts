@@ -54,6 +54,8 @@ const ENDPOINTS = [
 ];
 const BATCH = 12;
 const ATTRIBUTION = 'Circuit data © OpenStreetMap contributors, ODbL (https://www.openstreetmap.org/copyright)';
+/** Kart tracks with no name of their own are named after the nearest town, some from GeoNames' list of towns. */
+const KART_ATTRIBUTION = `${ATTRIBUTION}; some town names © GeoNames, CC BY 4.0 (https://www.geonames.org)`;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -472,7 +474,7 @@ function writeLayoutFile(l: Layout) {
   writeFileSync(
     join(OUT, `${id}.json`),
     JSON.stringify({
-      attribution: ATTRIBUTION,
+      attribution: id >= KART_ID_BASE ? KART_ATTRIBUTION : ATTRIBUTION,
       id,
       name,
       length,
@@ -484,56 +486,166 @@ function writeLayoutFile(l: Layout) {
   );
 }
 
-/** The kart pass on its own (`--karts=<region>`): the circuit files are left as they are. */
-async function buildKarts(region: string, cached: (key: string, query: string) => Promise<any>) {
+/** One quick try at each Overpass server, giving up on any that hasn't answered in `ms`. */
+async function quickOverpass(query: string, ms: number): Promise<any> {
+  let last: unknown;
+  for (const url of ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+          'User-Agent': 'Blacktop-TrackPack/1.0 (circuit library build)',
+          ...(GEO_URL && url.startsWith(GEO_URL) && GEO_TOKEN ? { Authorization: `Bearer ${GEO_TOKEN}` } : {}),
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(ms),
+      });
+      const text = await res.text();
+      if (!res.ok || !text.trimStart().startsWith('{')) throw new Error(`${res.status}`);
+      return JSON.parse(text);
+    } catch (e) {
+      last = e;
+      console.warn(`    ${new URL(url).host}: ${String((e as Error).message ?? e).slice(0, 60)}`);
+    }
+  }
+  throw last;
+}
+
+interface KartTile {
+  box: [number, number, number, number];
+  key: string;
+  /** Kart lines in it (a cheap count first), null until asked. */
+  count: number | null;
+  done: boolean;
+  tracks: Layout[];
+}
+
+const inBox = (p: { lat: number; lng: number }, [s, w, n, e]: KartTile['box']) => p.lat >= s && p.lat < n && p.lng >= w && p.lng < e;
+
+/**
+ * The kart pass on its own (`--karts=<region>`): the circuit files are left as
+ * they are. Each tile's kart lines are counted first (a tiny query: empty
+ * ocean tiles go at once) and the tiles are fetched one at a time, smallest
+ * first, each with one quick try at each server and a time limit by its size,
+ * so one slow tile can't hold the rest up. What's fetched is cached and
+ * written straight away, a tile not fetched yet keeping the tracks the last
+ * run had there. `--patient` rests half an hour and goes round again for the
+ * tiles left, for up to twelve hours (an overnight run).
+ */
+async function buildKarts(region: string, patient: boolean) {
   const boxes = KART_REGIONS[region];
   if (!boxes) throw new Error(`No kart region "${region}" (${Object.keys(KART_REGIONS).join(', ')})`);
   mkdirSync(OUT, { recursive: true });
   const existing = JSON.parse(readFileSync(join(OUT, 'index.json'), 'utf8')).circuits as { lat: number; lng: number }[];
+  const before: { id: number; lat: number; lng: number }[] = existsSync(join(OUT, 'karts.json'))
+    ? JSON.parse(readFileSync(join(OUT, 'karts.json'), 'utf8')).circuits ?? []
+    : [];
   const skipped: Record<string, number> = {};
-  const layouts: Layout[] = [];
-  let failed = 0;
-  for (const [south, west, north, east] of boxes) {
-    const box = `${south},${west},${north},${east}`;
-    const key = `karts-${box.replace(/[^0-9-]+/g, '_')}`;
-    console.log(`Kart tracks in ${box}…`);
-    const fresh = !existsSync(join(CACHE, `${key}-lines.json`));
-    try {
-      const lines = await cached(`${key}-lines`, `[out:json][timeout:240];way["highway"="raceway"]["sport"="karting"](${box});out geom;`);
-      const places = await cached(`${key}-venues`, `[out:json][timeout:180];nwr["sport"="karting"]["name"](${box});out tags bb;`);
-      const towns = await cached(`${key}-towns`, `[out:json][timeout:180];node["place"~"^(city|town)$"](${box});out;`);
-      const found = kartLayouts(lines, kartVenues(places), skipped, existing, townsOf(towns));
-      console.log(`  ${found.length} tracks`);
-      layouts.push(...found);
-      if (fresh) await sleep(5000); // be kind to shared Overpass servers
-    } catch (e) {
-      failed++;
-      console.warn(`  failed (${String((e as Error).message ?? e).slice(0, 80)}); re-run to fill it in`);
+  const tiles: KartTile[] = boxes.map((box) => ({ box, key: `karts-${box.join(',').replace(/[^0-9-]+/g, '_')}`, count: null, done: false, tracks: [] }));
+  const file = (key: string) => join(CACHE, `${key}.json`);
+  const read = (key: string) => (existsSync(file(key)) ? JSON.parse(readFileSync(file(key), 'utf8')) : null);
+  const keep = (key: string, data: any) => writeFileSync(file(key), JSON.stringify(data));
+
+  /** A tile's tracks from its cached answers (unnamed ones named after the nearest town). */
+  const build = async (t: KartTile, ms: number) => {
+    const box = t.box.join(',');
+    let lines = read(`${t.key}-lines`);
+    if (!lines) {
+      lines = await quickOverpass(`[out:json][timeout:${Math.round(ms / 1000)}];way["highway"="raceway"]["sport"="karting"](${box});out geom;`, ms);
+      keep(`${t.key}-lines`, lines);
     }
+    let venues = read(`${t.key}-venues`);
+    if (!venues) {
+      venues = await quickOverpass(`[out:json][timeout:${Math.round(ms / 1000)}];nwr["sport"="karting"]["name"](${box});out tags bb;`, ms);
+      keep(`${t.key}-venues`, venues);
+    }
+    // Unnamed tracks take the nearest town's name inside kartLayouts, before two of the same name are told apart by
+    // their lengths: named after (as this did at first), the second of a pair came out "Kart track 388 m".
+    let towns = read(`${t.key}-near-towns`);
+    let tracks = kartLayouts(lines, kartVenues(venues), skipped, existing, towns ? townsOf(towns) : []);
+    const unnamed = tracks.filter((l) => /^Kart track( \d+ m)?$/.test(l.name));
+    if (unnamed.length && !towns) {
+      // Towns only round the tracks that need one: a whole tile's towns is a big ask.
+      const around = unnamed.map((l) => `node(around:25000,${l.lat.toFixed(4)},${l.lng.toFixed(4)})["place"~"^(city|town)$"];`).join('');
+      towns = await quickOverpass(`[out:json][timeout:${Math.round(ms / 1000)}];(${around});out;`, ms);
+      keep(`${t.key}-near-towns`, towns);
+      tracks = kartLayouts(lines, kartVenues(venues), skipped, existing, townsOf(towns));
+    }
+    return tracks;
+  };
+
+  const write = () => {
+    const done = tiles.filter((t) => t.done);
+    const fresh = done.flatMap((t) => t.tracks);
+    // Tiles not fetched yet keep what the last run had in them.
+    const kept = before.filter((b) => tiles.some((t) => !t.done && inBox(b, t.box)));
+    const seen = new Set<number>();
+    const all = [...fresh.map((l) => ({ l, id: l.id })), ...kept.map((b) => ({ l: null as Layout | null, id: b.id, b }))]
+      .filter((x) => (seen.has(x.id) ? false : (seen.add(x.id), true)));
+    for (const f of readdirSync(OUT)) {
+      const id = Number(f.replace(/\.json$/, ''));
+      if (Number.isFinite(id) && id >= KART_ID_BASE && !seen.has(id)) rmSync(join(OUT, f));
+    }
+    for (const l of fresh) writeLayoutFile(l);
+    const entries = all
+      .map((x) => (x.l ? { id: x.l.id, name: x.l.name, aka: x.l.aka, lat: +x.l.lat.toFixed(5), lng: +x.l.lng.toFixed(5), length: x.l.length, sport: 'karting' } : (x as any).b))
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+    writeFileSync(
+      join(OUT, 'karts.json'),
+      JSON.stringify({ attribution: KART_ATTRIBUTION, generatedAt: new Date().toISOString(), region, circuits: entries }),
+    );
+    console.log(`  wrote ${entries.length} kart tracks (${done.length} of ${tiles.length} tiles fetched)`);
+  };
+
+  const started = Date.now();
+  for (let pass = 1; ; pass++) {
+    console.log(`\nPass ${pass}`);
+    // Counts first: cheap, and they put the tiles in order.
+    for (const t of tiles.filter((t) => t.count == null)) {
+      const cachedCount = read(`${t.key}-count`);
+      const cachedLines = cachedCount ? null : read(`${t.key}-lines`);
+      if (cachedCount || cachedLines) {
+        t.count = cachedCount ? cachedCount.n : (cachedLines.elements ?? []).length;
+        continue;
+      }
+      try {
+        const d = await quickOverpass(`[out:json][timeout:25];way["highway"="raceway"]["sport"="karting"](${t.box.join(',')});out count;`, 30_000);
+        t.count = Number(d.elements?.[0]?.tags?.ways ?? d.elements?.[0]?.tags?.total ?? 0);
+        keep(`${t.key}-count`, { n: t.count });
+      } catch {
+        console.warn(`  count for ${t.box.join(',')} didn't come back: later`);
+      }
+    }
+    for (const t of tiles) if (t.count === 0 && !t.done) t.done = true;
+    const todo = tiles.filter((t) => !t.done && t.count != null).sort((a, b) => a.count! - b.count!);
+    console.log(`  ${todo.length} tiles to fetch, smallest first: ${todo.map((t) => t.count).join(', ')}`);
+    for (const t of todo) {
+      // Time allowed by size: a small tile that hasn't answered in a minute is crawling.
+      const ms = Math.min(240_000, 60_000 + (t.count ?? 0) * 40);
+      console.log(`  ${t.box.join(',')} (${t.count} lines, ${Math.round(ms / 1000)} s each)`);
+      try {
+        t.tracks = await build(t, ms);
+        t.done = true;
+        console.log(`    ${t.tracks.length} tracks`);
+        write();
+      } catch {
+        console.warn(`    skipped for now`);
+      }
+      await sleep(3000); // be kind to shared Overpass servers
+    }
+    const left = tiles.filter((t) => !t.done);
+    if (!left.length) break;
+    if (!patient || Date.now() - started > 12 * 3600_000) {
+      console.warn(`\n${left.length} tile(s) still to fetch: run again (--patient to keep trying). Answers so far are cached.`);
+      break;
+    }
+    console.log(`\n${left.length} tile(s) left: resting 30 minutes…`);
+    await sleep(30 * 60_000);
   }
-  // Tiles overlap at their edges: one track once.
-  const seen = new Set<number>();
-  const unique = layouts.filter((l) => (seen.has(l.id) ? false : (seen.add(l.id), true))).sort((a, b) => a.name.localeCompare(b.name));
-  // A failed tile keeps the last run's tracks: only a full run replaces the set.
-  if (failed) {
-    console.warn(`\n${failed} region tile(s) failed: nothing written. Re-run (answers so far are cached).`);
-    return;
-  }
-  for (const f of readdirSync(OUT)) {
-    const id = Number(f.replace(/\.json$/, ''));
-    if (Number.isFinite(id) && id >= KART_ID_BASE) rmSync(join(OUT, f));
-  }
-  for (const l of unique) writeLayoutFile(l);
-  writeFileSync(
-    join(OUT, 'karts.json'),
-    JSON.stringify({
-      attribution: ATTRIBUTION,
-      generatedAt: new Date().toISOString(),
-      region,
-      circuits: unique.map(({ id, name, aka, lat, lng, length }) => ({ id, name, aka, lat: +lat.toFixed(5), lng: +lng.toFixed(5), length, sport: 'karting' })),
-    }),
-  );
-  console.log(`\nWrote ${unique.length} kart tracks (${region}). Skipped:`, skipped);
+  write();
+  console.log(`\nDone (${region}). Skipped:`, skipped);
 }
 
 async function main() {
@@ -549,7 +661,7 @@ async function main() {
 
   const karts = process.argv.find((a) => a.startsWith('--karts='))?.slice('--karts='.length);
   if (karts) {
-    await buildKarts(karts, cached);
+    await buildKarts(karts, process.argv.includes('--patient'));
     return;
   }
 

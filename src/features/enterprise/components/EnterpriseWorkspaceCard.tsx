@@ -58,7 +58,7 @@ export function EnterpriseWorkspaceCard({ session, className }: { session: Enter
             {org.branding.logo_url ? (
               <img src={org.branding.logo_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <Building2 className="w-6 h-6 text-accent" style={accent ? { color: accent } : undefined} />
+              <Building2 className="w-6 h-6 text-accent-2" style={accent ? { color: accent } : undefined} />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -87,7 +87,7 @@ export function EnterpriseWorkspaceCard({ session, className }: { session: Enter
 
         {guest && session.expiresAt && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="w-4 h-4 text-accent" />
+            <Clock className="w-4 h-4 text-accent-2" />
             <span className="font-mono">{timeLeft(session.expiresAt, now)}</span>
           </div>
         )}

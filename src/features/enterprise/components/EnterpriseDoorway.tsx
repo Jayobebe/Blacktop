@@ -156,7 +156,7 @@ export function EnterpriseDoorway({ className }: { className?: string }) {
       <div className="bg-card/50 rounded-3xl border-2 border-accent/60 p-4 flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5 text-accent" />
+            <Building2 className="w-5 h-5 text-accent-2" />
           </div>
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight text-foreground">{tr("Blacktop Enterprise")}</h2>
@@ -301,7 +301,7 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
                 {tierName(t.id)}
               </span>
               <span className="flex-1 min-w-0 text-xs text-muted-foreground line-clamp-2">{t.tagline}</span>
-              <ChevronDown className={cn('w-4 h-4 text-accent shrink-0 transition-transform', open && 'rotate-180')} />
+              <ChevronDown className={cn('w-4 h-4 text-accent-2 shrink-0 transition-transform', open && 'rotate-180')} />
             </button>
             {open && (
               <div className="px-3 pb-3 flex flex-col gap-3">
@@ -318,7 +318,7 @@ function TierAccordion({ openTier, onToggle }: { openTier: EnterpriseTier | null
                       className="flex gap-2 animate-slide-up"
                       style={{ animationDelay: `${200 + i * 80}ms`, animationFillMode: 'backwards' }}
                     >
-                      <Check className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-accent-2 shrink-0 mt-0.5" />
                       <span className="text-xs">
                         <span className="font-semibold text-foreground">{f.title}</span>
                         <span className="text-muted-foreground"> · {f.detail}</span>

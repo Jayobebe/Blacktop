@@ -111,7 +111,7 @@ function Card({
       className={cn('rounded-2xl frost border p-3.5', tone === 'live' ? 'border-[hsl(150_60%_50%/0.55)]' : 'border-accent/35', n > 1 && pin == null && 'cursor-pointer')}
     >
       <div className="flex items-center gap-1.5 mb-2 min-h-[20px]">
-        <Icon className={cn('w-3.5 h-3.5 shrink-0', tone === 'live' ? 'text-[hsl(150_60%_55%)]' : 'text-accent')} />
+        <Icon className={cn('w-3.5 h-3.5 shrink-0', tone === 'live' ? 'text-[hsl(150_60%_55%)]' : 'text-accent-2')} />
         <h3 className="flex-1 min-w-0 truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</h3>
         {n > 1 && pin == null && (
           <span className="flex items-center gap-1" aria-hidden>
@@ -174,7 +174,7 @@ function Btn({ children, onClick, primary, href, className }: { children: ReactN
 function Lines({ icon: Icon, main, sub, iconClass, big }: { icon?: LucideIcon; main: ReactNode; sub?: ReactNode; iconClass?: string; big?: boolean }) {
   return (
     <div className="flex items-center gap-3 min-h-[44px]">
-      {Icon && <Icon className={cn(big ? 'w-9 h-9' : 'w-6 h-6', 'shrink-0', iconClass ?? 'text-accent')} />}
+      {Icon && <Icon className={cn(big ? 'w-9 h-9' : 'w-6 h-6', 'shrink-0', iconClass ?? 'text-accent-2')} />}
       <div className="min-w-0 flex-1">
         <p className={cn('font-semibold leading-snug', big ? 'text-2xl font-mono leading-none' : 'text-[15px]')}>{main}</p>
         {sub && <p className={cn('text-xs text-muted-foreground leading-snug', big ? 'mt-1.5' : 'mt-0.5')}>{sub}</p>}
@@ -278,7 +278,7 @@ function WeatherCard({ weather, spot, active }: { weather: WeatherRead | null; s
   const soon = !weather.wetNow && weather.change && weather.change.t - Date.now() <= 3 * 3600_000;
   const faces: ReactNode[] = [
     // Now: the temperature and the verdict.
-    <Lines key="now" big icon={Icon} iconClass={weather.wetNow ? RAIN : 'text-accent'} main={tempText(weather.now.tempC)} sub={<span className="text-sm font-semibold text-foreground">{verdict(weather)}</span>} />,
+    <Lines key="now" big icon={Icon} iconClass={weather.wetNow ? RAIN : 'text-accent-2'} main={tempText(weather.now.tempC)} sub={<span className="text-sm font-semibold text-foreground">{verdict(weather)}</span>} />,
     // The next twelve hours: a bar for each hour's rain, its time every third hour.
     <div key="hours">
       <div className="flex items-end gap-[3px] h-[52px]" aria-hidden>
@@ -571,7 +571,7 @@ function WeekCard({ active }: { active: boolean }) {
     <Lines
       key="vs"
       icon={s.last === 0 || ahead >= 0 ? TrendingUp : TrendingDown}
-      iconClass={s.last > 0 && ahead < 0 ? 'text-muted-foreground' : 'text-accent'}
+      iconClass={s.last > 0 && ahead < 0 ? 'text-muted-foreground' : 'text-accent-2'}
       main={s.last === 0 ? tr("Nothing last week to beat") : ahead >= 0 ? tr("{0} more than last week", [milesText(ahead)]) : tr("{0} to match last week", [milesText(-ahead)])}
       sub={tr("Last week: {0}", [milesText(s.last)])}
     />,
@@ -691,7 +691,7 @@ function CrewCard({ active }: { active: boolean }) {
           <span className="relative w-2.5 h-2.5 rounded-full bg-[hsl(150_70%_50%)]" />
         </span>
       ) : (
-        <Users className="w-5 h-5 text-accent shrink-0" />
+        <Users className="w-5 h-5 text-accent-2 shrink-0" />
       )}
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-semibold truncate">{live ? tr("{0} is riding", [c.leader_name || c.name]) : tr("{0} is in a lobby", [c.leader_name || c.name])}</p>
@@ -757,7 +757,7 @@ function CrewCard({ active }: { active: boolean }) {
         }}
         className="w-full flex items-center gap-3 text-left min-h-[44px]"
       >
-        <Trophy className="w-6 h-6 text-accent shrink-0" />
+        <Trophy className="w-6 h-6 text-accent-2 shrink-0" />
         <span className="flex-1 min-w-0">
           <span className="block text-[15px] font-semibold">{tr("#{0} of {1} on distance", [rank, board.length])}</span>
           <span className="block text-xs text-muted-foreground">{tr("Your crew's board")}</span>
@@ -788,7 +788,7 @@ function CrewCard({ active }: { active: boolean }) {
         className="w-full text-left min-h-[44px]"
       >
         <span className="flex items-center gap-3">
-          <Target className="w-6 h-6 text-accent shrink-0" />
+          <Target className="w-6 h-6 text-accent-2 shrink-0" />
           <span className="flex-1 min-w-0">
             <span className="block text-[15px] font-semibold truncate">{c.title}</span>
             <span className="block text-xs text-muted-foreground truncate">
@@ -910,7 +910,7 @@ function UpNextCard({ spot, active }: { spot: Spot | null; active: boolean }) {
         }}
         className="w-full text-left flex items-center gap-3 min-h-[44px]"
       >
-        <CalendarDays className="w-6 h-6 text-accent shrink-0" />
+        <CalendarDays className="w-6 h-6 text-accent-2 shrink-0" />
         <span className="flex-1 min-w-0">
           <span className="block text-[15px] font-semibold truncate">{n.title}</span>
           <span className="block text-xs text-muted-foreground truncate">
